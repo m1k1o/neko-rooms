@@ -27,14 +27,16 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	response, err := manager.rooms.Create(request)
+	ID, err := manager.rooms.Create(request)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(struct{
+		ID string `json:"id"`
+	}{ID})
 }
 
 func (manager *ApiManagerCtx) roomGet(w http.ResponseWriter, r *http.Request) {

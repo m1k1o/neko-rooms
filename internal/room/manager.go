@@ -48,35 +48,35 @@ type RoomManagerCtx struct {
 	client *dockerClient.Client
 }
 
-func (manager *RoomManagerCtx) List() ([]types.RoomData, error) {
+func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 	containers, err := manager.listContainers()
 	if err != nil {
 		return nil, err
 	}
 
-	result := []types.RoomData{}
+	result := []types.RoomEntry{}
 	for _, container := range containers {
-		result = append(result, types.RoomData{
+		result = append(result, types.RoomEntry{
 			ID: container.ID,
 		})
 	}
 
 	return result, nil
 }
-func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomData, error) {
+func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	// TODO: Check if path name exists.
 	pathName := settings.Name
 	if pathName == "" {
 		var err error
 		pathName, err = utils.NewUID(32)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 	}
 
 	epr, err := manager.allocatePorts(settings.MaxConnections)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	portBindings := nat.PortMap{}
@@ -176,32 +176,26 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomD
 	)
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Run the actual container
 	err = manager.client.ContainerStart(context.Background(), cont.ID, dockerTypes.ContainerStartOptions{})
 
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &types.RoomData{
-		ID:           cont.ID,
-		RoomSettings: settings,
-	}, nil
+	return cont.ID, nil
 }
 
-func (manager *RoomManagerCtx) Get(id string) (*types.RoomData, error) {
+func (manager *RoomManagerCtx) Get(id string) (*types.RoomSettings, error) {
 	_, err := manager.inspectContainer(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.RoomData{
-		ID:           id,
-		RoomSettings: types.RoomSettings{},
-	}, nil
+	return &types.RoomSettings{}, nil
 }
 
 func (manager *RoomManagerCtx) Update(id string, settings types.RoomSettings) error {

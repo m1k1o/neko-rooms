@@ -66,16 +66,14 @@ func (settings *RoomSettings) Env(eprMin uint16, eprMax uint16, nat1to1 []string
 	return env
 }
 
-type RoomData struct {
+type RoomEntry struct {
 	ID string `json:"id"`
-
-	RoomSettings
 }
 
 type RoomManager interface {
-	List() ([]RoomData, error)
-	Create(settings RoomSettings) (*RoomData, error)
-	Get(id string) (*RoomData, error)
+	List() ([]RoomEntry, error)
+	Create(settings RoomSettings) (string, error)
+	Get(id string) (*RoomSettings, error)
 	Update(id string, settings RoomSettings) error
 	Remove(id string) error
 }
