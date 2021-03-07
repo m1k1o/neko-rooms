@@ -11,9 +11,9 @@ import (
 )
 
 type Room struct {
-	NAT1To1IPs   []string
-	EphemeralMin uint16
-	EphemeralMax uint16
+	NAT1To1IPs []string
+	EprMin     uint16
+	EprMax     uint16
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
@@ -83,11 +83,11 @@ func (s *Room) Set() {
 	}
 
 	if min > max {
-		s.EphemeralMin = max
-		s.EphemeralMax = min
+		s.EprMin = max
+		s.EprMax = min
 	} else {
-		s.EphemeralMin = min
-		s.EphemeralMax = max
+		s.EprMin = min
+		s.EprMax = max
 	}
 
 	s.TraefikDomain = viper.GetString("traefik_domain")
