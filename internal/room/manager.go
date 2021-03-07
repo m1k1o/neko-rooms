@@ -21,10 +21,7 @@ import (
 )
 
 const (
-	nekoImage       = "m1k1o/neko:latest"
-	containerPrefix = "neko-room-"
 	frontendPort    = 8080
-	labelCanary     = "m1k1o-neko-rooms"
 )
 
 func New(config *config.Room) *RoomManagerCtx {
@@ -122,7 +119,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		exposedPorts[portKey] = struct{}{}
 	}
 
-	containerName := containerPrefix + roomName
+	containerName := manager.config.InstanceName + "-" + roomName
 
 	urlProto := "http"
 	if manager.config.TraefikCertresolver != "" {
@@ -131,11 +128,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := map[string]string{
 		// Set internal labels
-		"m1k1o.neko_rooms.name":    roomName,
-		"m1k1o.neko_rooms.url":     urlProto + "://" + manager.config.TraefikDomain + "/" + roomName + "/",
-		"m1k1o.neko_rooms.canary":  labelCanary,
-		"m1k1o.neko_rooms.epr.min": fmt.Sprintf("%d", epr.Min),
-		"m1k1o.neko_rooms.epr.max": fmt.Sprintf("%d", epr.Max),
+		"m1k1o.neko_rooms.name":     roomName,
+		"m1k1o.neko_rooms.url":      urlProto + "://" + manager.config.TraefikDomain + "/" + roomName + "/",
+		"m1k1o.neko_rooms.instance": manager.config.InstanceName,
+		"m1k1o.neko_rooms.epr.min":  fmt.Sprintf("%d", epr.Min),
+		"m1k1o.neko_rooms.epr.max":  fmt.Sprintf("%d", epr.Max),
 
 		// Set traefik labels
 		"traefik.enable": "true",
@@ -168,7 +165,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")),
 		}, settings.ToEnv()...),
 		// Name of the image as it was passed by the operator (e.g. could be symbolic)
-		Image: nekoImage,
+		Image: manager.config.NekoImage,
 		// List of labels set to this container
 		Labels: labels,
 	}

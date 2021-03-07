@@ -15,6 +15,9 @@ type Room struct {
 	EprMin     uint16
 	EprMax     uint16
 
+	NekoImage    string
+	InstanceName string
+
 	TraefikDomain       string
 	TraefikEntrypoint   string
 	TraefikCertresolver string
@@ -29,6 +32,16 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().StringSlice("nat1to1", []string{}, "sets a list of external IP addresses of 1:1 (D)NAT and a candidate type for which the external IP address is used")
 	if err := viper.BindPFlag("nat1to1", cmd.PersistentFlags().Lookup("nat1to1")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("neko_image", "m1k1o/neko:latest", "neko image to be used")
+	if err := viper.BindPFlag("neko_image", cmd.PersistentFlags().Lookup("neko_image")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("instance_name", "neko-rooms", "unique instance name (if running muliple on the same host)")
+	if err := viper.BindPFlag("instance_name", cmd.PersistentFlags().Lookup("instance_name")); err != nil {
 		return err
 	}
 
@@ -89,6 +102,9 @@ func (s *Room) Set() {
 		s.EprMin = min
 		s.EprMax = max
 	}
+
+	s.NekoImage = viper.GetString("neko_image")
+	s.InstanceName = viper.GetString("instance_name")
 
 	s.TraefikDomain = viper.GetString("traefik_domain")
 	s.TraefikEntrypoint = viper.GetString("traefik_entrypoint")

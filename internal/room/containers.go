@@ -15,8 +15,8 @@ func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error)
 
 	result := []dockerTypes.Container{}
 	for _, container := range containers {
-		val, ok := container.Labels["m1k1o.neko_rooms.canary"]
-		if !ok || val != labelCanary {
+		val, ok := container.Labels["m1k1o.neko_rooms.instance"]
+		if !ok || val != manager.config.InstanceName {
 			continue
 		}
 
@@ -32,8 +32,8 @@ func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.Contain
 		return nil, err
 	}
 
-	val, ok := container.Config.Labels["m1k1o.neko_rooms.canary"]
-	if !ok || val != labelCanary {
+	val, ok := container.Config.Labels["m1k1o.neko_rooms.instance"]
+	if !ok || val != manager.config.InstanceName {
 		return nil, fmt.Errorf("This container does not belong to neko_rooms.")
 	}
 
