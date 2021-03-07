@@ -10,9 +10,9 @@ import (
 )
 
 type ApiManagerCtx struct {
-	logger      zerolog.Logger
-	rooms types.RoomManager
-	conf        *config.API
+	logger zerolog.Logger
+	rooms  types.RoomManager
+	conf   *config.API
 }
 
 func New(roomManager types.RoomManager, conf *config.API) *ApiManagerCtx {

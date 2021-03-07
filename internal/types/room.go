@@ -1,5 +1,10 @@
 package types
 
+import (
+	"fmt"
+	"strings"
+)
+
 type RoomSettings struct {
 	MaxConnections uint   `json:"max_connections"`
 	UserPass       string `json:"user_pass"`
@@ -18,8 +23,50 @@ type RoomSettings struct {
 	AudioPipeline string `json:"audio_pipeline"`
 }
 
+func (settings *RoomSettings) Env(epr_start uint, epr_end uint, nat1to1 []string) []string {
+	env := []string{
+		fmt.Sprintf("NEKO_EPR=%d-%d", epr_start, epr_end),
+		fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(nat1to1, ",")),
+		fmt.Sprintf("NEKO_PASSWORD=%s", settings.UserPass),
+		fmt.Sprintf("NEKO_PASSWORD_ADMIN=%s", settings.AdminPass),
+		fmt.Sprintf("NEKO_SCREEN=%s", settings.Screen),
+		fmt.Sprintf("NEKO_MAX_FPS=%d", settings.VideoMaxFPS),
+	}
+
+	if settings.BroadcastPipeline != "" {
+		env = append(env, fmt.Sprintf("NEKO_BROADCAST_PIPELINE=%s", settings.BroadcastPipeline))
+	}
+
+	if settings.VideoCodec != "" {
+		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.VideoCodec)))
+	}
+
+	if settings.VideoBitrate != 0 {
+		env = append(env, fmt.Sprintf("NEKO_VIDEO_BITRATE=%d", settings.VideoBitrate))
+	}
+
+	if settings.VideoPipeline != "" {
+		env = append(env, fmt.Sprintf("NEKO_VIDEO=%s", settings.VideoPipeline))
+	}
+
+	if settings.AudioCodec != "" {
+		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.AudioCodec)))
+	}
+
+	if settings.AudioBitrate != 0 {
+		env = append(env, fmt.Sprintf("NEKO_AUDIO_BITRATE=%d", settings.AudioBitrate))
+	}
+
+	if settings.AudioPipeline != "" {
+		env = append(env, fmt.Sprintf("NEKO_AUDIO=%s", settings.AudioPipeline))
+	}
+
+	return env
+}
+
 type RoomData struct {
-	ID   string `json:"id"`
+	ID string `json:"id"`
+
 	RoomSettings
 }
 
