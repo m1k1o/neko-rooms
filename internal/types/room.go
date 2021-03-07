@@ -50,7 +50,7 @@ func (settings *RoomSettings) ToEnv() []string {
 		env = append(env, fmt.Sprintf("NEKO_BROADCAST_PIPELINE=%s", settings.BroadcastPipeline))
 	}
 
-	if settings.VideoCodec != "" {
+	if settings.VideoCodec == "VP8" || settings.VideoCodec == "VP9" || settings.VideoCodec == "H264" {
 		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.VideoCodec)))
 	}
 
@@ -62,7 +62,7 @@ func (settings *RoomSettings) ToEnv() []string {
 		env = append(env, fmt.Sprintf("NEKO_VIDEO=%s", settings.VideoPipeline))
 	}
 
-	if settings.AudioCodec != "" {
+	if settings.AudioCodec == "OPUS" || settings.AudioCodec == "G722" || settings.AudioCodec == "PCMU" || settings.AudioCodec == "PCMA" {
 		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.AudioCodec)))
 	}
 
