@@ -47,6 +47,25 @@ type RoomManagerCtx struct {
 	client *dockerClient.Client
 }
 
+func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error) {
+	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	result := []dockerTypes.Container{}
+	for _, container := range containers {
+		val, ok := container.Labels["m1k1o.neko_rooms.canary"]
+		if !ok || val != labelCanary {
+			continue
+		}
+
+		result = append(result, container)
+	}
+
+	return result, nil
+}
+
 func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {
 	container, _, err := manager.client.ContainerInspectWithRaw(context.Background(), id, false)
 	if err != nil {
@@ -61,22 +80,20 @@ func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.Contain
 	return &container, nil
 }
 
-func (manager *RoomManagerCtx) List() (*[]types.RoomData, error) {
-	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
-		All: true,
-	})
+func (manager *RoomManagerCtx) List() ([]types.RoomData, error) {
+	containers, err := manager.listContainers()
 	if err != nil {
 		return nil, err
 	}
 
+	result := []types.RoomData{}
 	for _, container := range containers {
-		manager.logger.Info().
-			Str("id", container.ID[:10]).
-			Str("image", container.Image).
-			Msg("container")
+		result = append(result, types.RoomData{
+			ID: container.ID,
+		})
 	}
 
-	return &[]types.RoomData{}, nil
+	return result, nil
 }
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomData, error) {
 	// configs

@@ -71,7 +71,7 @@ type RoomData struct {
 }
 
 type RoomManager interface {
-	List() (*[]RoomData, error)
+	List() ([]RoomData, error)
 	Create(settings RoomSettings) (*RoomData, error)
 	Get(id string) (*RoomData, error)
 	Update(id string, settings RoomSettings) error
