@@ -47,39 +47,6 @@ type RoomManagerCtx struct {
 	client *dockerClient.Client
 }
 
-func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error) {
-	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	result := []dockerTypes.Container{}
-	for _, container := range containers {
-		val, ok := container.Labels["m1k1o.neko_rooms.canary"]
-		if !ok || val != labelCanary {
-			continue
-		}
-
-		result = append(result, container)
-	}
-
-	return result, nil
-}
-
-func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {
-	container, _, err := manager.client.ContainerInspectWithRaw(context.Background(), id, false)
-	if err != nil {
-		return nil, err
-	}
-
-	val, ok := container.Config.Labels["m1k1o.neko_rooms.canary"]
-	if !ok || val != labelCanary {
-		return nil, fmt.Errorf("This container does not belong to neko_rooms.")
-	}
-
-	return &container, nil
-}
-
 func (manager *RoomManagerCtx) List() ([]types.RoomData, error) {
 	containers, err := manager.listContainers()
 	if err != nil {
@@ -98,15 +65,15 @@ func (manager *RoomManagerCtx) List() ([]types.RoomData, error) {
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomData, error) {
 	// configs
 	pathName := "foobar"
-	eprStart := uint(52135)
-	eprEnd := uint(52145)
+	eprMin := uint(52135)
+	eprMax := uint(52145)
 
 	portBindings := nat.PortMap{}
 	exposedPorts := nat.PortSet{
 		nat.Port(fmt.Sprintf("%d/udp", frontendPort)): struct{}{},
 	}
 
-	for port := eprStart; port <= eprEnd; port++ {
+	for port := eprMin; port <= eprMax; port++ {
 		portKey := nat.Port(fmt.Sprintf("%d/udp", port))
 
 		portBindings[portKey] = []nat.PortBinding{
@@ -123,8 +90,9 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomD
 
 	labels := map[string]string{
 		// Set internal labels
-		"m1k1o.neko_rooms.canary": labelCanary,
-		"m1k1o.neko_rooms.epr":    fmt.Sprintf("%d-%d", eprStart, eprEnd),
+		"m1k1o.neko_rooms.canary":  labelCanary,
+		"m1k1o.neko_rooms.epr.min": fmt.Sprintf("%d", eprMin),
+		"m1k1o.neko_rooms.epr.max": fmt.Sprintf("%d", eprMax),
 
 		// Set traefik labels
 		"traefik.enable": "true",
@@ -153,7 +121,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomD
 		// List of environment variable to set in the container
 		Env: append([]string{
 			fmt.Sprintf("NEKO_BIND=%d", frontendPort),
-		}, settings.Env(eprStart, eprEnd, manager.config.NAT1To1IPs)...),
+		}, settings.Env(eprMin, eprMax, manager.config.NAT1To1IPs)...),
 		// Name of the image as it was passed by the operator (e.g. could be symbolic)
 		Image: nekoImage,
 		// List of labels set to this container
