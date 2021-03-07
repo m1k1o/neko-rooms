@@ -21,6 +21,7 @@ const (
 	nekoImage       = "m1k1o/neko:latest"
 	containerPrefix = "neko-room-"
 	frontendPort    = 8080
+	labelCanary     = "m1k1o-neko-rooms"
 )
 
 func New(config *config.Room) *RoomManagerCtx {
@@ -92,8 +93,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomD
 
 	labels := map[string]string{
 		// Set internal labels
-		"m1k1o.neko_rooms":     "true",
-		"m1k1o.neko_rooms.epr": fmt.Sprintf("%d-%d", eprStart, eprEnd),
+		"m1k1o.neko_rooms.canary": labelCanary,
+		"m1k1o.neko_rooms.epr":    fmt.Sprintf("%d-%d", eprStart, eprEnd),
 
 		// Set traefik labels
 		"traefik.enable": "true",
@@ -194,5 +195,28 @@ func (manager *RoomManagerCtx) Update(id string, settings types.RoomSettings) er
 }
 
 func (manager *RoomManagerCtx) Remove(id string) error {
-	return nil
+	container, _, err := manager.client.ContainerInspectWithRaw(context.Background(), id, false)
+	if err != nil {
+		return err
+	}
+
+	val, ok := container.Config.Labels["m1k1o.neko_rooms.canary"]
+	if !ok || val != labelCanary {
+		return fmt.Errorf("This container does not belong to neko_rooms.")
+	}
+
+	// Stop the actual container
+	err = manager.client.ContainerStop(context.Background(), id, nil)
+
+	if err != nil {
+		return err
+	}
+
+	// Remove the actual container
+	err = manager.client.ContainerRemove(context.Background(), id, dockerTypes.ContainerRemoveOptions{
+		RemoveVolumes: true,
+		Force:         true,
+	})
+
+	return err
 }
