@@ -5,16 +5,13 @@ type RoomSettings struct {
 	UserPass       string `json:"user_pass"`
 	AdminPass      string `json:"admin_pass"`
 
-	ScreenWidth  string `json:"screen_width"`
-	ScreenHeight string `json:"screen_height"`
-	ScreenRate   string `json:"screen_rate"`
-
 	BroadcastPipeline string `json:"broadcast_pipeline"`
 
+	Screen        string `json:"screen"`
 	VideoCodec    string `json:"video_codec"`
 	VideoBitrate  uint   `json:"video_bitrate"`
 	VideoPipeline string `json:"video_pipeline"`
-	VideoFPSMax   uint   `json:"video_fps_max"`
+	VideoMaxFPS   uint   `json:"video_max_fps"`
 
 	AudioCodec    string `json:"audio_codec"`
 	AudioBitrate  uint   `json:"audio_bitrate"`
