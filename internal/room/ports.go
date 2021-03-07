@@ -12,12 +12,16 @@ type EprPorts struct {
 }
 
 func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
+	if sum < 1 {
+		return EprPorts{}, fmt.Errorf("Unable to allocate 0 ports.")
+	}
+
 	min := manager.config.EprMin
 	max := manager.config.EprMax
 
 	epr := EprPorts{
 		Min: min,
-		Max: min + sum,
+		Max: min + sum - 1,
 	}
 
 	ports, err := manager.getUsedPorts()
@@ -28,7 +32,7 @@ func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
 	for _, port := range ports {
 		if (epr.Min >= port.Min && epr.Min <= port.Max) || (epr.Max >= port.Min && epr.Max <= port.Max) {
 			epr.Min = port.Max + 1
-			epr.Max = port.Max + 1 + sum
+			epr.Max = port.Max + sum
 		}
 	}
 
