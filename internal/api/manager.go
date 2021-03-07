@@ -11,15 +11,15 @@ import (
 
 type ApiManagerCtx struct {
 	logger      zerolog.Logger
-	roomManager types.RoomManager
+	rooms types.RoomManager
 	conf        *config.API
 }
 
 func New(roomManager types.RoomManager, conf *config.API) *ApiManagerCtx {
 	return &ApiManagerCtx{
-		logger:      log.With().Str("module", "router").Logger(),
-		roomManager: roomManager,
-		conf:        conf,
+		logger: log.With().Str("module", "router").Logger(),
+		rooms:  roomManager,
+		conf:   conf,
 	}
 }
 
@@ -28,8 +28,8 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 	r.Post("/rooms", manager.roomCreate)
 
 	r.Route("/rooms/{roomId}", func(r chi.Router) {
-		r.Get("/", manager.roomRead)
+		r.Get("/", manager.roomGet)
 		r.Post("/", manager.roomUpdate)
-		r.Delete("/", manager.roomDelete)
+		r.Delete("/", manager.roomRemove)
 	})
 }
