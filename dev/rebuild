@@ -1,0 +1,11 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+set -e
+
+docker run --rm -it \
+    -v "${PWD}/../:/app" \
+    --entrypoint="/app/build" \
+    neko_rooms_img;
+
+./start

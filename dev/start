@@ -1,0 +1,10 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+docker run --rm -it \
+    --name "neko_rooms" \
+    -p "8080:8080" \
+    -v "${PWD}/../:/app" \
+    -e 'DOCKER_API_VERSION=1.39' \
+    -v "/var/run/docker.sock:/var/run/docker.sock" \
+    neko_rooms_img serve --bind :8080;

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+go build -o bin/neko_rooms cmd/neko_rooms/main.go

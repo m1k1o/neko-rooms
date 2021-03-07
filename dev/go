@@ -1,0 +1,16 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+docker run -it \
+    --name "neko_rooms_dev" \
+    --entrypoint="go" \
+    --volume "${PWD}/../:/app" \
+    neko_rooms_img "$@";
+
+#
+# commit changes to image
+docker commit "neko_rooms_dev" "neko_rooms_img"
+
+#
+# remove contianer
+docker rm "neko_rooms_dev"
