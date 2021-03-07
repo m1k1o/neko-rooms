@@ -37,10 +37,8 @@ type RoomSettings struct {
 	AudioPipeline string `json:"audio_pipeline"`
 }
 
-func (settings *RoomSettings) Env(eprMin uint16, eprMax uint16, nat1to1 []string) []string {
+func (settings *RoomSettings) ToEnv() []string {
 	env := []string{
-		fmt.Sprintf("NEKO_EPR=%d-%d", eprMin, eprMax),
-		fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(nat1to1, ",")),
 		fmt.Sprintf("NEKO_PASSWORD=%s", settings.UserPass),
 		fmt.Sprintf("NEKO_PASSWORD_ADMIN=%s", settings.AdminPass),
 		fmt.Sprintf("NEKO_SCREEN=%s", settings.Screen),

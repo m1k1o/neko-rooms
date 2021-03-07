@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -162,7 +163,9 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		// List of environment variable to set in the container
 		Env: append([]string{
 			fmt.Sprintf("NEKO_BIND=%d", frontendPort),
-		}, settings.Env(epr.Min, epr.Max, manager.config.NAT1To1IPs)...),
+			fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
+			fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")),
+		}, settings.ToEnv()...),
 		// Name of the image as it was passed by the operator (e.g. could be symbolic)
 		Image: nekoImage,
 		// List of labels set to this container
