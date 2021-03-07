@@ -6,20 +6,30 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"m1k1o/neko_rooms/internal/config"
+	"m1k1o/neko_rooms/internal/types"
 )
 
 type ApiManagerCtx struct {
-	logger zerolog.Logger
-	conf   *config.API
+	logger      zerolog.Logger
+	roomManager types.RoomManager
+	conf        *config.API
 }
 
-func New(conf *config.API) *ApiManagerCtx {
+func New(roomManager types.RoomManager, conf *config.API) *ApiManagerCtx {
 	return &ApiManagerCtx{
-		logger: log.With().Str("module", "router").Logger(),
-		conf:   conf,
+		logger:      log.With().Str("module", "router").Logger(),
+		roomManager: roomManager,
+		conf:        conf,
 	}
 }
 
-func (a *ApiManagerCtx) Mount(r chi.Router) {
+func (manager *ApiManagerCtx) Mount(r chi.Router) {
+	r.Get("/rooms", manager.roomsList)
+	r.Post("/rooms", manager.roomCreate)
 
+	r.Route("/rooms/{roomId}", func(r chi.Router) {
+		r.Get("/", manager.roomRead)
+		r.Post("/", manager.roomUpdate)
+		r.Delete("/", manager.roomDelete)
+	})
 }

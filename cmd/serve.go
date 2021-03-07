@@ -19,6 +19,7 @@ func init() {
 	configs := []config.Config{
 		neko_rooms.Service.Configs.Server,
 		neko_rooms.Service.Configs.API,
+		neko_rooms.Service.Configs.Room,
 	}
 
 	cobra.OnInitialize(func() {

@@ -9,6 +9,7 @@ import (
 	"m1k1o/neko_rooms/internal/api"
 	"m1k1o/neko_rooms/internal/config"
 	"m1k1o/neko_rooms/internal/http"
+	"m1k1o/neko_rooms/internal/room"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -60,6 +61,7 @@ func init() {
 			Root:   &config.Root{},
 			Server: &config.Server{},
 			API:    &config.API{},
+			Room:   &config.Room{},
 		},
 	}
 }
@@ -97,6 +99,7 @@ type Configs struct {
 	Root   *config.Root
 	Server *config.Server
 	API    *config.API
+	Room   *config.Room
 }
 
 type MainCtx struct {
@@ -104,6 +107,7 @@ type MainCtx struct {
 	Configs *Configs
 
 	logger      zerolog.Logger
+	roomManager *room.RoomManagerCtx
 	apiManager  *api.ApiManagerCtx
 	httpManager *http.HttpManagerCtx
 }
@@ -113,7 +117,12 @@ func (main *MainCtx) Preflight() {
 }
 
 func (main *MainCtx) Start() {
+	main.roomManager = room.New(
+		main.Configs.Room,
+	)
+
 	main.apiManager = api.New(
+		main.roomManager,
 		main.Configs.API,
 	)
 
