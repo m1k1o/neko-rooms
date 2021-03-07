@@ -7,4 +7,5 @@ docker run --rm -it \
     -v "${PWD}/../:/app" \
     -e 'DOCKER_API_VERSION=1.39' \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
+    --entrypoint="bin/neko_rooms" \
     neko_rooms_img serve --bind :8080;
