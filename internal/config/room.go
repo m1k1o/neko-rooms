@@ -67,7 +67,7 @@ func (s *Room) Set() {
 	}
 
 	min := uint16(59000)
-	max := uint16(59100)
+	max := uint16(59999)
 	epr := viper.GetString("epr")
 	ports := strings.SplitN(epr, "-", -1)
 	if len(ports) > 1 {
