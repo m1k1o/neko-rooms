@@ -87,6 +87,7 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 
 	return result, nil
 }
+
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	// TODO: Check if path name exists.
 	roomName := settings.Name
@@ -223,12 +224,28 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 }
 
 func (manager *RoomManagerCtx) Get(id string) (*types.RoomSettings, error) {
-	_, err := manager.inspectContainer(id)
+	container, err := manager.inspectContainer(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.RoomSettings{}, nil
+	roomName, ok := container.Config.Labels["m1k1o.neko_rooms.name"]
+	if !ok {
+		return nil, fmt.Errorf("Damaged container labels: name not found.")
+	}
+
+	epr, err := manager.getEprFromLabels(container.Config.Labels)
+	if err != nil {
+		return nil, err
+	}
+
+	settings := types.RoomSettings{
+		Name:           roomName,
+		MaxConnections: epr.Max - epr.Min + 1,
+	}
+
+	err = settings.FromEnv(container.Config.Env)
+	return &settings, err
 }
 
 func (manager *RoomManagerCtx) Update(id string, settings types.RoomSettings) error {

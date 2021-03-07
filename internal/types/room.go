@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 	"strings"
+	"strconv"
 	"time"
 )
 
@@ -24,17 +25,17 @@ type RoomSettings struct {
 	UserPass  string `json:"user_pass"`
 	AdminPass string `json:"admin_pass"`
 
-	BroadcastPipeline string `json:"broadcast_pipeline"`
+	BroadcastPipeline string `json:"broadcast_pipeline,omitempty"`
 
 	Screen        string `json:"screen"`
-	VideoCodec    string `json:"video_codec"`
-	VideoBitrate  uint   `json:"video_bitrate"`
-	VideoPipeline string `json:"video_pipeline"`
-	VideoMaxFPS   uint   `json:"video_max_fps"`
+	VideoCodec    string `json:"video_codec,omitempty"`
+	VideoBitrate  int    `json:"video_bitrate,omitempty"`
+	VideoPipeline string `json:"video_pipeline,omitempty"`
+	VideoMaxFPS   int    `json:"video_max_fps"`
 
-	AudioCodec    string `json:"audio_codec"`
-	AudioBitrate  uint   `json:"audio_bitrate"`
-	AudioPipeline string `json:"audio_pipeline"`
+	AudioCodec    string `json:"audio_codec,omitempty"`
+	AudioBitrate  int    `json:"audio_bitrate,omitempty"`
+	AudioPipeline string `json:"audio_pipeline,omitempty"`
 }
 
 func (settings *RoomSettings) ToEnv() []string {
@@ -74,6 +75,70 @@ func (settings *RoomSettings) ToEnv() []string {
 	}
 
 	return env
+}
+
+func (settings *RoomSettings) FromEnv(envs []string) error {
+	var err error
+	for _, env := range envs {
+		r := strings.SplitAfterN(env, "=", 2)
+		key := r[0]
+		val := r[1]
+
+		switch key {
+		case "NEKO_PASSWORD=":
+			settings.UserPass = val
+		case "NEKO_PASSWORD_ADMIN=":
+			settings.AdminPass = val
+		case "NEKO_SCREEN=":
+			settings.Screen = val
+		case "NEKO_MAX_FPS=":
+			settings.VideoMaxFPS, err = strconv.Atoi(val)
+		case "NEKO_BROADCAST_PIPELINE=":
+			settings.BroadcastPipeline = val
+		case "NEKO_VP8=":
+			if ok, _ := strconv.ParseBool(val); !ok {
+				settings.VideoCodec = "VP8"
+			}
+		case "NEKO_VP9=":
+			if ok, _ := strconv.ParseBool(val); !ok {
+				settings.VideoCodec = "VP9"
+			}
+		case "NEKO_H264=":
+			if ok, _ := strconv.ParseBool(val); !ok {
+				settings.VideoCodec = "H264"
+			}
+		case "NEKO_VIDEO_BITRATE=":
+			settings.VideoBitrate, err = strconv.Atoi(val)
+		case "NEKO_VIDEO=":
+			settings.VideoPipeline = val
+		case "NEKO_OPUS=":
+			if ok, _ := strconv.ParseBool(val); ok {
+				settings.AudioCodec = "OPUS"
+			}
+		case "NEKO_G722=":
+			if ok, _ := strconv.ParseBool(val); ok {
+				settings.AudioCodec = "G722"
+			}
+		case "NEKO_PCMU=":
+			if ok, _ := strconv.ParseBool(val); ok {
+				settings.AudioCodec = "PCMU"
+			}
+		case "NEKO_PCMA=":
+			if ok, _ := strconv.ParseBool(val); ok {
+				settings.AudioCodec = "PCMA"
+			}
+		case "NEKO_AUDIO_BITRATE=":
+			settings.AudioBitrate, err = strconv.Atoi(val)
+		case "NEKO_AUDIO=":
+			settings.AudioPipeline = val
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type RoomManager interface {
