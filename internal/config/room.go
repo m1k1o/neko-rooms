@@ -42,7 +42,7 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik_certresolver", "lets-encrypt", "traefik: certificate resolver for router")
+	cmd.PersistentFlags().String("traefik_certresolver", "", "traefik: certificate resolver for router")
 	if err := viper.BindPFlag("traefik_certresolver", cmd.PersistentFlags().Lookup("traefik_certresolver")); err != nil {
 		return err
 	}

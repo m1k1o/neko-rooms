@@ -3,6 +3,7 @@ package room
 import (
 	"context"
 	"fmt"
+	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -56,8 +57,30 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 
 	result := []types.RoomEntry{}
 	for _, container := range containers {
+		roomName, ok := container.Labels["m1k1o.neko_rooms.name"]
+		if !ok {
+			return nil, fmt.Errorf("Damaged container labels: name not found.")
+		}
+
+		URL, ok := container.Labels["m1k1o.neko_rooms.url"]
+		if !ok {
+			return nil, fmt.Errorf("Damaged container labels: url not found.")
+		}
+
+		epr, err := manager.getEprFromLabels(container.Labels)
+		if err != nil {
+			return nil, err
+		}
+
 		result = append(result, types.RoomEntry{
-			ID: container.ID,
+			ID:             container.ID,
+			URL:            URL,
+			Name:           roomName,
+			MaxConnections: epr.Max - epr.Min + 1,
+			Image:          container.Image,
+			State:          container.State,
+			Status:         container.Status,
+			Created:        time.Unix(container.Created, 0),
 		})
 	}
 
@@ -65,10 +88,10 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 }
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	// TODO: Check if path name exists.
-	pathName := settings.Name
-	if pathName == "" {
+	roomName := settings.Name
+	if roomName == "" {
 		var err error
-		pathName, err = utils.NewUID(32)
+		roomName, err = utils.NewUID(32)
 		if err != nil {
 			return "", err
 		}
@@ -97,10 +120,17 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		exposedPorts[portKey] = struct{}{}
 	}
 
-	containerName := containerPrefix + pathName
+	containerName := containerPrefix + roomName
+
+	urlProto := "http"
+	if manager.config.TraefikCertresolver != "" {
+		urlProto = "https"
+	}
 
 	labels := map[string]string{
 		// Set internal labels
+		"m1k1o.neko_rooms.name":    roomName,
+		"m1k1o.neko_rooms.url":     urlProto + "://" + manager.config.TraefikDomain + "/" + roomName + "/",
 		"m1k1o.neko_rooms.canary":  labelCanary,
 		"m1k1o.neko_rooms.epr.min": fmt.Sprintf("%d", epr.Min),
 		"m1k1o.neko_rooms.epr.max": fmt.Sprintf("%d", epr.Max),
@@ -109,10 +139,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		"traefik.enable": "true",
 		"traefik.http.services." + containerName + "-frontend.loadbalancer.server.port": fmt.Sprintf("%d", frontendPort),
 		"traefik.http.routers." + containerName + ".entrypoints":                        manager.config.TraefikEntrypoint,
-		"traefik.http.routers." + containerName + ".rule":                               "Host(`" + manager.config.TraefikDomain + "`) && PathPrefix(`/" + pathName + "`)",
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        "/" + pathName + "$$",
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + pathName + "/",
-		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + pathName + "/",
+		"traefik.http.routers." + containerName + ".rule":                               "Host(`" + manager.config.TraefikDomain + "`) && PathPrefix(`/" + roomName + "`)",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        "/" + roomName + "$$",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + roomName + "/",
+		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + roomName + "/",
 		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
 	}
 

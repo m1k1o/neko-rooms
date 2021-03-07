@@ -34,7 +34,7 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(struct{
+	json.NewEncoder(w).Encode(struct {
 		ID string `json:"id"`
 	}{ID})
 }

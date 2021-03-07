@@ -3,14 +3,26 @@ package types
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
-type RoomSettings struct {
-	Name string `json:"name"`
+type RoomEntry struct {
+	ID             string    `json:"id"`
+	URL            string    `json:"url"`
+	Name           string    `json:"name"`
+	MaxConnections uint16    `json:"max_connections"`
+	Image          string    `json:"image"`
+	State          string    `json:"state"`
+	Status         string    `json:"status"`
+	Created        time.Time `json:"created"`
+}
 
+type RoomSettings struct {
+	Name           string `json:"name"`
 	MaxConnections uint16 `json:"max_connections"`
-	UserPass       string `json:"user_pass"`
-	AdminPass      string `json:"admin_pass"`
+
+	UserPass  string `json:"user_pass"`
+	AdminPass string `json:"admin_pass"`
 
 	BroadcastPipeline string `json:"broadcast_pipeline"`
 
@@ -64,10 +76,6 @@ func (settings *RoomSettings) Env(eprMin uint16, eprMax uint16, nat1to1 []string
 	}
 
 	return env
-}
-
-type RoomEntry struct {
-	ID string `json:"id"`
 }
 
 type RoomManager interface {
