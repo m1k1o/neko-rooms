@@ -8,7 +8,7 @@ import (
 )
 
 func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error) {
-	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{})
+	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{ All: true })
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error)
 }
 
 func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {
-	container, _, err := manager.client.ContainerInspectWithRaw(context.Background(), id, false)
+	container, err := manager.client.ContainerInspect(context.Background(), id)
 	if err != nil {
 		return nil, err
 	}

@@ -79,7 +79,7 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 			Name:           roomName,
 			MaxConnections: epr.Max - epr.Min + 1,
 			Image:          container.Image,
-			State:          container.State,
+			Running:        container.State == "running",
 			Status:         container.Status,
 			Created:        time.Unix(container.Created, 0),
 		})
@@ -213,7 +213,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", err
 	}
 
-	// Run the actual container
+	// Start the actual container
 	err = manager.client.ContainerStart(context.Background(), cont.ID, dockerTypes.ContainerStartOptions{})
 
 	if err != nil {
@@ -248,15 +248,6 @@ func (manager *RoomManagerCtx) Get(id string) (*types.RoomSettings, error) {
 	return &settings, err
 }
 
-func (manager *RoomManagerCtx) Update(id string, settings types.RoomSettings) error {
-	_, err := manager.inspectContainer(id)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (manager *RoomManagerCtx) Remove(id string) error {
 	_, err := manager.inspectContainer(id)
 	if err != nil {
@@ -277,4 +268,35 @@ func (manager *RoomManagerCtx) Remove(id string) error {
 	})
 
 	return err
+}
+
+func (manager *RoomManagerCtx) Start(id string) error {
+	_, err := manager.inspectContainer(id)
+	if err != nil {
+		return err
+	}
+
+	// Start the actual container
+	return manager.client.ContainerStart(context.Background(), id, dockerTypes.ContainerStartOptions{})
+}
+
+
+func (manager *RoomManagerCtx) Stop(id string) error {
+	_, err := manager.inspectContainer(id)
+	if err != nil {
+		return err
+	}
+
+	// Stop the actual container
+	return manager.client.ContainerStop(context.Background(), id, nil)
+}
+
+func (manager *RoomManagerCtx) Restart(id string) error {
+	_, err := manager.inspectContainer(id)
+	if err != nil {
+		return err
+	}
+
+	// Restart the actual container
+	return manager.client.ContainerRestart(context.Background(), id, nil)
 }

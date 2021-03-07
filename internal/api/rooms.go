@@ -52,24 +52,6 @@ func (manager *ApiManagerCtx) roomGet(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (manager *ApiManagerCtx) roomUpdate(w http.ResponseWriter, r *http.Request) {
-	roomId := chi.URLParam(r, "roomId")
-
-	request := types.RoomSettings{}
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	}
-
-	err := manager.rooms.Update(roomId, request)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func (manager *ApiManagerCtx) roomRemove(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
@@ -80,4 +62,18 @@ func (manager *ApiManagerCtx) roomRemove(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) (func(http.ResponseWriter, *http.Request)) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		roomId := chi.URLParam(r, "roomId")
+	
+		err := action(roomId)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+	
+		w.WriteHeader(http.StatusNoContent)
+	}
 }

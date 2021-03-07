@@ -13,7 +13,7 @@ type RoomEntry struct {
 	Name           string    `json:"name"`
 	MaxConnections uint16    `json:"max_connections"`
 	Image          string    `json:"image"`
-	State          string    `json:"state"`
+	Running        bool      `json:"running"`
 	Status         string    `json:"status"`
 	Created        time.Time `json:"created"`
 }
@@ -143,8 +143,12 @@ func (settings *RoomSettings) FromEnv(envs []string) error {
 
 type RoomManager interface {
 	List() ([]RoomEntry, error)
+
 	Create(settings RoomSettings) (string, error)
 	Get(id string) (*RoomSettings, error)
-	Update(id string, settings RoomSettings) error
 	Remove(id string) error
+
+	Start(id string) error
+	Stop(id string) error
+	Restart(id string) error
 }
