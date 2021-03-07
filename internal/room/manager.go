@@ -47,6 +47,20 @@ type RoomManagerCtx struct {
 	client *dockerClient.Client
 }
 
+func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {
+	container, _, err := manager.client.ContainerInspectWithRaw(context.Background(), id, false)
+	if err != nil {
+		return nil, err
+	}
+
+	val, ok := container.Config.Labels["m1k1o.neko_rooms.canary"]
+	if !ok || val != labelCanary {
+		return nil, fmt.Errorf("This container does not belong to neko_rooms.")
+	}
+
+	return &container, nil
+}
+
 func (manager *RoomManagerCtx) List() (*[]types.RoomData, error) {
 	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
 		All: true,
@@ -64,7 +78,6 @@ func (manager *RoomManagerCtx) List() (*[]types.RoomData, error) {
 
 	return &[]types.RoomData{}, nil
 }
-
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomData, error) {
 	// configs
 	pathName := "foobar"
@@ -184,25 +197,30 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomD
 }
 
 func (manager *RoomManagerCtx) Get(id string) (*types.RoomData, error) {
+	_, err := manager.inspectContainer(id)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.RoomData{
-		ID:           "foo",
+		ID:           id,
 		RoomSettings: types.RoomSettings{},
 	}, nil
 }
 
 func (manager *RoomManagerCtx) Update(id string, settings types.RoomSettings) error {
-	return nil
-}
-
-func (manager *RoomManagerCtx) Remove(id string) error {
-	container, _, err := manager.client.ContainerInspectWithRaw(context.Background(), id, false)
+	_, err := manager.inspectContainer(id)
 	if err != nil {
 		return err
 	}
 
-	val, ok := container.Config.Labels["m1k1o.neko_rooms.canary"]
-	if !ok || val != labelCanary {
-		return fmt.Errorf("This container does not belong to neko_rooms.")
+	return nil
+}
+
+func (manager *RoomManagerCtx) Remove(id string) error {
+	_, err := manager.inspectContainer(id)
+	if err != nil {
+		return err
 	}
 
 	// Stop the actual container
