@@ -15,6 +15,7 @@ import (
 
 	"m1k1o/neko_rooms/internal/config"
 	"m1k1o/neko_rooms/internal/types"
+	"m1k1o/neko_rooms/internal/utils"
 )
 
 const (
@@ -63,17 +64,27 @@ func (manager *RoomManagerCtx) List() ([]types.RoomData, error) {
 	return result, nil
 }
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomData, error) {
-	// configs
-	pathName := "foobar"
-	eprMin := uint(52135)
-	eprMax := uint(52145)
+	// TODO: Check if path name exists.
+	pathName := settings.Name
+	if pathName == "" {
+		var err error
+		pathName, err = utils.NewUID(32)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	epr, err := manager.allocatePorts(settings.MaxConnections)
+	if err != nil {
+		return nil, err
+	}
 
 	portBindings := nat.PortMap{}
 	exposedPorts := nat.PortSet{
 		nat.Port(fmt.Sprintf("%d/udp", frontendPort)): struct{}{},
 	}
 
-	for port := eprMin; port <= eprMax; port++ {
+	for port := epr.Min; port <= epr.Max; port++ {
 		portKey := nat.Port(fmt.Sprintf("%d/udp", port))
 
 		portBindings[portKey] = []nat.PortBinding{
@@ -91,8 +102,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomD
 	labels := map[string]string{
 		// Set internal labels
 		"m1k1o.neko_rooms.canary":  labelCanary,
-		"m1k1o.neko_rooms.epr.min": fmt.Sprintf("%d", eprMin),
-		"m1k1o.neko_rooms.epr.max": fmt.Sprintf("%d", eprMax),
+		"m1k1o.neko_rooms.epr.min": fmt.Sprintf("%d", epr.Min),
+		"m1k1o.neko_rooms.epr.max": fmt.Sprintf("%d", epr.Max),
 
 		// Set traefik labels
 		"traefik.enable": "true",
@@ -121,7 +132,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (*types.RoomD
 		// List of environment variable to set in the container
 		Env: append([]string{
 			fmt.Sprintf("NEKO_BIND=%d", frontendPort),
-		}, settings.Env(eprMin, eprMax, manager.config.NAT1To1IPs)...),
+		}, settings.Env(epr.Min, epr.Max, manager.config.NAT1To1IPs)...),
 		// Name of the image as it was passed by the operator (e.g. could be symbolic)
 		Image: nekoImage,
 		// List of labels set to this container

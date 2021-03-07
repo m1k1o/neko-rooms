@@ -6,7 +6,9 @@ import (
 )
 
 type RoomSettings struct {
-	MaxConnections uint   `json:"max_connections"`
+	Name string `json:"name"`
+
+	MaxConnections uint16 `json:"max_connections"`
 	UserPass       string `json:"user_pass"`
 	AdminPass      string `json:"admin_pass"`
 
@@ -23,7 +25,7 @@ type RoomSettings struct {
 	AudioPipeline string `json:"audio_pipeline"`
 }
 
-func (settings *RoomSettings) Env(eprMin uint, eprMax uint, nat1to1 []string) []string {
+func (settings *RoomSettings) Env(eprMin uint16, eprMax uint16, nat1to1 []string) []string {
 	env := []string{
 		fmt.Sprintf("NEKO_EPR=%d-%d", eprMin, eprMax),
 		fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(nat1to1, ",")),
