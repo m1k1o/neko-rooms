@@ -1,0 +1,219 @@
+openapi: 3.0.0
+info:
+  title: Neko Rooms
+  version: 1.0.0
+servers:
+  - url: 'http://192.168.1.20:8080'
+tags:
+  - name: rooms
+    description: room endpoints
+paths:
+  /api/rooms:
+    get:
+      tags:
+        - rooms
+      summary: List all rooms
+      operationId: roomsList
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomEntry'
+        '500':
+          description: Internal server error
+    post:
+      tags:
+        - rooms
+      summary: Create new room
+      operationId: roomCreate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomSettings'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomID'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /api/rooms/{roomId}:
+    get:
+      tags:
+        - rooms
+      summary: Get room settings
+      operationId: roomGet
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomSettings'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    delete:
+      tags:
+        - rooms
+      summary: Remove room
+      operationId: roomRemove
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
+        '500':
+          description: Internal server error
+  /api/rooms/{roomId}/stop:
+    post:
+      tags:
+        - rooms
+      summary: Stop room
+      operationId: roomStop
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
+        '500':
+          description: Internal server error
+  /api/rooms/{roomId}/start:
+    post:
+      tags:
+        - rooms
+      summary: Start room
+      operationId: roomStart
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
+        '500':
+          description: Internal server error
+  /api/rooms/{roomId}/restart:
+    post:
+      tags:
+        - rooms
+      summary: Restart room
+      operationId: roomRestart
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    RoomID:
+      type: object
+      properties:
+        id:
+          type: string
+          example: bc04dace10
+    RoomEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          example: bc04dace10
+        url:
+          type: string
+          example: http://neko-rooms.server.lan/foobar/
+        name:
+          type: string
+          example: foobar
+        max_connections:
+          type: number
+          format: uint64
+          example: 10
+        image:
+          type: string
+          example: m1k1o/neko:latest
+        running:
+          type: boolean
+          example: true
+        status:
+          type: string
+          example: Up 2 seconds
+        created:
+          type: string
+          format: datetime
+          example: "2021-03-07T21:56:34Z"
+    RoomSettings:
+      type: object
+      properties:
+        name:
+          type: string
+          example: foobar
+        max_connections:
+          type: number
+          format: uint16
+          example: 10
+        user_pass:
+          type: string
+          example: neko
+        admin_pass:
+          type: string
+          example: admin
+        broadcast_pipeline:
+          type: string
+        screen:
+          type: string
+          example: 1920x1080@60
+        video_codec:
+          type: string
+          example: VP8
+        video_bitrate:
+          type: number
+          format: int
+          example: 3072
+        video_pipeline:
+          type: string
+        video_max_fps:
+          type: number
+          format: int
+          example: 25
+        audio_codec:
+          type: string
+          example: OPUS
+        audio_bitrate:
+          type: number
+          format: int
+          example: 128
+        audio_pipeline:
+          type: string
