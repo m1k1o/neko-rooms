@@ -1,0 +1,14 @@
+// Import variables
+@import "variables";
+
+// Import Vendor
+@import "vendor/sweetalert2";
+
+html, body {
+  -webkit-font-smoothing: subpixel-antialiased;
+  background-color: $background-tertiary;
+  font-family: $text-family;
+  font-size: $text-size;
+  color:  $text-normal;
+  overflow: hidden;
+}
