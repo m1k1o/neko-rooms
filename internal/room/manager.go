@@ -160,7 +160,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		ExposedPorts: exposedPorts,
 		// List of environment variable to set in the container
 		Env: append([]string{
-			fmt.Sprintf("NEKO_BIND=%d", frontendPort),
+			fmt.Sprintf("NEKO_BIND=:%d", frontendPort),
 			fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
 			fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")),
 		}, settings.ToEnv()...),
