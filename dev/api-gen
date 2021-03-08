@@ -1,0 +1,25 @@
+#!/bin/bash
+VERSION="1.0.0"
+
+rm -rf ../client/src/api
+mkdir ../client/src/api
+
+docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    -v "${PWD}/../client/src/api:/local/out" \
+    openapitools/openapi-generator-cli generate \
+        -i https://api.swaggerhub.com/apis/m1k1o/neko-rooms/${VERSION}/swagger.yaml \
+        -g typescript-axios \
+        -o /local/out \
+        --additional-properties=enumPropertyNaming=original,modelPropertyNaming=original
+
+# Remove not needed git_push.sh
+rm -f ../client/src/api/git_push.sh
+
+# Fix lint errors
+docker run --rm -it \
+    --user "$(id -u):$(id -g)" \
+    -v "${PWD}/../client:/app" \
+    --entrypoint="npm" \
+    --workdir="/app" \
+    node:14 run lint -- --fix src/api
