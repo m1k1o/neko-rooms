@@ -1,21 +1,18 @@
-FROM golang:1.16-buster as server
+# Step 1: build executable binary
+FROM golang:1.16-buster as builder
 WORKDIR /app
 
-#
-# install dependencies
-#RUN set -eux; apt-get update; \
-#    apt-get install -y --no-install-recommends;
-#    #
-#    # clean up
-#    apt-get clean -y; \
-#    rm -rf /var/lib/apt/lists/* /var/cache/apt/*
-
-#
-# build server
 COPY . .
-
 RUN go get -v -t -d .; \
-    ./build
+    go build -o bin/neko_rooms cmd/neko_rooms/main.go
 
-ENTRYPOINT [ "bin/neko_rooms" ]
+# Step 2: build a small image
+#FROM scratch
+#COPY --from=builder /app/bin/neko_rooms /app/bin/neko_rooms
+
+ENV DOCKER_API_VERSION=1.39
+ENV NEKO_ROOMS_BIND=:8080
+EXPOSE 8080
+
+ENTRYPOINT [ "/app/bin/neko_rooms" ]
 CMD [ "serve" ]
