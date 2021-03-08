@@ -62,9 +62,9 @@
       <v-btn
         color="gray darken-1"
         text
-        @click="Clear"
+        @click="Close"
       >
-        Clear
+        Close
       </v-btn>
       <v-btn
         color="green"
@@ -96,12 +96,13 @@ export default class RoomsCreate extends Vue {
       await this.$store.dispatch('ROOMS_CREATE', this.data)
     } finally {
       this.loading = false
+      this.$emit('finished', true)
     }
   }
 
-  Clear() {
+  Close() {
     this.data = {}
+    this.$emit('finished', true)
   }
-
 }
 </script>
