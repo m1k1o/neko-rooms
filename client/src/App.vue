@@ -2,7 +2,7 @@
   <v-app>
     <v-app-bar
       app
-      color="primary"
+      color="indigo"
       dark
     >
       <div class="d-flex align-center">
@@ -39,6 +39,10 @@ export default Vue.extend({
 
   data: () => ({
     //
-  })
+  }),
+
+  created () {
+    this.$vuetify.theme.dark = true
+  }
 })
 </script>
