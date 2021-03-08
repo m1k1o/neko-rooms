@@ -9,6 +9,10 @@
     <template v-slot:[`item.url`]="{ item }">
       <a :href="item.url"> Link </a>
     </template>
+    <template v-slot:[`item.max_connections`]="{ item }">
+      <span v-if="item.max_connections">{{ item.max_connections }}</span>
+      <i v-else>--not-specified--</i>
+    </template>
     <template v-slot:[`item.running`]="{ item }">
       <v-chip color="green" dark small v-if="item.running">yes</v-chip>
       <v-chip color="red" dark small v-else>no</v-chip>
