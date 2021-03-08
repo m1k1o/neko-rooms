@@ -1,7 +1,7 @@
 <template>
-  <div class="home">
+  <v-container>
     <RoomsList />
-  </div>
+  </v-container>
 </template>
 
 <script lang="ts">

@@ -5,7 +5,7 @@ import {
   RoomEntry,
   RoomSettings,
   RoomsApi,
-} from '@/api/index.ts'
+} from '@/api/index'
 
 import { state, State } from './state'
 
@@ -21,7 +21,7 @@ export default new Vuex.Store({
       Vue.set(state, 'rooms', [...state.rooms, roomEntry])
     },
     ROOMS_PUT(state: State, roomEntry: RoomEntry) {
-      const roomEntries = state.rooms.filter((room) => {
+      const roomEntries = state.rooms.map((room) => {
         if (room.id == roomEntry.id) {
           return { ...room, ...roomEntry }
         } else {

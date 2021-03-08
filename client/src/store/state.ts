@@ -1,6 +1,6 @@
 import {
   RoomEntry,
-} from '@/api/index.ts'
+} from '@/api/index'
 
 export const state = {
   rooms: [] as RoomEntry[],
