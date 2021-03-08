@@ -1,6 +1,8 @@
 <template>
   <v-container>
-    <RoomsList />
+    <v-btn @click="LoadRooms" class="mb-3" color="green" icon><v-icon>mdi-refresh</v-icon></v-btn>
+
+    <RoomsList :loading="loading" />
   </v-container>
 </template>
 
@@ -13,5 +15,17 @@ import RoomsList from '@/components/RoomsList.vue'
     RoomsList
   }
 })
-export default class Home extends Vue {}
+export default class Home extends Vue {
+  private loading = false
+
+  async LoadRooms() {
+    this.loading = true
+
+    try {
+      await this.$store.dispatch('ROOMS_LOAD')
+    } finally {
+      this.loading = false
+    }
+  }
+}
 </script>

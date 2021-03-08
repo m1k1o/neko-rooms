@@ -3,6 +3,8 @@
     :headers="headers"
     :items="rooms"
     class="elevation-1"
+    :loading="loading"
+    loading-text="Loading... Please wait"
   >
     <template v-slot:[`item.url`]="{ item }">
       <a :href="item.url"> Link </a>
@@ -18,10 +20,12 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator'
+import { Vue, Component, Prop } from 'vue-property-decorator'
 
 @Component
 export default class RoomsList extends Vue {
+  @Prop(Boolean) readonly loading: boolean = false
+
   private headers = [
     { text: 'Name', value: 'name' },
     { text: 'Link', value: 'url' },
