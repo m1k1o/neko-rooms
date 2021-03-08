@@ -3,6 +3,11 @@ module.exports = {
     'vuetify'
   ],
   devServer: {
-    disableHostCheck: true
+    disableHostCheck: true,
+    proxy: process.env.API_PROXY ? {
+      '^/api': {
+        target: process.env.API_PROXY,
+      },
+    } : undefined,
   }
 }
