@@ -1,0 +1,10 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+docker run --rm -it \
+    -p 8081:8080 \
+    -v "${PWD}/../client:/app" \
+    --user "$(id -u):$(id -g)" \
+    --workdir="/app" \
+    --entrypoint="npm" \
+    node:14 run serve;
