@@ -3,9 +3,41 @@ package room
 import (
 	"context"
 	"fmt"
+	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
+
+	"m1k1o/neko_rooms/internal/types"
 )
+
+
+func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container) (*types.RoomEntry, error) {
+	roomName, ok := container.Labels["m1k1o.neko_rooms.name"]
+	if !ok {
+		return nil, fmt.Errorf("Damaged container labels: name not found.")
+	}
+
+	URL, ok := container.Labels["m1k1o.neko_rooms.url"]
+	if !ok {
+		return nil, fmt.Errorf("Damaged container labels: url not found.")
+	}
+
+	epr, err := manager.getEprFromLabels(container.Labels)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.RoomEntry{
+		ID:             container.ID,
+		URL:            URL,
+		Name:           roomName,
+		MaxConnections: epr.Max - epr.Min + 1,
+		Image:          container.Image,
+		Running:        container.State == "running",
+		Status:         container.Status,
+		Created:        time.Unix(container.Created, 0),
+	}, nil
+}
 
 func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error) {
 	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{ All: true })

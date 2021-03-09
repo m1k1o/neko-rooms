@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -55,31 +54,12 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 
 	result := []types.RoomEntry{}
 	for _, container := range containers {
-		roomName, ok := container.Labels["m1k1o.neko_rooms.name"]
-		if !ok {
-			return nil, fmt.Errorf("Damaged container labels: name not found.")
-		}
-
-		URL, ok := container.Labels["m1k1o.neko_rooms.url"]
-		if !ok {
-			return nil, fmt.Errorf("Damaged container labels: url not found.")
-		}
-
-		epr, err := manager.getEprFromLabels(container.Labels)
+		entry, err := manager.containerToEntry(container)
 		if err != nil {
 			return nil, err
-		}
+		}	
 
-		result = append(result, types.RoomEntry{
-			ID:             container.ID,
-			URL:            URL,
-			Name:           roomName,
-			MaxConnections: epr.Max - epr.Min + 1,
-			Image:          container.Image,
-			Running:        container.State == "running",
-			Status:         container.Status,
-			Created:        time.Unix(container.Created, 0),
-		})
+		result = append(result, *entry)
 	}
 
 	return result, nil
