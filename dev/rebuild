@@ -5,7 +5,7 @@ set -e
 
 docker run --rm -it \
     -v "${PWD}/../:/app" \
-    --entrypoint="/app/build" \
-    neko_rooms_img;
+    --entrypoint="go" \
+    neko_rooms_img build -o bin/neko_rooms cmd/neko_rooms/main.go
 
 ./start
