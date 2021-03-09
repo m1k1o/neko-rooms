@@ -67,6 +67,35 @@ func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error)
 	return result, nil
 }
 
+func (manager *RoomManagerCtx) containerInfo(id string) (*dockerTypes.Container, error) {
+	args := filters.NewArgs(
+		filters.Arg("id", id),
+		filters.Arg("label", "m1k1o.neko_rooms.instance"),
+	)
+
+	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
+		All: true,
+		Filters: args,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(containers) == 0 {
+		return nil, fmt.Errorf("Container not found.")
+	}
+
+	container := containers[0]
+
+	val, ok := container.Labels["m1k1o.neko_rooms.instance"]
+	if !ok || val != manager.config.InstanceName {
+		return nil, fmt.Errorf("This container does not belong to neko_rooms.")
+	}
+
+	return &container, nil
+}
+
 func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {
 	container, err := manager.client.ContainerInspect(context.Background(), id)
 	if err != nil {

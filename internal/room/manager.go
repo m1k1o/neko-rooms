@@ -177,7 +177,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	// Creating the actual container
-	cont, err := manager.client.ContainerCreate(
+	container, err := manager.client.ContainerCreate(
 		context.Background(),
 		config,
 		hostConfig,
@@ -191,16 +191,25 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	// Start the actual container
-	err = manager.client.ContainerStart(context.Background(), cont.ID, dockerTypes.ContainerStartOptions{})
+	err = manager.client.ContainerStart(context.Background(), container.ID, dockerTypes.ContainerStartOptions{})
 
 	if err != nil {
 		return "", err
 	}
 
-	return cont.ID, nil
+	return container.ID, nil
 }
 
-func (manager *RoomManagerCtx) Get(id string) (*types.RoomSettings, error) {
+func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
+	container, err := manager.containerInfo(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.containerToEntry(*container)
+}
+
+func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, error) {
 	container, err := manager.inspectContainer(id)
 	if err != nil {
 		return nil, err

@@ -39,10 +39,10 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 	}{ID})
 }
 
-func (manager *ApiManagerCtx) roomGet(w http.ResponseWriter, r *http.Request) {
+func (manager *ApiManagerCtx) roomGetSettings(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
-	response, err := manager.rooms.Get(roomId)
+	response, err := manager.rooms.GetSettings(roomId)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

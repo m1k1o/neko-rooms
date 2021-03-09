@@ -145,7 +145,8 @@ type RoomManager interface {
 	List() ([]RoomEntry, error)
 
 	Create(settings RoomSettings) (string, error)
-	Get(id string) (*RoomSettings, error)
+	GetEntry(id string) (*RoomEntry, error)
+	GetSettings(id string) (*RoomSettings, error)
 	Remove(id string) error
 
 	Start(id string) error
