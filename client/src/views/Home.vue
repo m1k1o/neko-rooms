@@ -27,7 +27,6 @@
     </v-row>
 
     <RoomsList :loading="loading" />
-  
   </v-container>
 </template>
 
@@ -43,8 +42,8 @@ import RoomsCreate from '@/components/RoomsCreate.vue'
   }
 })
 export default class Home extends Vue {
-  private dialog = false
   private loading = false
+  private dialog = false
 
   async LoadRooms() {
     this.loading = true

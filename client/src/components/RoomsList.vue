@@ -1,50 +1,75 @@
 <template>
-  <v-data-table
-    :headers="headers"
-    :items="rooms"
-    class="elevation-1"
-    :loading="loading"
-    loading-text="Loading... Please wait"
-    hide-default-footer
-  >
-    <template v-slot:[`item.url`]="{ item }">
-      <v-btn :disabled="!item.running" :href="item.url" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
-    </template>
-    <template v-slot:[`item.max_connections`]="{ item }">
-      <span v-if="item.max_connections">{{ item.max_connections }}</span>
-      <i v-else>--not-specified--</i>
-    </template>
-    <template v-slot:[`item.status`]="{ item }">
-      <v-chip :color="item.running ? 'green' : 'red'" dark small> {{ item.status }} </v-chip>
-    </template>
-    <template v-slot:[`item.created`]="{ item }">
-      {{ item.created | timeago }}
-    </template>
-    <template v-slot:[`item.actions`]="{ item }">
-      <RoomActionBtn action="start" :roomId="item.id" :disabled="item.running" />
-      <RoomActionBtn action="stop" :roomId="item.id" :disabled="!item.running" />
-      <RoomActionBtn action="restart" :roomId="item.id" :disabled="!item.running" />
-    </template>
-    <template v-slot:[`item.destroy`]="{ item }">
-      <RoomActionBtn action="remove" :roomId="item.id" :disabled="!item.running" />
-    </template>
-  </v-data-table>
+  <div>
+    <v-data-table
+      :headers="headers"
+      :items="rooms"
+      class="elevation-1"
+      :loading="loading"
+      loading-text="Loading... Please wait"
+      hide-default-footer
+    >
+      <template v-slot:[`item.url`]="{ item }">
+        <v-btn @click="roomId = item.id; dialog = true" color="blue" small class="mr-2"> <v-icon small>mdi-information-outline</v-icon></v-btn>
+        <v-btn :disabled="!item.running" :href="item.url" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
+      </template>
+      <template v-slot:[`item.max_connections`]="{ item }">
+        <span v-if="item.max_connections">{{ item.max_connections }}</span>
+        <i v-else>--not-specified--</i>
+      </template>
+      <template v-slot:[`item.status`]="{ item }">
+        <v-chip :color="item.running ? 'green' : 'red'" dark small> {{ item.status }} </v-chip>
+      </template>
+      <template v-slot:[`item.created`]="{ item }">
+        {{ item.created | timeago }}
+      </template>
+      <template v-slot:[`item.actions`]="{ item }">
+        <RoomActionBtn action="start" :roomId="item.id" :disabled="item.running" />
+        <RoomActionBtn action="stop" :roomId="item.id" :disabled="!item.running" />
+        <RoomActionBtn action="restart" :roomId="item.id" :disabled="!item.running" />
+      </template>
+      <template v-slot:[`item.destroy`]="{ item }">
+        <RoomActionBtn action="remove" :roomId="item.id" :disabled="!item.running" />
+      </template>
+    </v-data-table>
+
+    <v-dialog v-model="dialog" max-width="920px">
+      <v-card>
+        <v-card-title class="headline">
+          Room information
+        </v-card-title>
+        <v-card-text>
+          <RoomInfo :roomId="roomId" />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" text @click="dialog = false">
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
+import RoomInfo from '@/components/RoomInfo.vue'
 import RoomActionBtn from '@/components/RoomActionBtn.vue'
 
 @Component({
   components: {
+    RoomInfo,
     RoomActionBtn,
   }
 })
 export default class RoomsList extends Vue {
   @Prop(Boolean) readonly loading: boolean = false
 
+  private dialog = false
+  private roomId = ''
+
   private headers = [
-    { text: 'Address', value: 'url' },
+    { text: 'Deployment', value: 'url' },
     { text: 'Name', value: 'name' },
     { text: 'Max connections', value: 'max_connections' },
     { text: 'Image', value: 'image' },
@@ -58,6 +83,7 @@ export default class RoomsList extends Vue {
     {
       text: 'Destroy',
       value: 'destroy',
+      align: 'end',
       sortable: false,
     },
   ]
