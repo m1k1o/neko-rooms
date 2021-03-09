@@ -206,6 +206,8 @@ export type VForm = Vue & {
 export default class RoomsCreate extends Vue {
   @Ref('form') readonly _form!: VForm
 
+  private valid = true
+
   private screen = true
   private extended = false
   private expert = false
