@@ -41,7 +41,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoomID'
+                $ref: '#/components/schemas/RoomEntry'
         '400':
           description: Bad request
         '500':
@@ -139,12 +139,6 @@ paths:
 
 components:
   schemas:
-    RoomID:
-      type: object
-      properties:
-        id:
-          type: string
-          example: bc04dace10
     RoomEntry:
       type: object
       properties:

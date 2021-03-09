@@ -79,19 +79,6 @@ export interface RoomEntry {
 /**
  * 
  * @export
- * @interface RoomID
- */
-export interface RoomID {
-    /**
-     * 
-     * @type {string}
-     * @memberof RoomID
-     */
-    id?: string;
-}
-/**
- * 
- * @export
  * @interface RoomSettings
  */
 export interface RoomSettings {
@@ -432,7 +419,7 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomCreate(roomSettings?: RoomSettings, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomID>> {
+        async roomCreate(roomSettings?: RoomSettings, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomCreate(roomSettings, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
@@ -518,7 +505,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomCreate(roomSettings?: RoomSettings, options?: any): AxiosPromise<RoomID> {
+        roomCreate(roomSettings?: RoomSettings, options?: any): AxiosPromise<RoomEntry> {
             return localVarFp.roomCreate(roomSettings, options).then((request) => request(axios, basePath));
         },
         /**
