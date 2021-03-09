@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/docker/docker/api/types/filters"
 	dockerTypes "github.com/docker/docker/api/types"
 
 	"m1k1o/neko_rooms/internal/types"
@@ -40,7 +41,15 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 }
 
 func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error) {
-	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{ All: true })
+	args := filters.NewArgs(
+		filters.Arg("label", "m1k1o.neko_rooms.instance"),
+	)
+
+	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
+		All: true,
+		Filters: args,
+	})
+
 	if err != nil {
 		return nil, err
 	}
