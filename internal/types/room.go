@@ -25,8 +25,6 @@ type RoomSettings struct {
 	UserPass  string `json:"user_pass"`
 	AdminPass string `json:"admin_pass"`
 
-	BroadcastPipeline string `json:"broadcast_pipeline,omitempty"`
-
 	Screen        string `json:"screen"`
 	VideoCodec    string `json:"video_codec,omitempty"`
 	VideoBitrate  int    `json:"video_bitrate,omitempty"`
@@ -36,6 +34,8 @@ type RoomSettings struct {
 	AudioCodec    string `json:"audio_codec,omitempty"`
 	AudioBitrate  int    `json:"audio_bitrate,omitempty"`
 	AudioPipeline string `json:"audio_pipeline,omitempty"`
+
+	BroadcastPipeline string `json:"broadcast_pipeline,omitempty"`
 }
 
 func (settings *RoomSettings) ToEnv() []string {
