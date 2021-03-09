@@ -17,7 +17,7 @@
               color="success"
               dark
             >
-              + Add new
+              + Add room
             </v-btn>
           </template>
 
@@ -54,6 +54,10 @@ export default class Home extends Vue {
     } finally {
       this.loading = false
     }
+  }
+
+  mounted() {
+    this.LoadRooms()
   }
 }
 </script>
