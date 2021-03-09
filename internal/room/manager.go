@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	frontendPort    = 8080
+	frontendPort = 8080
 )
 
 func New(config *config.Room) *RoomManagerCtx {
@@ -57,7 +57,7 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 		entry, err := manager.containerToEntry(container)
 		if err != nil {
 			return nil, err
-		}	
+		}
 
 		result = append(result, *entry)
 	}
@@ -265,7 +265,6 @@ func (manager *RoomManagerCtx) Start(id string) error {
 	// Start the actual container
 	return manager.client.ContainerStart(context.Background(), id, dockerTypes.ContainerStartOptions{})
 }
-
 
 func (manager *RoomManagerCtx) Stop(id string) error {
 	_, err := manager.inspectContainer(id)

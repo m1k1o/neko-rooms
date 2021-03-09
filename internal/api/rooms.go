@@ -68,16 +68,16 @@ func (manager *ApiManagerCtx) roomRemove(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) (func(http.ResponseWriter, *http.Request)) {
+func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		roomId := chi.URLParam(r, "roomId")
-	
+
 		err := action(roomId)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-	
+
 		w.WriteHeader(http.StatusNoContent)
 	}
 }

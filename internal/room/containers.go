@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types/filters"
 	dockerTypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 
 	"m1k1o/neko_rooms/internal/types"
 )
-
 
 func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container) (*types.RoomEntry, error) {
 	roomName, ok := container.Labels["m1k1o.neko_rooms.name"]
@@ -46,7 +45,7 @@ func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error)
 	)
 
 	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
-		All: true,
+		All:     true,
 		Filters: args,
 	})
 
@@ -74,7 +73,7 @@ func (manager *RoomManagerCtx) containerInfo(id string) (*dockerTypes.Container,
 	)
 
 	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
-		All: true,
+		All:     true,
 		Filters: args,
 	})
 

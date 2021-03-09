@@ -2,8 +2,8 @@ package types
 
 import (
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 )
 
