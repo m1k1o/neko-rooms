@@ -153,7 +153,6 @@ components:
           example: foobar
         max_connections:
           type: number
-          format: uint64
           example: 10
         image:
           type: string
@@ -176,7 +175,6 @@ components:
           example: foobar
         max_connections:
           type: number
-          format: uint16
           example: 10
         user_pass:
           type: string
