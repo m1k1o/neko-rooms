@@ -23,7 +23,7 @@ export default new Vuex.Store({
       Vue.set(state, 'rooms', roomEntries)
     },
     ROOMS_ADD(state: State, roomEntry: RoomEntry) {
-      Vue.set(state, 'rooms', [...state.rooms, roomEntry])
+      Vue.set(state, 'rooms', [roomEntry, ...state.rooms])
     },
     ROOMS_PUT(state: State, roomEntry: RoomEntry) {
       const roomEntries = state.rooms.map((room) => {
