@@ -28,7 +28,7 @@
         <RoomActionBtn action="restart" :roomId="item.id" :disabled="!item.running" />
       </template>
       <template v-slot:[`item.destroy`]="{ item }">
-        <RoomActionBtn action="remove" :roomId="item.id" :disabled="!item.running" />
+        <RoomActionBtn action="remove" :roomId="item.id" />
       </template>
     </v-data-table>
 
