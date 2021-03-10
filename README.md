@@ -30,8 +30,8 @@ Use `OpenApi.yml` and send commands to your new controller.
 
 This project is WIP, n.eko is not wokring on custom `/paths/`, because all static files are loaded from `/`. This needs to be fixed in upstream repository to have this instane working.
 
-### Todo:
- - add authentication provider for API
- - add GUI
- - add docker ssh / tcp support
- - add docker swarm support
+### Roadmap:
+ - [ ] add authentication provider for API
+ - [x] add GUI
+ - [ ] add docker ssh / tcp support
+ - [ ] add docker swarm support

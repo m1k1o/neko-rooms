@@ -5,14 +5,14 @@
       color="indigo"
       dark
     >
-      <div class="d-flex align-center">
-        neko-rooms
+      <div>
+        <a href="https://github.com/m1k1o/neko-rooms" style="text-decoration: none; color:white">neko-rooms</a>
       </div>
 
       <v-spacer></v-spacer>
 
-      <div class="d-flex align-center">
-        by m1k1o (WIP)
+      <div>
+        by <a href="https://m1k1o.net" style="text-decoration: none; color:white">m1k1o</a>
       </div>
     </v-app-bar>
 
@@ -27,6 +27,10 @@
 
     <v-footer app>
       <span>&copy; {{ new Date().getFullYear() }}</span>
+      <v-spacer></v-spacer>
+      <div>
+        based on <a href="https://github.com/m1k1o/neko" style="text-decoration: none; color:white">n.eko</a>
+      </div>
     </v-footer>
   </v-app>
 </template>
