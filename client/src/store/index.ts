@@ -5,11 +5,16 @@ import {
   RoomEntry,
   RoomSettings,
   RoomsApi,
+  Configuration,
 } from '@/api/index'
 
 import { state, State } from './state'
 
 Vue.use(Vuex)
+
+const api = new RoomsApi(new Configuration({
+  basePath: location.href.replace(/\/+$/, ''),
+}))
 
 export default new Vuex.Store({
   state,
@@ -37,27 +42,22 @@ export default new Vuex.Store({
   },
   actions: {
     async ROOMS_LOAD({ commit }: ActionContext<State, State>) {
-      const api = new RoomsApi()
       const res = await api.roomsList()
       commit('ROOMS_SET', res.data);
     },
     async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings) {
-      const api = new RoomsApi()
       const res = await api.roomCreate(roomSettings)
       commit('ROOMS_ADD', res.data);
     },
     async ROOMS_GET(_: ActionContext<State, State>, roomId: string): Promise<RoomSettings> {
-      const api = new RoomsApi()
       const res = await api.roomGet(roomId)
       return res.data
     },
     async ROOMS_REMOVE({ commit }: ActionContext<State, State>, roomId: string) {
-      const api = new RoomsApi()
       await api.roomRemove(roomId)
       commit('ROOMS_DEL', roomId);
     },
     async ROOMS_START({ commit }: ActionContext<State, State>, roomId: string) {
-      const api = new RoomsApi()
       await api.roomStart(roomId)
       commit('ROOMS_PUT', {
         id: roomId,
@@ -65,7 +65,6 @@ export default new Vuex.Store({
       });
     },
     async ROOMS_STOP({ commit }: ActionContext<State, State>, roomId: string) {
-      const api = new RoomsApi()
       await api.roomStop(roomId)
       commit('ROOMS_PUT', {
         id: roomId,
@@ -73,7 +72,6 @@ export default new Vuex.Store({
       });
     },
     async ROOMS_RESTART(_: ActionContext<State, State>, roomId: string) {
-      const api = new RoomsApi()
       await api.roomRestart(roomId)
     },
   },
