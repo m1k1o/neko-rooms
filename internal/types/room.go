@@ -96,15 +96,15 @@ func (settings *RoomSettings) FromEnv(envs []string) error {
 		case "NEKO_BROADCAST_PIPELINE=":
 			settings.BroadcastPipeline = val
 		case "NEKO_VP8=":
-			if ok, _ := strconv.ParseBool(val); !ok {
+			if ok, _ := strconv.ParseBool(val); ok {
 				settings.VideoCodec = "VP8"
 			}
 		case "NEKO_VP9=":
-			if ok, _ := strconv.ParseBool(val); !ok {
+			if ok, _ := strconv.ParseBool(val); ok {
 				settings.VideoCodec = "VP9"
 			}
 		case "NEKO_H264=":
-			if ok, _ := strconv.ParseBool(val); !ok {
+			if ok, _ := strconv.ParseBool(val); ok {
 				settings.VideoCodec = "H264"
 			}
 		case "NEKO_VIDEO_BITRATE=":
