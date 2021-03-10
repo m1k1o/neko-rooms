@@ -182,6 +182,7 @@
         color="green"
         dark
         @click="Create"
+        :loading="loading"
       >
         Create
       </v-btn>
