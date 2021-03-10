@@ -22,6 +22,7 @@ type Room struct {
 	TraefikEntrypoint   string
 	TraefikCertresolver string
 	TraefikNetwork      string
+	TraefikPort         string
 }
 
 func (Room) Init(cmd *cobra.Command) error {
@@ -62,6 +63,11 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().String("traefik_network", "traefik", "traefik: docker network name")
 	if err := viper.BindPFlag("traefik_network", cmd.PersistentFlags().Lookup("traefik_network")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("traefik_port", "", "traefik: external port (if different than 80 or 443)")
+	if err := viper.BindPFlag("traefik_port", cmd.PersistentFlags().Lookup("traefik_port")); err != nil {
 		return err
 	}
 
@@ -110,4 +116,5 @@ func (s *Room) Set() {
 	s.TraefikEntrypoint = viper.GetString("traefik_entrypoint")
 	s.TraefikCertresolver = viper.GetString("traefik_certresolver")
 	s.TraefikNetwork = viper.GetString("traefik_network")
+	s.TraefikPort = viper.GetString("traefik_port")
 }

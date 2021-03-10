@@ -106,10 +106,15 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		urlProto = "https"
 	}
 
+	port := ""
+	if manager.config.TraefikPort != "" {
+		port = ":" + manager.config.TraefikPort
+	}
+
 	labels := map[string]string{
 		// Set internal labels
 		"m1k1o.neko_rooms.name":     roomName,
-		"m1k1o.neko_rooms.url":      urlProto + "://" + manager.config.TraefikDomain + "/" + roomName + "/",
+		"m1k1o.neko_rooms.url":      urlProto + "://" + manager.config.TraefikDomain + port + "/" + roomName + "/",
 		"m1k1o.neko_rooms.instance": manager.config.InstanceName,
 		"m1k1o.neko_rooms.epr.min":  fmt.Sprintf("%d", epr.Min),
 		"m1k1o.neko_rooms.epr.max":  fmt.Sprintf("%d", epr.Max),
