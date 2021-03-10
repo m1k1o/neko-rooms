@@ -15,6 +15,7 @@
               label="Name"
               v-model="data.name"
               :rules="[ rules.slug ]"
+              autocomplete="off"
             ></v-text-field>
           </v-col>
           <v-col class="pb-0">
@@ -36,6 +37,7 @@
               :append-icon="showUserPass ? 'mdi-eye' : 'mdi-eye-off'"
               :type="showUserPass ? 'text' : 'password'"
               @click:append="showUserPass = !showUserPass"
+              autocomplete="off"
             ></v-text-field>
           </v-col>
           <v-col class="pt-0">
@@ -46,6 +48,7 @@
               :append-icon="showAdminPass ? 'mdi-eye' : 'mdi-eye-off'"
               :type="showAdminPass ? 'text' : 'password'"
               @click:append="showAdminPass = !showAdminPass"
+              autocomplete="off"
             ></v-text-field>
           </v-col>
         </v-row>
@@ -254,10 +257,10 @@ export default class RoomsCreate extends Vue {
   }
 
   async Create() {
-    this.loading = true
-    
     const valid = this._form.validate()
     if (!valid) return
+
+    this.loading = true
 
     try {
       await this.$store.dispatch('ROOMS_CREATE', {
@@ -277,15 +280,34 @@ export default class RoomsCreate extends Vue {
         // eslint-disable-next-line
         broadcast_pipeline: this.broadcastPipelineEnabled ? this.data.broadcast_pipeline : '',
       })
+      this.Clear()
+      this.$emit('finished', true)
+     } catch(e) {
+      if (e.response) {
+        this.$swal({
+          title: 'Server error',
+          text: e.response.data,
+          icon: 'error',
+        })
+      } else {
+        this.$swal({
+          title: 'Network error',
+          text: String(e),
+          icon: 'error',
+        })
+      }
     } finally {
       this.loading = false
-      this.$emit('finished', true)
     }
   }
 
-  Close() {
+  Clear() {
     this._form.resetValidation()
     this.data = { ...this.$store.state.defaultRoomSettings }
+  }
+
+  Close() {
+    this.Clear()
     this.$emit('finished', true)
   }
 }
