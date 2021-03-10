@@ -62,6 +62,7 @@ export default new Vuex.Store({
       commit('ROOMS_PUT', {
         id: roomId,
         running: true,
+        state: 'Up',
       });
     },
     async ROOMS_STOP({ commit }: ActionContext<State, State>, roomId: string) {
@@ -69,6 +70,7 @@ export default new Vuex.Store({
       commit('ROOMS_PUT', {
         id: roomId,
         running: false,
+        state: 'Exited',
       });
     },
     async ROOMS_RESTART(_: ActionContext<State, State>, roomId: string) {
