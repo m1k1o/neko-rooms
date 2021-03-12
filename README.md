@@ -1,12 +1,20 @@
 # neko-rooms
 
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/m1k1o/neko-rooms" alt="release">
+  <img src="https://img.shields.io/github/license/m1k1o/neko-rooms" alt="license">
+  <img src="https://img.shields.io/docker/pulls/m1k1o/neko-rooms" alt="pulls">
+  <img src="https://img.shields.io/github/issues/m1k1o/neko-rooms" alt="issues">
+  <a href="https://discord.gg/3U6hWpC" ><img src="https://discordapp.com/api/guilds/665851821906067466/widget.png" alt="Chat on discord"></a>
+</p>
+
 Simple room management system for [n.eko](https://github.com/m1k1o/neko). Self hosted rabb.it alternative.
 
-![rooms](https://github.com/m1k1o/neko-rooms/raw/master/docs/rooms.png)
-
-![new room](https://github.com/m1k1o/neko-rooms/raw/master/docs/new_room.png)
-
-![n.eko](https://github.com/m1k1o/neko-rooms/raw/master/docs/neko.gif)
+<div align="center">
+  <img src="https://github.com/m1k1o/neko-rooms/raw/master/docs/rooms.png" alt="rooms">
+  <img src="https://github.com/m1k1o/neko-rooms/raw/master/docs/new_room.png" alt="new room">
+  <img src="https://github.com/m1k1o/neko-rooms/raw/master/docs/neko.gif" alt="n.eko">
+</div>
 
 ## How to start
 
