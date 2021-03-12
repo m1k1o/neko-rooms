@@ -45,9 +45,10 @@ export default new Vuex.Store({
       const res = await api.roomsList()
       commit('ROOMS_SET', res.data);
     },
-    async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings) {
+    async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
       const res = await api.roomCreate(roomSettings)
       commit('ROOMS_ADD', res.data);
+      return res.data
     },
     async ROOMS_GET(_: ActionContext<State, State>, roomId: string): Promise<RoomSettings> {
       const res = await api.roomGet(roomId)

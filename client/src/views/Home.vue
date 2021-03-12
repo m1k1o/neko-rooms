@@ -5,6 +5,7 @@
         <v-btn @click="LoadRooms" class="mb-3" color="green" icon><v-icon>mdi-refresh</v-icon></v-btn>
       </v-col>
       <v-col class="text-right">
+        <RoomsQuick class="mr-3" />
         <v-dialog
           v-model="dialog"
           persistent
@@ -33,11 +34,13 @@
 <script lang="ts">
 import { Component, Vue } from 'vue-property-decorator'
 import RoomsList from '@/components/RoomsList.vue'
+import RoomsQuick from '@/components/RoomsQuick.vue'
 import RoomsCreate from '@/components/RoomsCreate.vue'
 
 @Component({
   components: {
     RoomsList,
+    RoomsQuick,
     RoomsCreate,
   }
 })
