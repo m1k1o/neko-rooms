@@ -16,6 +16,10 @@ You can watch installation video provided by *Dr R1ck*:
 
 https://www.youtube.com/watch?v=cCmnw-pq0gA
 
+### Installation guide
+
+You only need `.env.example`, `docker-compose.yml` and `traefik/`.
+
 ### Step 1
 
 Copy `.env.example` to `.env` and customize.

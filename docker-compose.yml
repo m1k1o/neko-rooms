@@ -7,8 +7,8 @@ networks:
 
 services:
   traefik:
-    image: "traefik"
-    restart: unless-stopped
+    image: "traefik:2.4"
+    restart: "unless-stopped"
     environment:
       - "TZ"
     ports:
@@ -22,8 +22,8 @@ services:
       - "./traefik/config:/config"
 
   neko-rooms:
-    build: "./"
-    restart: unless-stopped
+    image: "m1k1o/neko-rooms:latest"
+    restart: "unless-stopped"
     environment:
       - "TZ"
       - "NEKO_ROOMS_EPR"

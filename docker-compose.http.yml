@@ -7,7 +7,8 @@ networks:
 
 services:
   traefik:
-    image: "traefik"
+    image: "traefik:2.4"
+    restart: "unless-stopped"
     environment:
       - "TZ"
     command:
@@ -22,7 +23,8 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
   neko-rooms:
-    build: "./"
+    image: "m1k1o/neko-rooms:latest"
+    restart: "unless-stopped"
     environment:
       - "TZ"
       - "NEKO_ROOMS_EPR"
