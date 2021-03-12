@@ -148,6 +148,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			fmt.Sprintf("NEKO_BIND=:%d", frontendPort),
 			fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
 			fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")),
+			"NEKO_ICELITE=true",
 		}, settings.ToEnv()...),
 		// Name of the image as it was passed by the operator (e.g. could be symbolic)
 		Image: manager.config.NekoImage,

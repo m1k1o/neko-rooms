@@ -22,13 +22,25 @@
           <tbody>
             <tr><th style="width:50%;"> Name </th><td>{{ settings.name }}</td></tr>
             <tr><th> Max connections </th><td>{{ settings.max_connections }}</td></tr>
-            <tr><th> User pass </th><td>
-              <v-btn @click="showUserPass = !showUserPass" class="mr-2" icon small><v-icon small>{{ showUserPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
-              <span></span>{{ showUserPass ? settings.user_pass : '****' }}
+            <tr><th> User password </th><td>
+              <v-btn @click="showUserPass = !showUserPass" icon small><v-icon small>{{ showUserPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
+              <span class="mx-2">{{ showUserPass ? settings.user_pass : '****' }}</span>
+              <v-tooltip top v-if="room">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn v-bind="attrs" v-on="on" :href="room.url + '?pwd=' + encodeURIComponent(settings.user_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
+                </template>
+                <span>Invite link for users</span>
+              </v-tooltip>
             </td></tr>
-            <tr><th> Admin pass </th><td>
-              <v-btn @click="showAdminPass = !showAdminPass" class="mr-2" icon small><v-icon small>{{ showAdminPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
-              <span></span>{{ showAdminPass ? settings.admin_pass : '****' }}
+            <tr><th> Admin password </th><td>
+              <v-btn @click="showAdminPass = !showAdminPass" icon small><v-icon small>{{ showAdminPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
+              <span class="mx-2">{{ showAdminPass ? settings.admin_pass : '****' }}</span>
+              <v-tooltip bottom v-if="room">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn  v-bind="attrs" v-on="on" :href="room.url + '?pwd=' + encodeURIComponent(settings.admin_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
+                </template>
+                <span>Invite link for admins</span>
+              </v-tooltip>
             </td></tr>
           </tbody>
         </template>
@@ -72,7 +84,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import { RoomSettings } from '@/api/index'
+import { RoomSettings, RoomEntry } from '@/api/index'
 
 @Component
 export default class RoomInfo extends Vue {
@@ -83,6 +95,10 @@ export default class RoomInfo extends Vue {
 
   private showUserPass = false
   private showAdminPass = false
+
+  get room(): RoomEntry {
+    return this.$store.state.rooms.find(({ id }: RoomEntry) => id == this.roomId)
+  }
 
   @Watch('roomId', { immediate: true })
   async SetRoomId(roomId: string) {
