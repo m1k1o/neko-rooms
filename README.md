@@ -1,12 +1,18 @@
 # neko-rooms
 
-Simple room management system for [n.eko](https://github.com/m1k1o/neko).
+Simple room management system for [n.eko](https://github.com/m1k1o/neko). Self hosted rabb.it alternative.
+
+![rooms](docs/rooms.png)
+
+![new room](docs/new_room.png)
+
+![n.eko](docs/neko.gif)
 
 ## How to start
 
-You need to have installed `Docker` and `docker-compose`.
+You need to have installed `Docker` and `docker-compose`. You need to have custom domain pointing to your server's IP.
 
-You can watch this installation video provided by *Dr R1ck*:
+You can watch installation video provided by *Dr R1ck*:
 
 https://www.youtube.com/watch?v=cCmnw-pq0gA
 
