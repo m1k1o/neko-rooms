@@ -1,0 +1,10 @@
+http:
+  middlewares:
+    basicauth:
+      basicAuth:
+        usersFile: "/usersfile"
+
+    httpsredirect:
+      redirectScheme:
+        scheme: https
+        permanent: true

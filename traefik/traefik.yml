@@ -1,0 +1,22 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    directory: "/config"
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    network: traefik
+    watch: true
+    exposedByDefault: false
+
+certificatesResolvers:
+  lets-encrypt:
+    acme:
+      email: youname@example.com
+      storage: /acme.json
+      httpChallenge:
+        entryPoint: web 

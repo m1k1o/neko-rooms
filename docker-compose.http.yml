@@ -1,0 +1,40 @@
+version: "3.7"
+
+networks:
+  default:
+    attachable: "true"
+    name: "${NEKO_ROOMS_TRAEFIK_NETWORK}"
+
+services:
+  traefik:
+    image: "traefik"
+    environment:
+      - "TZ"
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.watch=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=${NEKO_ROOMS_TRAEFIK_NETWORK}"
+      - "--entrypoints.${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}.address=:${APP_PORT-8080}"
+    ports:
+      - "${APP_PORT-8080}:${APP_PORT-8080}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  neko-rooms:
+    build: "./"
+    environment:
+      - "TZ"
+      - "NEKO_ROOMS_EPR"
+      - "NEKO_ROOMS_NAT1TO1"
+      - "NEKO_ROOMS_TRAEFIK_DOMAIN"
+      - "NEKO_ROOMS_TRAEFIK_ENTRYPOINT"
+      - "NEKO_ROOMS_TRAEFIK_NETWORK"
+      - "NEKO_ROOMS_TRAEFIK_PORT=${APP_PORT-8080}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.neko-rooms-frontend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.neko-rooms.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}"
+      - "traefik.http.routers.neko-rooms.rule=Host(`${NEKO_ROOMS_TRAEFIK_DOMAIN}`)"

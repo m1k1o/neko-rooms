@@ -6,6 +6,10 @@ Simple room management system for [n.eko](https://github.com/m1k1o/neko).
 
 You need to have installed `Docker` and `docker-compose`.
 
+You can watch this installation video provided by *Dr R1ck*:
+
+https://www.youtube.com/watch?v=cCmnw-pq0gA
+
 ### Step 1
 
 Copy `.env.example` to `.env` and customize.
@@ -16,22 +20,33 @@ cp .env.example .env
 
 ### Step 2
 
-Run start docker compose stack.
+Create `usersfile` with your users:
 
 ```bash
-docker-compose up -d
+touch traefik/usersfile
 ```
 
-### Stop 3
+And add as many users as you like:
 
-Use `OpenApi.yml` and send commands to your new controller.
+```bash
+echo $(htpasswd -nb user password) >> traefik/usersfile
+```
 
-## WARNING
+### Step 3
 
-This project is WIP, n.eko is not wokring on custom `/paths/`, because all static files are loaded from `/`. This needs to be fixed in upstream repository to have this instane working.
+Create `acme.json`
+
+```bash
+touch traefik/acme.json
+chmod 600 traefik/acme.json
+```
+
+Update your email in `traefik/traefik.yml`.
 
 ### Roadmap:
- - [ ] add authentication provider for API
  - [x] add GUI
+ - [x] add HTTPS support
+ - [x] add authentication provider for traefik
+ - [ ] add bearer token to for API
  - [ ] add docker ssh / tcp support
  - [ ] add docker swarm support
