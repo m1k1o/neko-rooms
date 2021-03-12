@@ -2,11 +2,11 @@
 
 Simple room management system for [n.eko](https://github.com/m1k1o/neko). Self hosted rabb.it alternative.
 
-![rooms](docs/rooms.png)
+![rooms](https://github.com/m1k1o/neko-rooms/raw/master/docs/rooms.png)
 
-![new room](docs/new_room.png)
+![new room](https://github.com/m1k1o/neko-rooms/raw/master/docs/new_room.png)
 
-![n.eko](docs/neko.gif)
+![n.eko](https://github.com/m1k1o/neko-rooms/raw/master/docs/neko.gif)
 
 ## How to start
 
