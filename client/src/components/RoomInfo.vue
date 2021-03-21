@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="loading" class="text-center">
+    <div v-if="settingsLoading" class="text-center">
       <v-progress-circular
         :size="70"
         :width="7"
@@ -16,6 +16,62 @@
       Room not found!
     </v-alert>
     <template v-else>
+      <div class="my-3 headline">Room members</div>
+      <v-row v-if="stats">
+        <v-col class="text-center">
+          <div class="mb-3">
+            <v-progress-circular
+              :rotate="270"
+              :size="100"
+              :width="15"
+              :value="(stats.connections / settings.max_connections) * 100"
+              color="blue"
+            >
+              {{ stats.connections }} / {{ settings.max_connections }}
+            </v-progress-circular>
+          </div>
+        </v-col>
+        <v-col>
+          <v-simple-table>
+            <template v-slot:default>
+              <thead>
+                <tr>
+                  <th> Dispaly name </th>
+                  <th class="text-center"> Is Hosting </th>
+                  <th class="text-center"> Is Admin </th>
+                  <th class="text-center"> Is Muted </th>
+                </tr>
+              </thead>
+              <tbody v-if="stats.members.length > 0">
+                <tr v-for="member in stats.members" :key="member.id">
+                  <td>{{ member.displayname }}</td>
+                  <td class="text-center">
+                    <v-icon v-if="stats.host == member.id" small color="green">mdi-keyboard</v-icon>
+                    <v-icon v-else small color="red">mdi-keyboard</v-icon>
+                  </td>
+                  <td class="text-center">
+                    <v-icon v-if="member.admin" small color="green">mdi-shield-check</v-icon>
+                    <v-icon v-else small color="red">mdi-shield-off</v-icon>
+                  </td>
+                  <td class="text-center">
+                    <v-icon v-if="member.muted" small color="red">mdi-volume-mute</v-icon>
+                    <v-icon v-else small color="green">mdi-volume-high</v-icon>
+                  </td>
+                </tr>
+              </tbody>
+              <tbody v-else>
+                <tr>
+                  <td style="pointer-events: none;" colspan="4" class="text-center">no members</td>
+                </tr>
+              </tbody>
+            </template>
+          </v-simple-table>
+        </v-col>
+      </v-row>
+      <div class="text-center mt-3">
+        <v-btn @click="LoadStats" :loading="statsLoading">Reload</v-btn>
+      </div>
+
       <div class="my-3 headline">Main settings</div>
       <v-simple-table>
         <template v-slot:default>
@@ -45,7 +101,7 @@
           </tbody>
         </template>
       </v-simple-table>
-        
+
       <div class="my-3 headline">Video settings</div>
       <v-simple-table>
         <template v-slot:default>
@@ -58,7 +114,7 @@
           </tbody>
         </template>
       </v-simple-table>
-        
+
       <div class="my-3 headline">Audio settings</div>
       <v-simple-table>
         <template v-slot:default>
@@ -69,7 +125,7 @@
           </tbody>
         </template>
       </v-simple-table>
-        
+
       <div class="my-3 headline">Broadcast settings</div>
       <v-simple-table>
         <template v-slot:default>
@@ -84,13 +140,16 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import { RoomSettings, RoomEntry } from '@/api/index'
+import { RoomStats, RoomMember, RoomSettings, RoomEntry } from '@/api/index'
 
 @Component
 export default class RoomInfo extends Vue {
   @Prop(String) readonly roomId: string | undefined
 
-  private loading = false
+  private statsLoading = false
+  private stats: RoomStats | null = null
+
+  private settingsLoading = false
   private settings: RoomSettings | null = null
 
   private showUserPass = false
@@ -102,10 +161,13 @@ export default class RoomInfo extends Vue {
 
   @Watch('roomId', { immediate: true })
   async SetRoomId(roomId: string) {
-    this.loading = true
+    this.stats = null
+    this.settings = null
+    this.settingsLoading = true
   
     try {
       this.settings = await this.$store.dispatch('ROOMS_SETTINGS', roomId)
+      this.LoadStats()
     } catch(e) {
       if (e.response) {
         this.$swal({
@@ -121,7 +183,32 @@ export default class RoomInfo extends Vue {
         })
       }
     } finally {
-      this.loading = false
+      this.settingsLoading = false
+    }
+  }
+
+  async LoadStats() {
+    this.statsLoading = true
+  
+    try {
+      const stats = await this.$store.dispatch('ROOMS_STATS', this.roomId)
+      stats.members.sort(function(a: RoomMember, b: RoomMember) {
+        const nameA = a.displayname?.toUpperCase() || "";
+        const nameB = b.displayname?.toUpperCase() || "";
+
+        if (nameA < nameB) {
+          return -1
+        }
+
+        if (nameA > nameB) {
+          return 1
+        }
+
+        return 0
+      })
+      this.stats = stats
+    } finally {
+      this.statsLoading = false
     }
   }
 }
