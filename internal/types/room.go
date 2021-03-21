@@ -141,12 +141,26 @@ func (settings *RoomSettings) FromEnv(envs []string) error {
 	return nil
 }
 
+type RoomStats struct {
+	Connections uint32        `json:"connections"`
+	Host        string        `json:"host"`
+	Members     []*RoomMember `json:"members"`
+}
+
+type RoomMember struct {
+	ID    string `json:"id"`
+	Name  string `json:"displayname"`
+	Admin bool   `json:"admin"`
+	Muted bool   `json:"muted"`
+}
+
 type RoomManager interface {
 	List() ([]RoomEntry, error)
 
 	Create(settings RoomSettings) (string, error)
 	GetEntry(id string) (*RoomEntry, error)
 	GetSettings(id string) (*RoomSettings, error)
+	GetStats(id string) (*RoomStats, error)
 	Remove(id string) error
 
 	Start(id string) error

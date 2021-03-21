@@ -48,8 +48,7 @@ func New(ApiManager types.ApiManager, conf *config.Server) *HttpManagerCtx {
 			if _, err := os.Stat(conf.Static + r.URL.Path); !os.IsNotExist(err) {
 				fs.ServeHTTP(w, r)
 			} else {
-				w.WriteHeader(http.StatusNotFound)
-				fmt.Fprint(w, "404 page not found")
+				http.NotFound(w, r)
 			}
 		})
 	}

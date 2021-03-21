@@ -47,11 +47,28 @@ paths:
         '500':
           description: Internal server error
   /api/rooms/{roomId}:
+    delete:
+      tags:
+        - rooms
+      summary: Remove room
+      operationId: roomRemove
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
+        '500':
+          description: Internal server error
+  /api/rooms/{roomId}/settings:
     get:
       tags:
         - rooms
       summary: Get room settings
-      operationId: roomGet
+      operationId: roomSettings
       parameters:
         - in: path
           name: roomId
@@ -69,11 +86,12 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
-    delete:
+  /api/rooms/{roomId}/stats:
+    get:
       tags:
         - rooms
-      summary: Remove room
-      operationId: roomRemove
+      summary: Get room statistics
+      operationId: roomStats
       parameters:
         - in: path
           name: roomId
@@ -81,8 +99,12 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomStats'
         '500':
           description: Internal server error
   /api/rooms/{roomId}/stop:
@@ -167,6 +189,7 @@ components:
           type: string
           format: datetime
           example: "2021-03-07T21:56:34Z"
+
     RoomSettings:
       type: object
       properties:
@@ -209,3 +232,33 @@ components:
           example: 128
         audio_pipeline:
           type: string
+
+    RoomStats:
+      type: object
+      properties:
+        connections:
+          type: number
+          example: 3
+        host:
+          type: string
+          example: foobar
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomMember'
+
+    RoomMember:
+      type: object
+      properties:
+        id:
+          type: string
+          example: foobar
+        displayname:
+          type: string
+          example: Foo Bar
+        admin:
+          type: boolean
+          example: true
+        muted:
+          type: boolean
+          example: false

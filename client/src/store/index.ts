@@ -4,6 +4,7 @@ import Vuex, { ActionContext } from 'vuex'
 import {
   RoomEntry,
   RoomSettings,
+  RoomStats,
   RoomsApi,
   Configuration,
 } from '@/api/index'
@@ -50,13 +51,17 @@ export default new Vuex.Store({
       commit('ROOMS_ADD', res.data);
       return res.data
     },
-    async ROOMS_GET(_: ActionContext<State, State>, roomId: string): Promise<RoomSettings> {
-      const res = await api.roomGet(roomId)
-      return res.data
-    },
     async ROOMS_REMOVE({ commit }: ActionContext<State, State>, roomId: string) {
       await api.roomRemove(roomId)
       commit('ROOMS_DEL', roomId);
+    },
+    async ROOMS_SETTINGS(_: ActionContext<State, State>, roomId: string): Promise<RoomSettings> {
+      const res = await api.roomSettings(roomId)
+      return res.data
+    },
+    async ROOMS_STATS(_: ActionContext<State, State>, roomId: string): Promise<RoomStats> {
+      const res = await api.roomStats(roomId)
+      return res.data
     },
     async ROOMS_START({ commit }: ActionContext<State, State>, roomId: string) {
       await api.roomStart(roomId)

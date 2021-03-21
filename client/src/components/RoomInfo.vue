@@ -105,7 +105,7 @@ export default class RoomInfo extends Vue {
     this.loading = true
   
     try {
-      this.settings = await this.$store.dispatch('ROOMS_GET', roomId)
+      this.settings = await this.$store.dispatch('ROOMS_SETTINGS', roomId)
     } catch(e) {
       if (e.response) {
         this.$swal({

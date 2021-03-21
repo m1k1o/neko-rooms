@@ -215,6 +215,28 @@ func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
 	return manager.containerToEntry(*container)
 }
 
+func (manager *RoomManagerCtx) Remove(id string) error {
+	_, err := manager.inspectContainer(id)
+	if err != nil {
+		return err
+	}
+
+	// Stop the actual container
+	err = manager.client.ContainerStop(context.Background(), id, nil)
+
+	if err != nil {
+		return err
+	}
+
+	// Remove the actual container
+	err = manager.client.ContainerRemove(context.Background(), id, dockerTypes.ContainerRemoveOptions{
+		RemoveVolumes: true,
+		Force:         true,
+	})
+
+	return err
+}
+
 func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, error) {
 	container, err := manager.inspectContainer(id)
 	if err != nil {
@@ -240,27 +262,11 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 	return &settings, err
 }
 
-func (manager *RoomManagerCtx) Remove(id string) error {
-	_, err := manager.inspectContainer(id)
-	if err != nil {
-		return err
-	}
 
-	// Stop the actual container
-	err = manager.client.ContainerStop(context.Background(), id, nil)
-
-	if err != nil {
-		return err
-	}
-
-	// Remove the actual container
-	err = manager.client.ContainerRemove(context.Background(), id, dockerTypes.ContainerRemoveOptions{
-		RemoveVolumes: true,
-		Force:         true,
-	})
-
-	return err
+func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
+	return nil, fmt.Errorf("Not Implemented.")
 }
+
 
 func (manager *RoomManagerCtx) Start(id string) error {
 	_, err := manager.inspectContainer(id)
