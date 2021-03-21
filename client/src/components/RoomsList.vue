@@ -17,6 +17,7 @@
         <i v-else>--not-specified--</i>
       </template>
       <template v-slot:[`item.status`]="{ item }">
+        <v-btn @click="Reload(item.id)" :loading="roomLoading.includes(item.id)" class="mr-3" color="green" icon><v-icon>mdi-refresh</v-icon></v-btn>
         <v-chip :color="item.running ? 'green' : 'red'" dark small> {{ item.status }} </v-chip>
       </template>
       <template v-slot:[`item.created`]="{ item }">
@@ -67,6 +68,7 @@ export default class RoomsList extends Vue {
 
   private dialog = false
   private roomId = ''
+  private roomLoading = [] as Array<string>
 
   private headers = [
     { text: 'Deployment', value: 'url' },
@@ -90,6 +92,17 @@ export default class RoomsList extends Vue {
 
   get rooms() {
     return this.$store.state.rooms
+  }
+
+  async Reload(roomId: string) {
+    Vue.set(this, 'roomLoading', [roomId, ...this.roomLoading])
+
+    try {
+      await this.$store.dispatch('ROOMS_GET', roomId)
+    } finally {
+      const roomLoading = this.roomLoading.filter((id: string) => id != roomId)
+      Vue.set(this, 'roomLoading', roomLoading)
+    }
   }
 }
 </script>
