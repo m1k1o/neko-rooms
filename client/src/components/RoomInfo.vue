@@ -27,7 +27,7 @@
               <span class="mx-2">{{ showUserPass ? settings.user_pass : '****' }}</span>
               <v-tooltip top v-if="room">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn v-bind="attrs" v-on="on" :href="room.url + '?pwd=' + encodeURIComponent(settings.user_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
+                  <v-btn v-bind="attrs" v-on="on" :disabled="!room.running" :href="room.url + '?pwd=' + encodeURIComponent(settings.user_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
                 </template>
                 <span>Invite link for users</span>
               </v-tooltip>
@@ -37,7 +37,7 @@
               <span class="mx-2">{{ showAdminPass ? settings.admin_pass : '****' }}</span>
               <v-tooltip bottom v-if="room">
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn  v-bind="attrs" v-on="on" :href="room.url + '?pwd=' + encodeURIComponent(settings.admin_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
+                  <v-btn  v-bind="attrs" v-on="on" :disabled="!room.running" :href="room.url + '?pwd=' + encodeURIComponent(settings.admin_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
                 </template>
                 <span>Invite link for admins</span>
               </v-tooltip>
