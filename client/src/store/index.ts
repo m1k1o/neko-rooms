@@ -13,7 +13,7 @@ import { state, State } from './state'
 Vue.use(Vuex)
 
 const api = new RoomsApi(new Configuration({
-  basePath: location.href.replace(/\/+$/, ''),
+  basePath: (location.protocol + '//' + location.host + location.pathname).replace(/\/+$/, ''),
 }))
 
 export default new Vuex.Store({
