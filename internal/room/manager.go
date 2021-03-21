@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -264,7 +265,30 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 
 
 func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
-	return nil, fmt.Errorf("Not Implemented.")
+	container, err := manager.inspectContainer(id)
+	if err != nil {
+		return nil, err
+	}
+
+	settings := types.RoomSettings{}
+	err = settings.FromEnv(container.Config.Env)
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := manager.containerExec(id, []string{
+		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd="+settings.AdminPass,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var stats types.RoomStats
+	if err := json.Unmarshal([]byte(output), &stats); err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
 }
 
 

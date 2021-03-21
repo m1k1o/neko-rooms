@@ -1,6 +1,7 @@
 package room
 
 import (
+	"io"
 	"context"
 	"fmt"
 	"time"
@@ -107,4 +108,30 @@ func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.Contain
 	}
 
 	return &container, nil
+}
+
+func (manager *RoomManagerCtx) containerExec(id string, cmd []string) (string, error) {
+	exec, err := manager.client.ContainerExecCreate(context.Background(), id, dockerTypes.ExecConfig{
+		AttachStderr: true,
+		AttachStdin:  true,
+		AttachStdout: true,
+		Cmd:          cmd,
+		Tty:          true,
+		Detach:       false,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	conn, err := manager.client.ContainerExecAttach(context.Background(), exec.ID, dockerTypes.ExecStartCheck{
+		Detach: false,
+		Tty:    true,
+	})
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+
+	data, err := io.ReadAll(conn.Reader)
+	return string(data), err
 }
