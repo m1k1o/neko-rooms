@@ -47,6 +47,28 @@ paths:
         '500':
           description: Internal server error
   /api/rooms/{roomId}:
+    get:
+      tags:
+        - rooms
+      summary: Get room entry
+      operationId: roomGet
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomEntry'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
     delete:
       tags:
         - rooms

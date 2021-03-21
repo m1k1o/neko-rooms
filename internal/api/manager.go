@@ -28,6 +28,7 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 	r.Post("/rooms", manager.roomCreate)
 
 	r.Route("/rooms/{roomId}", func(r chi.Router) {
+		r.Get("/", manager.roomGetEntry)
 		r.Delete("/", manager.roomRemove)
 
 		r.Get("/settings", manager.roomGetSettings)

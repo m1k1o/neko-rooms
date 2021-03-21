@@ -27,14 +27,21 @@ export default new Vuex.Store({
       Vue.set(state, 'rooms', [roomEntry, ...state.rooms])
     },
     ROOMS_PUT(state: State, roomEntry: RoomEntry) {
+      let exists = false
       const roomEntries = state.rooms.map((room) => {
         if (room.id == roomEntry.id) {
+          exists = true
           return { ...room, ...roomEntry }
         } else {
           return room
         }
       })
-      Vue.set(state, 'rooms', roomEntries)
+
+      if (exists) {
+        Vue.set(state, 'rooms', roomEntries)
+      } else {
+        Vue.set(state, 'rooms', [roomEntry, ...roomEntries])
+      }
     },
     ROOMS_DEL(state: State, roomId: string) {
       const roomEntries = state.rooms.filter(({ id }) => id != roomId)
@@ -49,6 +56,11 @@ export default new Vuex.Store({
     async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
       const res = await api.roomCreate(roomSettings)
       commit('ROOMS_ADD', res.data);
+      return res.data
+    },
+    async ROOMS_GET({ commit }: ActionContext<State, State>, roomId: string)  {
+      const res = await api.roomGet(roomId)
+      commit('ROOMS_PUT', res.data);
       return res.data
     },
     async ROOMS_REMOVE({ commit }: ActionContext<State, State>, roomId: string) {
