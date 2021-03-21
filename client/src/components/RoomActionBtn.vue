@@ -1,5 +1,10 @@
 <template>
-  <v-btn v-if="tmpl" @click="Action" :color="tmpl.color" :disabled="disabled" :loading="loading" icon><v-icon>{{ tmpl.icon }}</v-icon></v-btn>
+  <v-tooltip bottom v-if="tmpl" open-delay="300">
+    <template v-slot:activator="{ on, attrs }">
+      <v-btn v-bind="attrs" v-on="on" @click="Action" :color="tmpl.color" :disabled="disabled" :loading="loading" icon><v-icon>{{ tmpl.icon }}</v-icon></v-btn>
+    </template>
+    <span>{{ tmpl.tooltip }}</span>
+  </v-tooltip>
 </template>
 
 <script lang="ts">
@@ -20,6 +25,7 @@ export default class RoomActionBtn extends Vue {
         return {
           dispatch: 'ROOMS_START',
           msg: 'Room started!',
+          tooltip: 'Start',
           color: 'green',
           icon: 'mdi-play-circle-outline',
         }
@@ -27,6 +33,7 @@ export default class RoomActionBtn extends Vue {
         return {
           dispatch: 'ROOMS_STOP',
           msg: 'Room stopped!',
+          tooltip: 'Stop',
           color: 'warning',
           icon: 'mdi-stop-circle-outline',
         }
@@ -34,6 +41,7 @@ export default class RoomActionBtn extends Vue {
         return {
           dispatch: 'ROOMS_RESTART',
           msg: 'Room restarted!',
+          tooltip: 'Restart',
           color: 'blue',
           icon: 'mdi-refresh',
         }
@@ -41,6 +49,7 @@ export default class RoomActionBtn extends Vue {
         return {
           dispatch: 'ROOMS_REMOVE',
           msg: 'Room removed!',
+          tooltip: 'Remove',
           color: 'red',
           icon: 'mdi-trash-can-outline',
         }
