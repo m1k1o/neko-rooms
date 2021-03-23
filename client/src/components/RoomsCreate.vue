@@ -320,12 +320,20 @@ export default class RoomsCreate extends Vue {
 
   Clear() {
     this._form.resetValidation()
-    this.data = { ...this.$store.state.defaultRoomSettings }
+    this.data = {
+      ...this.$store.state.defaultRoomSettings,
+      // eslint-disable-next-line
+      neko_image: this.nekoImages[0],
+    }
   }
 
   Close() {
     this.Clear()
     this.$emit('finished', true)
+  }
+
+  mounted() {
+    this.Clear()
   }
 }
 </script>
