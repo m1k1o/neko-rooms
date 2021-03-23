@@ -74,7 +74,7 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 }
 
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
-	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); in {
+	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
 		return "", fmt.Errorf("invalid neko image")
 	}
 
