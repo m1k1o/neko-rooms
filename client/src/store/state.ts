@@ -1,12 +1,16 @@
 import {
+  RoomsConfig,
   RoomEntry,
   RoomSettings,
 } from '@/api/index'
 
 export const state = {
+  roomsConfig: {} as RoomsConfig,
   rooms: [] as RoomEntry[],
   defaultRoomSettings: {
     name: '',
+    // eslint-disable-next-line
+    neko_image: '',
     // eslint-disable-next-line
     max_connections: 10,
     // eslint-disable-next-line

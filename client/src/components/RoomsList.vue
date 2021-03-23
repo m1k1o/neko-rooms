@@ -89,7 +89,7 @@ export default class RoomsList extends Vue {
     { text: 'Deployment', value: 'url' },
     { text: 'Name', value: 'name' },
     { text: 'Max connections', value: 'max_connections' },
-    { text: 'Image', value: 'image' },
+    { text: 'Neko image', value: 'neko_image' },
     { text: 'Status', value: 'status' },
     { text: 'Created', value: 'created' },
     {

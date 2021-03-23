@@ -59,6 +59,7 @@ export default class Home extends Vue {
   }
 
   mounted() {
+    this.$store.dispatch('ROOMS_CONFIG')
     this.LoadRooms()
   }
 }

@@ -13,7 +13,8 @@
       type="warning"
       v-else-if="!settings"
     >
-      Room not found!
+      <p><strong>Room not loaded!</strong></p>
+      <p class="mb-0">Check your internet connectivity. Try to recreate room.</p>
     </v-alert>
     <template v-else>
       <div class="my-3 headline">Room members</div>
@@ -77,7 +78,7 @@
         <template v-slot:default>
           <tbody>
             <tr><th style="width:50%;"> Name </th><td>{{ settings.name }}</td></tr>
-            <tr><th> Max connections </th><td>{{ settings.max_connections }}</td></tr>
+            <tr><th> Neko image </th><td>{{ settings.neko_image }}</td></tr>
             <tr><th> User password </th><td>
               <v-btn @click="showUserPass = !showUserPass" icon small><v-icon small>{{ showUserPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
               <span class="mx-2">{{ showUserPass ? settings.user_pass : '****' }}</span>
@@ -98,6 +99,7 @@
                 <span>Invite link for admins</span>
               </v-tooltip>
             </td></tr>
+            <tr><th> Max connections </th><td>{{ settings.max_connections }}</td></tr>
           </tbody>
         </template>
       </v-simple-table>

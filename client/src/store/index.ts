@@ -2,24 +2,32 @@ import Vue from 'vue'
 import Vuex, { ActionContext } from 'vuex'
 
 import {
+  Configuration,
+  RoomsConfig,
+  ConfigApi,
   RoomEntry,
   RoomSettings,
   RoomStats,
   RoomsApi,
-  Configuration,
 } from '@/api/index'
 
 import { state, State } from './state'
 
 Vue.use(Vuex)
 
-const api = new RoomsApi(new Configuration({
+const configuration = new Configuration({
   basePath: (location.protocol + '//' + location.host + location.pathname).replace(/\/+$/, ''),
-}))
+})
+
+const configApi = new ConfigApi(configuration)
+const roomsApi = new RoomsApi(configuration)
 
 export default new Vuex.Store({
   state,
   mutations: {
+    ROOMS_CONFIG_SET(state: State, roomsConfig: RoomsConfig) {
+      Vue.set(state, 'roomsConfig', roomsConfig)
+    },
     ROOMS_SET(state: State, roomEntries: RoomEntry[]) {
       Vue.set(state, 'rooms', roomEntries)
     },
@@ -49,34 +57,38 @@ export default new Vuex.Store({
     },
   },
   actions: {
+    async ROOMS_CONFIG({ commit }: ActionContext<State, State>) {
+      const res = await configApi.roomsConfig()
+      commit('ROOMS_CONFIG_SET', res.data);
+    },
     async ROOMS_LOAD({ commit }: ActionContext<State, State>) {
-      const res = await api.roomsList()
+      const res = await roomsApi.roomsList()
       commit('ROOMS_SET', res.data);
     },
     async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
-      const res = await api.roomCreate(roomSettings)
+      const res = await roomsApi.roomCreate(roomSettings)
       commit('ROOMS_ADD', res.data);
       return res.data
     },
     async ROOMS_GET({ commit }: ActionContext<State, State>, roomId: string)  {
-      const res = await api.roomGet(roomId)
+      const res = await roomsApi.roomGet(roomId)
       commit('ROOMS_PUT', res.data);
       return res.data
     },
     async ROOMS_REMOVE({ commit }: ActionContext<State, State>, roomId: string) {
-      await api.roomRemove(roomId)
+      await roomsApi.roomRemove(roomId)
       commit('ROOMS_DEL', roomId);
     },
     async ROOMS_SETTINGS(_: ActionContext<State, State>, roomId: string): Promise<RoomSettings> {
-      const res = await api.roomSettings(roomId)
+      const res = await roomsApi.roomSettings(roomId)
       return res.data
     },
     async ROOMS_STATS(_: ActionContext<State, State>, roomId: string): Promise<RoomStats> {
-      const res = await api.roomStats(roomId)
+      const res = await roomsApi.roomStats(roomId)
       return res.data
     },
     async ROOMS_START({ commit }: ActionContext<State, State>, roomId: string) {
-      await api.roomStart(roomId)
+      await roomsApi.roomStart(roomId)
       commit('ROOMS_PUT', {
         id: roomId,
         running: true,
@@ -84,7 +96,7 @@ export default new Vuex.Store({
       });
     },
     async ROOMS_STOP({ commit }: ActionContext<State, State>, roomId: string) {
-      await api.roomStop(roomId)
+      await roomsApi.roomStop(roomId)
       commit('ROOMS_PUT', {
         id: roomId,
         running: false,
@@ -92,7 +104,7 @@ export default new Vuex.Store({
       });
     },
     async ROOMS_RESTART(_: ActionContext<State, State>, roomId: string) {
-      await api.roomRestart(roomId)
+      await roomsApi.roomRestart(roomId)
     },
   },
   modules: {

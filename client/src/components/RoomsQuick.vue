@@ -1,8 +1,29 @@
 <template>
   <span>
-    <v-btn @click="Action" :loading="loading" color="info" dark>
-      + Quick room
-    </v-btn>
+    <v-menu bottom left close-on-click>
+      <template v-slot:activator="{ on, attrs }">
+        <v-btn
+          v-bind="attrs"
+          v-on="on"
+          :loading="loading"
+          color="info"
+          dark
+        >
+          + Quick room
+        </v-btn>
+      </template>
+
+      <v-list>
+        <v-list-item
+          v-for="(neko_image, index) in nekoImages"
+          :key="index"
+          @click="Action(neko_image)"
+          link
+        >
+          <v-list-item-title>{{ neko_image }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
 
     <v-dialog v-model="dialog" max-width="920px">
       <v-card>
@@ -37,13 +58,19 @@ export default class RoomActionBtn extends Vue {
   private loading = false
   private roomId = ''
 
-  async Action() {
+  get nekoImages() {
+    return this.$store.state.roomsConfig.neko_images
+  }
+
+  // eslint-disable-next-line
+  async Action(neko_image: string) {
     this.loading = true
   
     try {
-      
       const entry = await this.$store.dispatch('ROOMS_CREATE', {
         ...this.$store.state.defaultRoomSettings,
+        // eslint-disable-next-line
+        neko_image,
         // eslint-disable-next-line
         user_pass: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
         // eslint-disable-next-line

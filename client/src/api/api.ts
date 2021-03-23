@@ -47,16 +47,16 @@ export interface RoomEntry {
     name?: string;
     /**
      * 
+     * @type {string}
+     * @memberof RoomEntry
+     */
+    neko_image?: string;
+    /**
+     * 
      * @type {number}
      * @memberof RoomEntry
      */
     max_connections?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof RoomEntry
-     */
-    image?: string;
     /**
      * 
      * @type {boolean}
@@ -119,6 +119,12 @@ export interface RoomSettings {
      * @memberof RoomSettings
      */
     name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomSettings
+     */
+    neko_image?: string;
     /**
      * 
      * @type {number}
@@ -217,6 +223,123 @@ export interface RoomStats {
      */
     members?: Array<RoomMember>;
 }
+/**
+ * 
+ * @export
+ * @interface RoomsConfig
+ */
+export interface RoomsConfig {
+    /**
+     * 
+     * @type {number}
+     * @memberof RoomsConfig
+     */
+    connections?: number;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof RoomsConfig
+     */
+    neko_images?: Array<string>;
+}
+
+/**
+ * ConfigApi - axios parameter creator
+ * @export
+ */
+export const ConfigApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get rooms config
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        roomsConfig: async (options: any = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/config/rooms`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * ConfigApi - functional programming interface
+ * @export
+ */
+export const ConfigApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = ConfigApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Get rooms config
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async roomsConfig(options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<RoomsConfig>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.roomsConfig(options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+    }
+};
+
+/**
+ * ConfigApi - factory interface
+ * @export
+ */
+export const ConfigApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = ConfigApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Get rooms config
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        roomsConfig(options?: any): AxiosPromise<Array<RoomsConfig>> {
+            return localVarFp.roomsConfig(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * ConfigApi - object-oriented interface
+ * @export
+ * @class ConfigApi
+ * @extends {BaseAPI}
+ */
+export class ConfigApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get rooms config
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ConfigApi
+     */
+    public roomsConfig(options?: any) {
+        return ConfigApiFp(this.configuration).roomsConfig(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
 
 /**
  * RoomsApi - axios parameter creator
