@@ -263,7 +263,6 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 	return &settings, err
 }
 
-
 func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 	container, err := manager.inspectContainer(id)
 	if err != nil {
@@ -277,7 +276,7 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 	}
 
 	output, err := manager.containerExec(id, []string{
-		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd="+settings.AdminPass,
+		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + settings.AdminPass,
 	})
 	if err != nil {
 		return nil, err
@@ -290,7 +289,6 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 
 	return &stats, nil
 }
-
 
 func (manager *RoomManagerCtx) Start(id string) error {
 	_, err := manager.inspectContainer(id)
