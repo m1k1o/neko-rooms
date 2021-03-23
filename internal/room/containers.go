@@ -20,7 +20,9 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 
 	nekoImage, ok := container.Labels["m1k1o.neko_rooms.neko_image"]
 	if !ok {
-		return nil, fmt.Errorf("Damaged container labels: neko_image not found.")
+		// Backward compatibility.
+		nekoImage = container.Image
+		//return nil, fmt.Errorf("Damaged container labels: neko_image not found.")
 	}
 
 	URL, ok := container.Labels["m1k1o.neko_rooms.url"]
