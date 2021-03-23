@@ -18,6 +18,11 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		return nil, fmt.Errorf("Damaged container labels: name not found.")
 	}
 
+	nekoImage, ok := container.Labels["m1k1o.neko_rooms.neko_image"]
+	if !ok {
+		return nil, fmt.Errorf("Damaged container labels: neko_image not found.")
+	}
+
 	URL, ok := container.Labels["m1k1o.neko_rooms.url"]
 	if !ok {
 		return nil, fmt.Errorf("Damaged container labels: url not found.")
@@ -32,8 +37,8 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		ID:             container.ID,
 		URL:            URL,
 		Name:           roomName,
+		NekoImage:      nekoImage,
 		MaxConnections: epr.Max - epr.Min + 1,
-		Image:          container.Image,
 		Running:        container.State == "running",
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),

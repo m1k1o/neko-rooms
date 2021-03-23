@@ -24,6 +24,8 @@ func New(roomManager types.RoomManager, conf *config.API) *ApiManagerCtx {
 }
 
 func (manager *ApiManagerCtx) Mount(r chi.Router) {
+	r.Get("/config/rooms", manager.roomsConfig)
+
 	r.Get("/rooms", manager.roomsList)
 	r.Post("/rooms", manager.roomCreate)
 

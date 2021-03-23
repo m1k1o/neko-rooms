@@ -9,6 +9,13 @@ import (
 	"m1k1o/neko_rooms/internal/types"
 )
 
+func (manager *ApiManagerCtx) roomsConfig(w http.ResponseWriter, r *http.Request) {
+	response := manager.rooms.Config()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) {
 	response, err := manager.rooms.List()
 	if err != nil {

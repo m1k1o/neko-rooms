@@ -3,11 +3,32 @@ info:
   title: Neko Rooms
   version: 1.0.0
 servers:
-  - url: 'http://192.168.1.20:8080'
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/m1k1o/neko-rooms/1.0.0
 tags:
+  - name: config
+    description: config endpoints
   - name: rooms
     description: room endpoints
 paths:
+  /api/config/rooms:
+    get:
+      tags:
+        - config
+      summary: Get rooms config
+      operationId: roomsConfig
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoomsConfig'
+        '500':
+          description: Internal server error
   /api/rooms:
     get:
       tags:
@@ -183,6 +204,18 @@ paths:
 
 components:
   schemas:
+    RoomsConfig:
+      type: object
+      properties:
+        connections:
+          type: number
+          example: 100
+        neko_images:
+          type: array
+          items:
+            type: string
+            example: m1k1o/neko:latest
+
     RoomEntry:
       type: object
       properties:
@@ -195,12 +228,12 @@ components:
         name:
           type: string
           example: foobar
+        neko_image:
+          type: string
+          example: m1k1o/neko:latest
         max_connections:
           type: number
           example: 10
-        image:
-          type: string
-          example: m1k1o/neko:latest
         running:
           type: boolean
           example: true
@@ -218,6 +251,9 @@ components:
         name:
           type: string
           example: foobar
+        neko_image:
+          type: string
+          example: m1k1o/neko:latest
         max_connections:
           type: number
           example: 10
@@ -237,20 +273,17 @@ components:
           example: VP8
         video_bitrate:
           type: number
-          format: int
           example: 3072
         video_pipeline:
           type: string
         video_max_fps:
           type: number
-          format: int
           example: 25
         audio_codec:
           type: string
           example: OPUS
         audio_bitrate:
           type: number
-          format: int
           example: 128
         audio_pipeline:
           type: string

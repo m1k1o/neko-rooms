@@ -7,12 +7,17 @@ import (
 	"time"
 )
 
+type RoomsConfig struct {
+	Connections uint16   `json:"connections"`
+	NekoImages  []string `json:"neko_images"`
+}
+
 type RoomEntry struct {
 	ID             string    `json:"id"`
 	URL            string    `json:"url"`
 	Name           string    `json:"name"`
+	NekoImage      string    `json:"neko_image"`
 	MaxConnections uint16    `json:"max_connections"`
-	Image          string    `json:"image"`
 	Running        bool      `json:"running"`
 	Status         string    `json:"status"`
 	Created        time.Time `json:"created"`
@@ -20,6 +25,7 @@ type RoomEntry struct {
 
 type RoomSettings struct {
 	Name           string `json:"name"`
+	NekoImage      string `json:"neko_image"`
 	MaxConnections uint16 `json:"max_connections"`
 
 	UserPass  string `json:"user_pass"`
@@ -155,6 +161,7 @@ type RoomMember struct {
 }
 
 type RoomManager interface {
+	Config() RoomsConfig
 	List() ([]RoomEntry, error)
 
 	Create(settings RoomSettings) (string, error)

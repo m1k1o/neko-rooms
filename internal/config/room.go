@@ -15,7 +15,7 @@ type Room struct {
 	EprMin     uint16
 	EprMax     uint16
 
-	NekoImage    string
+	NekoImages   []string
 	InstanceName string
 
 	TraefikDomain       string
@@ -36,8 +36,8 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("neko_image", "m1k1o/neko:latest", "neko image to be used")
-	if err := viper.BindPFlag("neko_image", cmd.PersistentFlags().Lookup("neko_image")); err != nil {
+	cmd.PersistentFlags().StringSlice("neko_images", []string{"m1k1o/neko:latest", "m1k1o/neko:chromium"}, "neko images to be used")
+	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
 		return err
 	}
 
@@ -109,7 +109,7 @@ func (s *Room) Set() {
 		s.EprMax = max
 	}
 
-	s.NekoImage = viper.GetString("neko_image")
+	s.NekoImages = viper.GetStringSlice("neko_images")
 	s.InstanceName = viper.GetString("instance_name")
 
 	s.TraefikDomain = viper.GetString("traefik_domain")
