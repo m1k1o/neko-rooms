@@ -4,6 +4,7 @@ cd "$(dirname "$0")"
 docker run --rm -it \
     -p 8081:8080 \
     -v "${PWD}/../client:/app" \
+    -e "API_PROXY=http://192.168.1.20:8080" \
     --user "$(id -u):$(id -g)" \
     --workdir="/app" \
     --entrypoint="npm" \
