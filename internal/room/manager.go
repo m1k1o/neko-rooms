@@ -73,6 +73,15 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 	return result, nil
 }
 
+func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error) {
+	container, err := manager.containerByName(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.containerToEntry(*container)
+}
+
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
 		return "", fmt.Errorf("invalid neko image")
@@ -220,7 +229,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 }
 
 func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
-	container, err := manager.containerInfo(id)
+	container, err := manager.containerById(id)
 	if err != nil {
 		return nil, err
 	}

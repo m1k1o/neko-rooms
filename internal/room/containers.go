@@ -74,11 +74,8 @@ func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error)
 	return result, nil
 }
 
-func (manager *RoomManagerCtx) containerInfo(id string) (*dockerTypes.Container, error) {
-	args := filters.NewArgs(
-		filters.Arg("id", id),
-		filters.Arg("label", "m1k1o.neko_rooms.instance"),
-	)
+func (manager *RoomManagerCtx) containerFilter(args filters.Args) (*dockerTypes.Container, error) {
+	args.Add("label", "m1k1o.neko_rooms.instance")
 
 	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
 		All:     true,
@@ -101,6 +98,18 @@ func (manager *RoomManagerCtx) containerInfo(id string) (*dockerTypes.Container,
 	}
 
 	return &container, nil
+}
+
+func (manager *RoomManagerCtx) containerById(id string) (*dockerTypes.Container, error) {
+	return manager.containerFilter(filters.NewArgs(
+		filters.Arg("id", id),
+	))
+}
+
+func (manager *RoomManagerCtx) containerByName(name string) (*dockerTypes.Container, error) {
+	return manager.containerFilter(filters.NewArgs(
+		filters.Arg("name", manager.config.InstanceName+"-"+name),
+	))
 }
 
 func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {

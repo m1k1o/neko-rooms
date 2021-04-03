@@ -163,6 +163,7 @@ type RoomMember struct {
 type RoomManager interface {
 	Config() RoomsConfig
 	List() ([]RoomEntry, error)
+	FindByName(name string) (*RoomEntry, error)
 
 	Create(settings RoomSettings) (string, error)
 	GetEntry(id string) (*RoomEntry, error)
