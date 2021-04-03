@@ -28,6 +28,8 @@ https://www.youtube.com/watch?v=cCmnw-pq0gA
 
 You only need `.env.example`, `docker-compose.yml` and `traefik/`.
 
+You don't need to have traefik as your entrypoint reverse proxy. In that case you can use `docker-compose.http.yml` that will expose this service to `APP_PORT`.
+
 ### Step 1
 
 Copy `.env.example` to `.env` and customize.
@@ -61,10 +63,32 @@ chmod 600 traefik/acme.json
 
 Update your email in `traefik/traefik.yml`.
 
+### Download images / update
+
+You need to pull all your images, that you want to use with neko-room. Otherwise you might get this error: `Error response from daemon: No such image:` (see issue #1).
+
+```sh
+docker pull m1k1o/neko:latest
+docker pull m1k1o/neko:chromium
+# etc...
+```
+
+If you want to update neko image, you need to pull new image and recreate all rooms, that use old image. To update neko rooms, simpy run:
+
+```sh
+docker-compose pull
+docker-compose up -d
+```
+
 ### Roadmap:
  - [x] add GUI
  - [x] add HTTPS support
  - [x] add authentication provider for traefik
+ - [ ] allow specifying custom ENV variables
+ - [ ] allow mounting direcotries for persistent data
+ - [ ] add upgrade button
+ - [ ] auto pull images, that do not exist
  - [ ] add bearer token to for API
  - [ ] add docker ssh / tcp support
  - [ ] add docker swarm support
+ - [ ] add k8s support
