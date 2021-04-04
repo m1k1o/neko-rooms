@@ -13,7 +13,7 @@ type EprPorts struct {
 
 func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
 	if sum < 1 {
-		return EprPorts{}, fmt.Errorf("Unable to allocate 0 ports.")
+		return EprPorts{}, fmt.Errorf("unable to allocate 0 ports")
 	}
 
 	min := manager.config.EprMin
@@ -37,7 +37,7 @@ func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
 	}
 
 	if epr.Min > max || epr.Max > max {
-		return epr, fmt.Errorf("Unable to allocate ports: not enough ports.")
+		return epr, fmt.Errorf("unable to allocate ports: not enough ports")
 	}
 
 	return epr, nil
@@ -72,7 +72,7 @@ func (manager *RoomManagerCtx) getEprFromLabels(labels map[string]string) (EprPo
 
 	eprMinStr, ok := labels["m1k1o.neko_rooms.epr.min"]
 	if !ok {
-		return epr, fmt.Errorf("Damaged container labels: epr.min not found.")
+		return epr, fmt.Errorf("damaged container labels: epr.min not found")
 	}
 
 	eprMin, err := strconv.ParseUint(eprMinStr, 10, 16)
@@ -82,7 +82,7 @@ func (manager *RoomManagerCtx) getEprFromLabels(labels map[string]string) (EprPo
 
 	eprMaxStr, ok := labels["m1k1o.neko_rooms.epr.max"]
 	if !ok {
-		return epr, fmt.Errorf("Damaged container labels: epr.max not found.")
+		return epr, fmt.Errorf("damaged container labels: epr.max not found")
 	}
 
 	eprMax, err := strconv.ParseUint(eprMaxStr, 10, 16)

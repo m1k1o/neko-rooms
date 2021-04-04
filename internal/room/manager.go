@@ -27,7 +27,7 @@ const (
 func New(config *config.Room) *RoomManagerCtx {
 	logger := log.With().Str("module", "room").Logger()
 
-	cli, err := dockerClient.NewEnvClient()
+	cli, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv)
 	if err != nil {
 		logger.Panic().Err(err).Msg("unable to connect to docker client")
 	} else {
@@ -200,7 +200,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	networkingConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			manager.config.TraefikNetwork: &network.EndpointSettings{},
+			manager.config.TraefikNetwork: {},
 		},
 	}
 
@@ -267,12 +267,12 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 
 	roomName, ok := container.Config.Labels["m1k1o.neko_rooms.name"]
 	if !ok {
-		return nil, fmt.Errorf("Damaged container labels: name not found.")
+		return nil, fmt.Errorf("damaged container labels: name not found")
 	}
 
 	nekoImage, ok := container.Config.Labels["m1k1o.neko_rooms.neko_image"]
 	if !ok {
-		return nil, fmt.Errorf("Damaged container labels: neko_image not found.")
+		return nil, fmt.Errorf("damaged container labels: neko_image not found")
 	}
 
 	epr, err := manager.getEprFromLabels(container.Config.Labels)
