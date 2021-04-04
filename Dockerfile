@@ -22,13 +22,13 @@ WORKDIR /app
 
 COPY . .
 RUN go get -v -t -d .; \
-    go build -o bin/neko_rooms cmd/neko_rooms/main.go
+    CGO_ENABLED=0 go build -o bin/neko_rooms cmd/neko_rooms/main.go
 
 #
 # STAGE 3: build a small image
 #
-#FROM scratch
-#COPY --from=builder /app/bin/neko_rooms /app/bin/neko_rooms
+FROM scratch
+COPY --from=builder /app/bin/neko_rooms /app/bin/neko_rooms
 COPY --from=frontend /src/dist/ /var/www
 
 ENV DOCKER_API_VERSION=1.39
