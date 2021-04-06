@@ -84,7 +84,7 @@ docker-compose up -d
  - [x] add GUI
  - [x] add HTTPS support
  - [x] add authentication provider for traefik
- - [ ] allow specifying custom ENV variables
+ - [x] allow specifying custom ENV variables (TODO: FE.)
  - [ ] allow mounting direcotries for persistent data
  - [ ] add upgrade button
  - [ ] auto pull images, that do not exist

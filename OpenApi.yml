@@ -287,6 +287,12 @@ components:
           example: 128
         audio_pipeline:
           type: string
+        envs:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            CUSTOM_ENV: custom value
 
     RoomStats:
       type: object
