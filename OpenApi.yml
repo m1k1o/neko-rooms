@@ -24,9 +24,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RoomsConfig'
+                $ref: '#/components/schemas/RoomsConfig'
         '500':
           description: Internal server error
   /api/rooms:
