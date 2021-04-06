@@ -136,6 +136,15 @@
           </tbody>
         </template>
       </v-simple-table>
+
+      <div class="my-3 headline">Environment variables</div>
+      <v-simple-table>
+        <template v-slot:default>
+          <tbody>
+            <tr v-for="(key, val) in settings.envs" :key="key"><th style="width:50%;">{{ key }}</th><td>{{ val }}</td></tr>
+          </tbody>
+        </template>
+      </v-simple-table>
     </template>
   </div>
 </template>

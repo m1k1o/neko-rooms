@@ -182,6 +182,31 @@
               v-model="data.broadcast_pipeline"
             ></v-textarea>
           </v-row>
+          <v-row align="center" no-gutters>
+            <h2> Environment variables </h2>
+            <v-btn @click="addEnv" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+          </v-row>
+          <v-row align="center" v-for="({ key, val }, index) in envList" :key="index">
+            <v-col class="pb-0">
+              <v-text-field
+                label="Key"
+                :value="key"
+                @input="setEnv(index, { key: $event, val })"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <v-col class="pb-0">
+              <v-text-field
+                label="Value"
+                :value="val"
+                @input="setEnv(index, { key, val: $event })"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <div>
+              <v-btn @click="delEnv(index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
+            </div>
+          </v-row>
         </template>
       </v-form>
     </v-card-text>
@@ -239,6 +264,7 @@ export default class RoomsCreate extends Vue {
 
   private loading = false
   private data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
+  private envList: { key: string; val: string }[] = []
 
   // eslint-disable-next-line
   private rules: any = {
@@ -273,6 +299,18 @@ export default class RoomsCreate extends Vue {
     return this.$store.state.availableScreens
   }
 
+  addEnv() {
+    Vue.set(this, 'envList', [ ...this.envList, { key: '', val: '' } ])
+  }
+
+  setEnv(index: number, data: { key: string; val: string }) {
+    Vue.set(this.envList, index, data)
+  }
+
+  delEnv(index: number) {
+    Vue.delete(this.envList, index)
+  }
+
   async Create() {
     const valid = this._form.validate()
     if (!valid) return
@@ -280,6 +318,8 @@ export default class RoomsCreate extends Vue {
     this.loading = true
 
     try {
+      const envs = this.envList.reduce((obj, { key, val }) => ({ ...obj, [key]: val, }), {})
+
       await this.$store.dispatch('ROOMS_CREATE', {
         ...this.data,
         // eslint-disable-next-line
@@ -296,6 +336,7 @@ export default class RoomsCreate extends Vue {
         audio_pipeline: this.audioPipelineEnabled ? this.data.audio_pipeline : '',
         // eslint-disable-next-line
         broadcast_pipeline: this.broadcastPipelineEnabled ? this.data.broadcast_pipeline : '',
+        envs,
       })
       this.Clear()
       this.$emit('finished', true)
@@ -325,6 +366,7 @@ export default class RoomsCreate extends Vue {
       // eslint-disable-next-line
       neko_image: this.nekoImages[0],
     }
+    this.envList = Object.entries({...this.data.envs}).map(([ key, val ]) => ({ key, val, }))
   }
 
   Close() {
