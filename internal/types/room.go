@@ -113,8 +113,7 @@ func (settings *RoomSettings) FromEnv(envs []string) error {
 	var err error
 	for _, env := range envs {
 		r := strings.SplitN(env, "=", 2)
-		key := r[0]
-		val := r[1]
+		key, val := r[0], r[1]
 
 		switch key {
 		case "NEKO_PASSWORD":
