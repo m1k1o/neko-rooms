@@ -169,8 +169,9 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	config := &container.Config{
 		// Hostname
 		Hostname: containerName,
-		// Domainname
-		Domainname: containerName,
+		// Domainname is preventing from running container on LXC (Proxmox)
+		// https://www.gitmemory.com/issue/docker/for-linux/743/524569376
+		// Domainname: containerName,
 		// List of exposed ports
 		ExposedPorts: exposedPorts,
 		// List of environment variable to set in the container
