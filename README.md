@@ -31,10 +31,10 @@ You only need `.env.example`, `docker-compose.yml` and `traefik/`.
 #### Do I need to use traefik?
 
 - Traefik needs to be used to forward traffic to the rooms. You can put nginx in front of it, but not replace it.
-- Your domain name specified for traefik must match domain name, that your proxy connects to.
-- Currently, there is no support for custom paths. You cannot host your `neko-rooms` on `example.com/neko-rooms/` but it needs own subdomain e.g. `neko-rooms.example.com`.
+- Your domain name specified for traefik must match domain name, that your proxy connects to. In docker-compose it is service name.
+- See example configuration for [nginx](docs/nginx).
 
-You can use `docker-compose.http.yml` that will expose this service to `APP_PORT`. See example configuration for [nginx](docs/nginx).
+You can use `docker-compose.http.yml` that will expose this service to `8080` or any port. 
 
 ### Step 1
 

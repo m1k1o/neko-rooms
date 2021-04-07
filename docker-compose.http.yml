@@ -16,9 +16,9 @@ services:
       - "--providers.docker.watch=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.network=${NEKO_ROOMS_TRAEFIK_NETWORK}"
-      - "--entrypoints.${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}.address=:${APP_PORT-8080}"
+      - "--entrypoints.${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}.address=:80"
     ports:
-      - "${APP_PORT-8080}:${APP_PORT-8080}"
+      - "8080:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
@@ -32,7 +32,7 @@ services:
       - "NEKO_ROOMS_TRAEFIK_DOMAIN"
       - "NEKO_ROOMS_TRAEFIK_ENTRYPOINT"
       - "NEKO_ROOMS_TRAEFIK_NETWORK"
-      - "NEKO_ROOMS_TRAEFIK_PORT=${APP_PORT-8080}"
+      - "NEKO_ROOMS_INSTANCE_URL=http://${NEKO_ROOMS_TRAEFIK_DOMAIN}:8080/" # external URL
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     labels:

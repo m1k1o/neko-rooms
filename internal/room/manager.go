@@ -122,20 +122,28 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	containerName := manager.config.InstanceName + "-" + roomName
 
-	urlProto := "http"
-	if manager.config.TraefikCertresolver != "" {
-		urlProto = "https"
-	}
+	instanceUrl := manager.config.InstanceUrl
+	if instanceUrl == "" {
+		urlProto := "http"
+		if manager.config.TraefikCertresolver != "" {
+			urlProto = "https"
+		}
 
-	port := ""
-	if manager.config.TraefikPort != "" {
-		port = ":" + manager.config.TraefikPort
+		// deprecated
+		port := ""
+		if manager.config.TraefikPort != "" {
+			port = ":" + manager.config.TraefikPort
+		}
+
+		instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port + "/"
+	} else if !strings.HasSuffix(instanceUrl, "/") {
+		instanceUrl = instanceUrl + "/"
 	}
 
 	labels := map[string]string{
 		// Set internal labels
 		"m1k1o.neko_rooms.name":       roomName,
-		"m1k1o.neko_rooms.url":        urlProto + "://" + manager.config.TraefikDomain + port + "/" + roomName + "/",
+		"m1k1o.neko_rooms.url":        instanceUrl + roomName + "/",
 		"m1k1o.neko_rooms.instance":   manager.config.InstanceName,
 		"m1k1o.neko_rooms.epr.min":    fmt.Sprintf("%d", epr.Min),
 		"m1k1o.neko_rooms.epr.max":    fmt.Sprintf("%d", epr.Max),

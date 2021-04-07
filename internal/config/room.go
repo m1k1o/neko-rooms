@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -17,12 +18,13 @@ type Room struct {
 
 	NekoImages   []string
 	InstanceName string
+	InstanceUrl  string
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
 	TraefikCertresolver string
 	TraefikNetwork      string
-	TraefikPort         string
+	TraefikPort         string // deprecated
 }
 
 func (Room) Init(cmd *cobra.Command) error {
@@ -46,6 +48,11 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	cmd.PersistentFlags().String("instance_url", "", "instance url that is prefixing room names (if different from `http(s)://{traefik_domain}/`)")
+	if err := viper.BindPFlag("instance_url", cmd.PersistentFlags().Lookup("instance_url")); err != nil {
+		return err
+	}
+
 	cmd.PersistentFlags().String("traefik_domain", "neko.lan", "traefik: domain on which will be container hosted")
 	if err := viper.BindPFlag("traefik_domain", cmd.PersistentFlags().Lookup("traefik_domain")); err != nil {
 		return err
@@ -66,7 +73,7 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik_port", "", "traefik: external port (if different than 80 or 443)")
+	cmd.PersistentFlags().String("traefik_port", "", "traefik: external port (deprecated)")
 	if err := viper.BindPFlag("traefik_port", cmd.PersistentFlags().Lookup("traefik_port")); err != nil {
 		return err
 	}
@@ -111,10 +118,20 @@ func (s *Room) Set() {
 
 	s.NekoImages = viper.GetStringSlice("neko_images")
 	s.InstanceName = viper.GetString("instance_name")
+	s.InstanceUrl = viper.GetString("instance_url")
 
 	s.TraefikDomain = viper.GetString("traefik_domain")
 	s.TraefikEntrypoint = viper.GetString("traefik_entrypoint")
 	s.TraefikCertresolver = viper.GetString("traefik_certresolver")
 	s.TraefikNetwork = viper.GetString("traefik_network")
+
+	// deprecated
 	s.TraefikPort = viper.GetString("traefik_port")
+	if s.TraefikPort != "" {
+		if s.InstanceUrl != "" {
+			log.Warn().Msg("deprecated `traefik_port` config item is ignored when `instance_url` is set")
+		} else {
+			log.Warn().Msg("you are using deprecated `traefik_port` config item, you should consider moving to `instance_url`")
+		}
+	}
 }
