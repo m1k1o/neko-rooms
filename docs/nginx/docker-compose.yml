@@ -1,0 +1,54 @@
+version: "3.7"
+
+networks:
+  default:
+    attachable: "true"
+    name: "neko-rooms-traefik"
+
+services:
+  traefik: # traefik domain (name of the service)
+    image: "traefik:2.4"
+    restart: "unless-stopped"
+    environment:
+      - "TZ=Europe/Vienna"
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.watch=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=neko-rooms-traefik"
+      - "--entrypoints.web.address=:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  neko-rooms:
+    image: "m1k1o/neko-rooms:latest"
+    restart: "unless-stopped"
+    environment:
+      - "TZ=Europe/Vienna"
+      - "NEKO_ROOMS_EPR=59000-59049"
+      - "NEKO_ROOMS_NAT1TO1=10.8.0.1" # IP address of your server
+      - "NEKO_ROOMS_TRAEFIK_DOMAIN=traefik" # traefik domain (name of the service)
+      - "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=web"
+      - "NEKO_ROOMS_TRAEFIK_NETWORK=neko-rooms-traefik"
+      - "NEKO_ROOMS_INSTANCE_URL=https://10.8.0.1:8080/" # external URL
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.neko-rooms-frontend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.neko-rooms.entrypoints=web"
+      - "traefik.http.routers.neko-rooms.rule=Host(`traefik`)" # traefik domain (name of the service)
+
+  #
+  # This should be replaced by your own existing nginx instance
+  #
+
+  nginx:
+    image: "nginx"
+    restart: "unless-stopped"
+    environment:
+      - "TZ=Europe/Vienna"
+    ports:
+      - "8080:80"
+    volumes:
+      - "./nginx.conf:/etc/nginx/conf.d/default.conf:ro"
