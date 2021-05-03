@@ -7,8 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"m1k1o/neko_rooms/internal/utils"
 )
 
 type Room struct {
@@ -82,16 +80,6 @@ func (Room) Init(cmd *cobra.Command) error {
 }
 
 func (s *Room) Set() {
-	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
-
-	// if not specified, get public
-	if len(s.NAT1To1IPs) == 0 {
-		ip, err := utils.GetIP()
-		if err == nil {
-			s.NAT1To1IPs = append(s.NAT1To1IPs, ip)
-		}
-	}
-
 	min := uint16(59000)
 	max := uint16(59999)
 	epr := viper.GetString("epr")
@@ -116,6 +104,7 @@ func (s *Room) Set() {
 		s.EprMax = max
 	}
 
+	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
 	s.InstanceName = viper.GetString("instance_name")
 	s.InstanceUrl = viper.GetString("instance_url")

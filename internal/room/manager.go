@@ -166,6 +166,17 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		labels["traefik.http.routers."+containerName+".tls.certresolver"] = manager.config.TraefikCertresolver
 	}
 
+	env := []string{
+		fmt.Sprintf("NEKO_BIND=:%d", frontendPort),
+		fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
+		"NEKO_ICELITE=true",
+	}
+
+	// optional nat mapping
+	if len(manager.config.NAT1To1IPs) > 0 {
+		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")))
+	}
+
 	config := &container.Config{
 		// Hostname
 		Hostname: containerName,
@@ -175,12 +186,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		// List of exposed ports
 		ExposedPorts: exposedPorts,
 		// List of environment variable to set in the container
-		Env: append([]string{
-			fmt.Sprintf("NEKO_BIND=:%d", frontendPort),
-			fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
-			fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")),
-			"NEKO_ICELITE=true",
-		}, settings.ToEnv()...),
+		Env: append(env, settings.ToEnv()...),
 		// Name of the image as it was passed by the operator (e.g. could be symbolic)
 		Image: settings.NekoImage,
 		// List of labels set to this container
