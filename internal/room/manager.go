@@ -197,7 +197,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		},
 		// Restart policy to be used for the container
 		RestartPolicy: container.RestartPolicy{
-			Name: "always",
+			Name: "unless-stopped",
 		},
 		// List of kernel capabilities to add to the container
 		CapAdd: strslice.StrSlice{
