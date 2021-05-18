@@ -59,7 +59,8 @@ type RoomSettings struct {
 
 	BroadcastPipeline string `json:"broadcast_pipeline,omitempty"`
 
-	Envs map[string]string `json:"envs"`
+	Envs   map[string]string `json:"envs"`
+	Mounts map[string]string `json:"mounts"`
 }
 
 func (settings *RoomSettings) ToEnv() []string {

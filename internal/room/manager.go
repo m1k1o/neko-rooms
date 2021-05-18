@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 	"strings"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -177,6 +178,15 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")))
 	}
 
+	binds := []string{}
+	for hostPath, containerPath := range settings.Mounts {
+		binds = append(
+			binds,
+			// TODO: Check for invalid paths.
+			path.Join(manager.config.InstanceData, roomName, hostPath)+":"+containerPath,
+		)
+	}
+
 	config := &container.Config{
 		// Hostname
 		Hostname: containerName,
@@ -194,6 +204,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	hostConfig := &container.HostConfig{
+		// List of volume bindings for this container
+		Binds: binds,
 		// Port mapping between the exposed port (container) and the host
 		PortBindings: portBindings,
 		// Configuration of the logs for this container

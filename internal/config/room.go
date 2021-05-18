@@ -18,6 +18,7 @@ type Room struct {
 
 	InstanceName string
 	InstanceUrl  string
+	InstanceData string
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
@@ -59,6 +60,11 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().String("instance.url", "", "instance url that is prefixing room names (if different from `http(s)://{traefik_domain}/`)")
 	if err := viper.BindPFlag("instance.url", cmd.PersistentFlags().Lookup("instance.url")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("instance.data", "", "absolute path on host to a folder, where peristent containers data will be stored")
+	if err := viper.BindPFlag("instance.data", cmd.PersistentFlags().Lookup("instance.url")); err != nil {
 		return err
 	}
 
@@ -122,6 +128,7 @@ func (s *Room) Set() {
 
 	s.InstanceName = viper.GetString("instance.name")
 	s.InstanceUrl = viper.GetString("instance.url")
+	s.InstanceData = viper.GetString("instance.data")
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
