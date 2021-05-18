@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -92,6 +93,7 @@ func init() {
 		}
 
 		viper.SetEnvPrefix("NEKO_ROOMS")
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 		viper.AutomaticEnv() // read in environment variables that match
 
 		if err := viper.ReadInConfig(); err != nil {

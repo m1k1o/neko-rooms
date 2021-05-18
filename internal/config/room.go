@@ -10,11 +10,12 @@ import (
 )
 
 type Room struct {
-	NAT1To1IPs []string
-	EprMin     uint16
-	EprMax     uint16
+	EprMin uint16
+	EprMax uint16
 
-	NekoImages   []string
+	NAT1To1IPs []string
+	NekoImages []string
+
 	InstanceName string
 	InstanceUrl  string
 
@@ -36,43 +37,55 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().StringSlice("neko_images", []string{"m1k1o/neko:latest", "m1k1o/neko:chromium", "m1k1o/neko:ungoogled-chromium", "m1k1o/neko:tor-browser", "m1k1o/neko:vlc", "m1k1o/neko:vncviewer", "m1k1o/neko:xfce"}, "neko images to be used")
+	cmd.PersistentFlags().StringSlice("neko_images", []string{
+		"m1k1o/neko:latest",
+		"m1k1o/neko:chromium",
+		"m1k1o/neko:ungoogled-chromium",
+		"m1k1o/neko:tor-browser",
+		"m1k1o/neko:vlc",
+		"m1k1o/neko:vncviewer",
+		"m1k1o/neko:xfce",
+	}, "neko images to be used")
 	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().String("instance_name", "neko-rooms", "unique instance name (if running muliple on the same host)")
-	if err := viper.BindPFlag("instance_name", cmd.PersistentFlags().Lookup("instance_name")); err != nil {
+	// Instance
+
+	cmd.PersistentFlags().String("instance.name", "neko-rooms", "unique instance name (if running muliple on the same host)")
+	if err := viper.BindPFlag("instance.name", cmd.PersistentFlags().Lookup("instance.name")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().String("instance_url", "", "instance url that is prefixing room names (if different from `http(s)://{traefik_domain}/`)")
-	if err := viper.BindPFlag("instance_url", cmd.PersistentFlags().Lookup("instance_url")); err != nil {
+	cmd.PersistentFlags().String("instance.url", "", "instance url that is prefixing room names (if different from `http(s)://{traefik_domain}/`)")
+	if err := viper.BindPFlag("instance.url", cmd.PersistentFlags().Lookup("instance.url")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik_domain", "neko.lan", "traefik: domain on which will be container hosted")
-	if err := viper.BindPFlag("traefik_domain", cmd.PersistentFlags().Lookup("traefik_domain")); err != nil {
+	// Traefik
+
+	cmd.PersistentFlags().String("traefik.domain", "neko.lan", "traefik: domain on which will be container hosted")
+	if err := viper.BindPFlag("traefik.domain", cmd.PersistentFlags().Lookup("traefik.domain")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik_entrypoint", "web-secure", "traefik: router entrypoint")
-	if err := viper.BindPFlag("traefik_entrypoint", cmd.PersistentFlags().Lookup("traefik_entrypoint")); err != nil {
+	cmd.PersistentFlags().String("traefik.entrypoint", "web-secure", "traefik: router entrypoint")
+	if err := viper.BindPFlag("traefik.entrypoint", cmd.PersistentFlags().Lookup("traefik.entrypoint")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik_certresolver", "", "traefik: certificate resolver for router")
-	if err := viper.BindPFlag("traefik_certresolver", cmd.PersistentFlags().Lookup("traefik_certresolver")); err != nil {
+	cmd.PersistentFlags().String("traefik.certresolver", "", "traefik: certificate resolver for router")
+	if err := viper.BindPFlag("traefik.certresolver", cmd.PersistentFlags().Lookup("traefik.certresolver")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik_network", "traefik", "traefik: docker network name")
-	if err := viper.BindPFlag("traefik_network", cmd.PersistentFlags().Lookup("traefik_network")); err != nil {
+	cmd.PersistentFlags().String("traefik.network", "traefik", "traefik: docker network name")
+	if err := viper.BindPFlag("traefik.network", cmd.PersistentFlags().Lookup("traefik.network")); err != nil {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik_port", "", "traefik: external port (deprecated)")
-	if err := viper.BindPFlag("traefik_port", cmd.PersistentFlags().Lookup("traefik_port")); err != nil {
+	cmd.PersistentFlags().String("traefik.port", "", "traefik: external port (deprecated)")
+	if err := viper.BindPFlag("traefik.port", cmd.PersistentFlags().Lookup("traefik.port")); err != nil {
 		return err
 	}
 
@@ -106,21 +119,22 @@ func (s *Room) Set() {
 
 	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
-	s.InstanceName = viper.GetString("instance_name")
-	s.InstanceUrl = viper.GetString("instance_url")
 
-	s.TraefikDomain = viper.GetString("traefik_domain")
-	s.TraefikEntrypoint = viper.GetString("traefik_entrypoint")
-	s.TraefikCertresolver = viper.GetString("traefik_certresolver")
-	s.TraefikNetwork = viper.GetString("traefik_network")
+	s.InstanceName = viper.GetString("instance.name")
+	s.InstanceUrl = viper.GetString("instance.url")
+
+	s.TraefikDomain = viper.GetString("traefik.domain")
+	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
+	s.TraefikCertresolver = viper.GetString("traefik.certresolver")
+	s.TraefikNetwork = viper.GetString("traefik.network")
 
 	// deprecated
-	s.TraefikPort = viper.GetString("traefik_port")
+	s.TraefikPort = viper.GetString("traefik.port")
 	if s.TraefikPort != "" {
 		if s.InstanceUrl != "" {
-			log.Warn().Msg("deprecated `traefik_port` config item is ignored when `instance_url` is set")
+			log.Warn().Msg("deprecated `traefik.port` config item is ignored when `instance.url` is set")
 		} else {
-			log.Warn().Msg("you are using deprecated `traefik_port` config item, you should consider moving to `instance_url`")
+			log.Warn().Msg("you are using deprecated `traefik.port` config item, you should consider moving to `instance.url`")
 		}
 	}
 }
