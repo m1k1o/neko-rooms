@@ -218,6 +218,7 @@
                 label="Host path"
                 :value="host_path"
                 @input="$set(data.mounts, index, { host_path: $event, container_path })"
+                :rules="[ rules.absolutePath ]"
                 autocomplete="off"
               ></v-text-field>
             </v-col>
@@ -227,6 +228,7 @@
                 label="Container path"
                 :value="container_path"
                 @input="$set(data.mounts, index, { host_path, container_path: $event})"
+                :rules="[ rules.absolutePath ]"
                 autocomplete="off"
               ></v-text-field>
             </v-col>
@@ -308,6 +310,9 @@ export default class RoomsCreate extends Vue {
     slug(val: string) {
       return val && !/^[A-Za-z0-9-_.]+$/.test(val) ? 'Should only contain A-Z a-z 0-9 - _ .' : true
     },
+    absolutePath(val: string) {
+      return val[0] !== "/" ? 'Must be absolute path, starting with /.' : true
+    }
   }
 
   get nekoImages() {
