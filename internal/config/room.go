@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	dockerNames "github.com/docker/docker/daemon/names"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -127,8 +128,23 @@ func (s *Room) Set() {
 	s.NekoImages = viper.GetStringSlice("neko_images")
 
 	s.InstanceName = viper.GetString("instance.name")
+	if !dockerNames.RestrictedNamePattern.MatchString(s.InstanceName) {
+		log.Panic().Msg("invalid `instance.name`, must match " + dockerNames.RestrictedNameChars)
+	}
+
 	s.InstanceUrl = viper.GetString("instance.url")
 	s.InstanceData = viper.GetString("instance.data")
+	if s.InstanceData != "" {
+		if !strings.HasPrefix(s.InstanceData, "/") {
+			log.Panic().Msg("invalid `instance.data`, must be absolute path starting with /.")
+		}
+
+		if strings.Contains(s.InstanceData, ":") {
+			log.Panic().Msg("invalid `instance.data`, cannot contain : character")
+		}
+	} else {
+		log.Warn().Msg("missing `instance.data`, container mounts are unavailable")
+	}
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")

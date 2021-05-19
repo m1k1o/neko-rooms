@@ -12,6 +12,7 @@ import (
 	network "github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	dockerClient "github.com/docker/docker/client"
+	dockerNames "github.com/docker/docker/daemon/names"
 	"github.com/docker/go-connections/nat"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -84,6 +85,14 @@ func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error)
 }
 
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
+	if settings.Name != "" && dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
+		return "", fmt.Errorf("invalid container name, must match " + dockerNames.RestrictedNameChars)
+	}
+
+	if manager.config.InstanceData == "" && len(settings.Mounts) > 0 {
+		return "", fmt.Errorf("mounts cannot be specified, because `instance.data` config value is not set")
+	}
+
 	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
 		return "", fmt.Errorf("invalid neko image")
 	}
@@ -180,9 +189,12 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	binds := []string{}
 	for _, mount := range settings.Mounts {
+		if strings.Contains(mount.HostPath, ":") || strings.Contains(mount.ContainerPath, ":") {
+			return "", fmt.Errorf("mount paths cannot contain : character")
+		}
+
 		binds = append(
 			binds,
-			// TODO: Check for invalid paths.
 			path.Join(manager.config.InstanceData, roomName, mount.HostPath)+":"+mount.ContainerPath,
 		)
 	}

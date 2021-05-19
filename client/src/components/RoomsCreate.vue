@@ -14,7 +14,7 @@
             <v-text-field
               label="Name"
               v-model="data.name"
-              :rules="[ rules.slug ]"
+              :rules="[ rules.containerNameStart, rules.containerName ]"
               autocomplete="off"
             ></v-text-field>
           </v-col>
@@ -218,7 +218,7 @@
                 label="Host path"
                 :value="host_path"
                 @input="$set(data.mounts, index, { host_path: $event, container_path })"
-                :rules="[ rules.absolutePath ]"
+                :rules="[ rules.absolutePath, rules.withoutColon ]"
                 autocomplete="off"
               ></v-text-field>
             </v-col>
@@ -228,7 +228,7 @@
                 label="Container path"
                 :value="container_path"
                 @input="$set(data.mounts, index, { host_path, container_path: $event})"
-                :rules="[ rules.absolutePath ]"
+                :rules="[ rules.absolutePath, rules.withoutColon ]"
                 autocomplete="off"
               ></v-text-field>
             </v-col>
@@ -307,11 +307,17 @@ export default class RoomsCreate extends Vue {
     nonZero(val: string) {
       return val === "0" ? 'Value cannot be zero.' : true
     },
-    slug(val: string) {
-      return val && !/^[A-Za-z0-9-_.]+$/.test(val) ? 'Should only contain A-Z a-z 0-9 - _ .' : true
+    containerName(val: string) {
+      return val && !/^[a-zA-Z0-9][a-zA-Z0-9_.-]+$/.test(val) ? 'Must only contain a-z A-Z 0-9 _ . -' : true
+    },
+    containerNameStart(val: string) {
+      return val && /^[_.-]/.test(val) ? 'Cannot start with _ . -' : true
     },
     absolutePath(val: string) {
       return val[0] !== "/" ? 'Must be absolute path, starting with /.' : true
+    },
+    withoutColon(val: string) {
+      return val && /:$/.test(val) ? 'Cannnot contain : character.' : true
     }
   }
 
