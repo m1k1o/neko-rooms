@@ -136,7 +136,7 @@ func (s *Room) Set() {
 	s.InstanceData = viper.GetString("instance.data")
 	if s.InstanceData != "" {
 		if !strings.HasPrefix(s.InstanceData, "/") {
-			log.Panic().Msg("invalid `instance.data`, must be absolute path starting with /.")
+			log.Panic().Msg("invalid `instance.data`, must be absolute path starting with /")
 		}
 
 		if strings.Contains(s.InstanceData, ":") {
