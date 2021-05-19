@@ -1,0 +1,33 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+if [ ! -f "../.env" ]
+then
+    echo "../.env file not found!"
+    exit 1
+fi
+
+export $(cat ../.env | sed 's/#.*//g' | xargs)
+
+docker network create --attachable "${NEKO_ROOMS_TRAEFIK_NETWORK}";
+
+trap on_exit EXIT
+
+on_exit() {
+    echo "Removing traefik network"
+    docker network rm "${NEKO_ROOMS_TRAEFIK_NETWORK}";
+}
+
+docker run --rm -it \
+    --name="neko_rooms_traefik" \
+    -p "${1:-80}:80" \
+    -v "${PWD}/../:/app" \
+	-e "TZ=${TZ}" \
+    -v "/var/run/docker.sock:/var/run/docker.sock" \
+    --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
+    traefik:2.4 \
+      --providers.docker=true \
+      --providers.docker.watch=true \
+      --providers.docker.exposedbydefault=false \
+      --providers.docker.network=${NEKO_ROOMS_TRAEFIK_NETWORK} \
+      --entrypoints.${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}.address=:80;

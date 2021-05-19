@@ -1,16 +1,29 @@
 #!/bin/sh
 cd "$(dirname "$0")"
 
+if [ ! -f "../.env" ]
+then
+    echo "../.env file not found!"
+    exit 1
+fi
+
+export $(cat ../.env | sed 's/#.*//g' | xargs)
+
 docker run --rm -it \
-    --name "neko_rooms" \
-    -p "8080:8080" \
+    --name="neko_rooms_server" \
     -v "${PWD}/../:/app" \
+	-e "TZ=${TZ}" \
+	-e "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}" \
+	-e "NEKO_ROOMS_NAT1TO1=${NEKO_ROOMS_NAT1TO1}" \
+	-e "NEKO_ROOMS_TRAEFIK_DOMAIN=${NEKO_ROOMS_TRAEFIK_DOMAIN}" \
+	-e "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
+	-e "NEKO_ROOMS_TRAEFIK_NETWORK=${NEKO_ROOMS_TRAEFIK_NETWORK}" \
     -e 'DOCKER_API_VERSION=1.39' \
-	-e "NEKO_ROOMS_EPR=59000-59049" \
-	-e "NEKO_ROOMS_NAT1TO1=192.168.1.20" \
-	-e "NEKO_ROOMS_TRAEFIK_DOMAIN=neko-rooms.server.lan" \
-	-e "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=web" \
-	-e "NEKO_ROOMS_TRAEFIK_NETWORK=traefik" \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
+    --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
+    -l "traefik.enable=true" \
+    -l "traefik.http.services.neko-rooms-server-fe.loadbalancer.server.port=8080" \
+    -l "traefik.http.routers.neko-rooms-server.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
+    -l "traefik.http.routers.neko-rooms-server.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`) && PathPrefix(\`/api\`)" \
     --entrypoint="/app/bin/neko_rooms" \
     neko_rooms_img serve --bind :8080;
