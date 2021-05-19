@@ -179,11 +179,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	binds := []string{}
-	for hostPath, containerPath := range settings.Mounts {
+	for _, mount := range settings.Mounts {
 		binds = append(
 			binds,
 			// TODO: Check for invalid paths.
-			path.Join(manager.config.InstanceData, roomName, hostPath)+":"+containerPath,
+			path.Join(manager.config.InstanceData, roomName, mount.HostPath)+":"+mount.ContainerPath,
 		)
 	}
 

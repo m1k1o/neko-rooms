@@ -110,6 +110,25 @@ export interface RoomMember {
 /**
  * 
  * @export
+ * @interface RoomMount
+ */
+export interface RoomMount {
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomMount
+     */
+    host_path?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomMount
+     */
+    container_path?: string;
+}
+/**
+ * 
+ * @export
  * @interface RoomSettings
  */
 export interface RoomSettings {
@@ -203,6 +222,12 @@ export interface RoomSettings {
      * @memberof RoomSettings
      */
     envs?: { [key: string]: string; };
+    /**
+     * 
+     * @type {Array<RoomMount>}
+     * @memberof RoomSettings
+     */
+    mounts?: Array<RoomMount>;
 }
 /**
  * 

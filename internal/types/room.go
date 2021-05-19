@@ -39,6 +39,11 @@ type RoomEntry struct {
 	Created        time.Time `json:"created"`
 }
 
+type RoomMount struct {
+	HostPath      string `json:"host_path"`
+	ContainerPath string `json:"container_path"`
+}
+
 type RoomSettings struct {
 	Name           string `json:"name"`
 	NekoImage      string `json:"neko_image"`
@@ -60,7 +65,7 @@ type RoomSettings struct {
 	BroadcastPipeline string `json:"broadcast_pipeline,omitempty"`
 
 	Envs   map[string]string `json:"envs"`
-	Mounts map[string]string `json:"mounts"`
+	Mounts []RoomMount       `json:"mounts"`
 }
 
 func (settings *RoomSettings) ToEnv() []string {

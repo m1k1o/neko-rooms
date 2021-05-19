@@ -243,6 +243,16 @@ components:
           format: datetime
           example: "2021-03-07T21:56:34Z"
 
+    RoomMount:
+      type: object
+      properties:
+        host_path:
+          type: string
+          example: /profile
+        container_path:
+          type: string
+          example: /home/neko/.config/chromium
+
     RoomSettings:
       type: object
       properties:
@@ -291,6 +301,10 @@ components:
             type: string
           example:
             CUSTOM_ENV: custom value
+        mounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoomMount'
 
     RoomStats:
       type: object
