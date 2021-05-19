@@ -37,6 +37,11 @@ export const state = {
   
     // eslint-disable-next-line
     broadcast_pipeline: '',
+  
+    // eslint-disable-next-line
+    envs: {},
+    // eslint-disable-next-line
+    mounts: [],
   } as RoomSettings,
   videoCodecs: [
     "VP8",

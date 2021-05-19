@@ -187,7 +187,7 @@
             <v-btn @click="addEnv" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
           <v-row align="center" v-for="({ key, val }, index) in envList" :key="index">
-            <v-col class="pb-0">
+            <v-col class="py-0">
               <v-text-field
                 label="Key"
                 :value="key"
@@ -195,7 +195,8 @@
                 autocomplete="off"
               ></v-text-field>
             </v-col>
-            <v-col class="pb-0">
+            <div> : </div>
+            <v-col class="py-0">
               <v-text-field
                 label="Value"
                 :value="val"
@@ -205,6 +206,32 @@
             </v-col>
             <div>
               <v-btn @click="delEnv(index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
+            </div>
+          </v-row>
+          <v-row align="center" no-gutters class="mt-3">
+            <h2> Mounts </h2>
+            <v-btn @click="data.mounts = [ ...data.mounts, { host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+          </v-row>
+          <v-row align="center" v-for="({ host_path, container_path }, index) in data.mounts" :key="index">
+            <v-col class="py-0">
+              <v-text-field
+                label="Host path"
+                :value="host_path"
+                @input="$set(data.mounts, index, { host_path: $event, container_path })"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <div> : </div>
+            <v-col class="py-0">
+              <v-text-field
+                label="Container path"
+                :value="container_path"
+                @input="$set(data.mounts, index, { host_path, container_path: $event})"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <div>
+              <v-btn @click="$delete(data.mounts, index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
             </div>
           </v-row>
         </template>
