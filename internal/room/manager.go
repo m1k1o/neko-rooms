@@ -328,9 +328,10 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 	}
 
 	mounts := []types.RoomMount{}
+	dataRoot := path.Join(manager.config.InstanceData, roomName)
 	for _, mount := range container.Mounts {
 		mounts = append(mounts, types.RoomMount{
-			HostPath:      mount.Source,
+			HostPath:      strings.TrimPrefix(mount.Source, dataRoot),
 			ContainerPath: mount.Destination,
 		})
 	}
