@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"path/filepath"
 	"strings"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -189,13 +190,20 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	binds := []string{}
 	for _, mount := range settings.Mounts {
-		if strings.Contains(mount.HostPath, ":") || strings.Contains(mount.ContainerPath, ":") {
+		hostPath := filepath.Clean(mount.HostPath)
+		containerPath := filepath.Clean(mount.ContainerPath)
+
+		if !filepath.IsAbs(hostPath) || !filepath.IsAbs(containerPath) {
+			return "", fmt.Errorf("mount paths must be absolute")
+		}
+
+		if strings.Contains(hostPath, ":") || strings.Contains(containerPath, ":") {
 			return "", fmt.Errorf("mount paths cannot contain : character")
 		}
 
 		binds = append(
 			binds,
-			path.Join(manager.config.InstanceData, roomName, mount.HostPath)+":"+mount.ContainerPath,
+			path.Join(manager.config.InstanceData, roomName, hostPath)+":"+containerPath,
 		)
 	}
 

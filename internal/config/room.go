@@ -1,6 +1,7 @@
 package config
 
 import (
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -135,8 +136,10 @@ func (s *Room) Set() {
 	s.InstanceUrl = viper.GetString("instance.url")
 	s.InstanceData = viper.GetString("instance.data")
 	if s.InstanceData != "" {
-		if !strings.HasPrefix(s.InstanceData, "/") {
-			log.Panic().Msg("invalid `instance.data`, must be absolute path starting with /")
+		s.InstanceData = filepath.Clean(s.InstanceData)
+
+		if !filepath.IsAbs(s.InstanceData) {
+			log.Panic().Msg("invalid `instance.data`, must be an absolute path")
 		}
 
 		if strings.Contains(s.InstanceData, ":") {
