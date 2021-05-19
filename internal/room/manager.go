@@ -85,7 +85,7 @@ func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error)
 }
 
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
-	if settings.Name != "" && dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
+	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
 		return "", fmt.Errorf("invalid container name, must match " + dockerNames.RestrictedNameChars)
 	}
 
@@ -319,10 +319,19 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		return nil, err
 	}
 
+	mounts := []types.RoomMount{}
+	for _, mount := range container.Mounts {
+		mounts = append(mounts, types.RoomMount{
+			HostPath:      mount.Source,
+			ContainerPath: mount.Destination,
+		})
+	}
+
 	settings := types.RoomSettings{
 		Name:           roomName,
 		NekoImage:      nekoImage,
 		MaxConnections: epr.Max - epr.Min + 1,
+		Mounts:         mounts,
 	}
 
 	err = settings.FromEnv(container.Config.Env)
