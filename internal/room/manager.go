@@ -10,6 +10,7 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	dockerMount "github.com/docker/docker/api/types/mount"
 	network "github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	dockerClient "github.com/docker/docker/client"
@@ -188,7 +189,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")))
 	}
 
-	binds := []string{}
+	mounts := []dockerMount.Mount{}
 	for _, mount := range settings.Mounts {
 		hostPath := filepath.Clean(mount.HostPath)
 		containerPath := filepath.Clean(mount.ContainerPath)
@@ -197,13 +198,19 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			return "", fmt.Errorf("mount paths must be absolute")
 		}
 
-		if strings.Contains(hostPath, ":") || strings.Contains(containerPath, ":") {
-			return "", fmt.Errorf("mount paths cannot contain : character")
-		}
+		mounts = append(mounts,
+			dockerMount.Mount{
+				Type:        dockerMount.TypeBind,
+				Source:      path.Join(manager.config.InstanceData, roomName, hostPath),
+				Target:      containerPath,
+				ReadOnly:    false,
+				Consistency: dockerMount.ConsistencyDefault,
 
-		binds = append(
-			binds,
-			path.Join(manager.config.InstanceData, roomName, hostPath)+":"+containerPath,
+				BindOptions: &dockerMount.BindOptions{
+					Propagation:  dockerMount.PropagationRPrivate,
+					NonRecursive: false,
+				},
+			},
 		)
 	}
 
@@ -224,8 +231,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	hostConfig := &container.HostConfig{
-		// List of volume bindings for this container
-		Binds: binds,
 		// Port mapping between the exposed port (container) and the host
 		PortBindings: portBindings,
 		// Configuration of the logs for this container
@@ -243,6 +248,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		},
 		// Total shm memory usage
 		ShmSize: 2 * 10e9,
+		// Mounts specs used by the container
+		Mounts: mounts,
 	}
 
 	networkingConfig := &network.NetworkingConfig{
