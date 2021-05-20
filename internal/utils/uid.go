@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultAlphabet = "_-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" // len=64
+	defaultAlphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" // len=62
 	defaultSize     = 21
 	defaultMaskSize = 5
 )
@@ -92,7 +92,7 @@ func NewUID(param ...int) (string, error) {
 	}
 	id := make([]byte, size)
 	for i := 0; i < size; i++ {
-		id[i] = defaultAlphabet[bytes[i]&63]
+		id[i] = defaultAlphabet[bytes[i]&61]
 	}
 	return string(id[:size]), nil
 }
