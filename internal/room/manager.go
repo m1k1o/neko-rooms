@@ -103,7 +103,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	roomName := settings.Name
 	if roomName == "" {
 		var err error
-		roomName, err = utils.NewUID(32)
+		roomName, err = utils.NewUID(8)
 		if err != nil {
 			return "", err
 		}
