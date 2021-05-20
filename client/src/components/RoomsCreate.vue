@@ -218,7 +218,7 @@
                 label="Host path"
                 :value="host_path"
                 @input="$set(data.mounts, index, { host_path: $event, container_path })"
-                :rules="[ rules.absolutePath, rules.withoutColon ]"
+                :rules="[ rules.absolutePath ]"
                 autocomplete="off"
               ></v-text-field>
             </v-col>
@@ -228,7 +228,7 @@
                 label="Container path"
                 :value="container_path"
                 @input="$set(data.mounts, index, { host_path, container_path: $event})"
-                :rules="[ rules.absolutePath, rules.withoutColon ]"
+                :rules="[ rules.absolutePath ]"
                 autocomplete="off"
               ></v-text-field>
             </v-col>
@@ -315,9 +315,6 @@ export default class RoomsCreate extends Vue {
     },
     absolutePath(val: string) {
       return val[0] !== "/" ? 'Must be absolute path, starting with /.' : true
-    },
-    withoutColon(val: string) {
-      return val && /:$/.test(val) ? 'Cannnot contain : character.' : true
     }
   }
 

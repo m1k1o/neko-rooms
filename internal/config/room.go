@@ -141,10 +141,6 @@ func (s *Room) Set() {
 		if !filepath.IsAbs(s.InstanceData) {
 			log.Panic().Msg("invalid `instance.data`, must be an absolute path")
 		}
-
-		if strings.Contains(s.InstanceData, ":") {
-			log.Panic().Msg("invalid `instance.data`, cannot contain : character")
-		}
 	} else {
 		log.Warn().Msg("missing `instance.data`, container mounts are unavailable")
 	}
