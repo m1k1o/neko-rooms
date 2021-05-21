@@ -18,9 +18,12 @@ type Room struct {
 	NAT1To1IPs []string
 	NekoImages []string
 
+	StorageEnabled  bool
+	StorageInternal string
+	StorageExternal string
+
 	InstanceName string
 	InstanceUrl  string
-	InstanceData string
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
@@ -53,6 +56,23 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	// Data
+
+	cmd.PersistentFlags().Bool("storage.enabled", true, "whether storage is enabled, where peristent containers data will be stored")
+	if err := viper.BindPFlag("storage.enabled", cmd.PersistentFlags().Lookup("storage.enabled")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("storage.external", "", "external absolute path (on the host) to storage folder")
+	if err := viper.BindPFlag("storage.external", cmd.PersistentFlags().Lookup("storage.external")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("storage.internal", "/data", "internal absolute path (inside container) to storage folder")
+	if err := viper.BindPFlag("storage.internal", cmd.PersistentFlags().Lookup("storage.internal")); err != nil {
+		return err
+	}
+
 	// Instance
 
 	cmd.PersistentFlags().String("instance.name", "neko-rooms", "unique instance name (if running muliple on the same host)")
@@ -62,11 +82,6 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().String("instance.url", "", "instance url that is prefixing room names (if different from `http(s)://{traefik_domain}/`)")
 	if err := viper.BindPFlag("instance.url", cmd.PersistentFlags().Lookup("instance.url")); err != nil {
-		return err
-	}
-
-	cmd.PersistentFlags().String("instance.data", "", "absolute path on host to a folder, where peristent containers data will be stored")
-	if err := viper.BindPFlag("instance.data", cmd.PersistentFlags().Lookup("instance.url")); err != nil {
 		return err
 	}
 
@@ -128,22 +143,28 @@ func (s *Room) Set() {
 	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
 
+	s.StorageEnabled = viper.GetBool("storage.enabled")
+	s.StorageInternal = viper.GetString("storage.internal")
+	s.StorageExternal = viper.GetString("storage.external")
+
+	if s.StorageInternal != "" && s.StorageExternal != "" {
+		s.StorageInternal = filepath.Clean(s.StorageInternal)
+		s.StorageExternal = filepath.Clean(s.StorageExternal)
+
+		if !filepath.IsAbs(s.StorageInternal) || !filepath.IsAbs(s.StorageExternal) {
+			log.Panic().Msg("invalid `storage.internal` or `storage.external`, must be an absolute path")
+		}
+	} else {
+		log.Warn().Msg("missing `storage.internal` or `storage.external`, storage is unavailable")
+		s.StorageEnabled = false
+	}
+
 	s.InstanceName = viper.GetString("instance.name")
 	if !dockerNames.RestrictedNamePattern.MatchString(s.InstanceName) {
 		log.Panic().Msg("invalid `instance.name`, must match " + dockerNames.RestrictedNameChars)
 	}
 
 	s.InstanceUrl = viper.GetString("instance.url")
-	s.InstanceData = viper.GetString("instance.data")
-	if s.InstanceData != "" {
-		s.InstanceData = filepath.Clean(s.InstanceData)
-
-		if !filepath.IsAbs(s.InstanceData) {
-			log.Panic().Msg("invalid `instance.data`, must be an absolute path")
-		}
-	} else {
-		log.Warn().Msg("missing `instance.data`, container mounts are unavailable")
-	}
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")

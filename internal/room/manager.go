@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -25,7 +26,8 @@ import (
 )
 
 const (
-	frontendPort = 8080
+	frontendPort    = 8080
+	roomStoragePath = "./rooms"
 )
 
 func New(config *config.Room) *RoomManagerCtx {
@@ -91,8 +93,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", fmt.Errorf("invalid container name, must match " + dockerNames.RestrictedNameChars)
 	}
 
-	if manager.config.InstanceData == "" && len(settings.Mounts) > 0 {
-		return "", fmt.Errorf("mounts cannot be specified, because `instance.data` config value is not set")
+	if !manager.config.StorageEnabled && len(settings.Mounts) > 0 {
+		return "", fmt.Errorf("mounts cannot be specified, because storage is disabled or unavailable")
 	}
 
 	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
@@ -198,10 +200,17 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			return "", fmt.Errorf("mount paths must be absolute")
 		}
 
+		externalPath := path.Join(manager.config.StorageExternal, roomStoragePath, roomName, hostPath)
+		internalPath := path.Join(manager.config.StorageInternal, roomStoragePath, roomName, hostPath)
+
+		if err := os.MkdirAll(internalPath, os.ModePerm); err != nil {
+			return "", err
+		}
+
 		mounts = append(mounts,
 			dockerMount.Mount{
 				Type:        dockerMount.TypeBind,
-				Source:      path.Join(manager.config.InstanceData, roomName, hostPath),
+				Source:      externalPath,
 				Target:      containerPath,
 				ReadOnly:    false,
 				Consistency: dockerMount.ConsistencyDefault,
@@ -335,7 +344,7 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 	}
 
 	mounts := []types.RoomMount{}
-	dataRoot := path.Join(manager.config.InstanceData, roomName)
+	dataRoot := path.Join(manager.config.StorageExternal, roomStoragePath, roomName)
 	for _, mount := range container.Mounts {
 		mounts = append(mounts, types.RoomMount{
 			HostPath:      strings.TrimPrefix(mount.Source, dataRoot),
