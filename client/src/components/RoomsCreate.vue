@@ -209,8 +209,8 @@
             </div>
           </v-row>
           <v-row align="center" no-gutters class="mt-3">
-            <h2> Mounts </h2>
-            <v-btn @click="data.mounts = [ ...data.mounts, { host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+              <h2> Mounts </h2>
+              <v-btn @click="data.mounts = [ ...data.mounts, { host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
           <v-row align="center" v-for="({ host_path, container_path }, index) in data.mounts" :key="index">
             <v-col class="py-0">
@@ -235,6 +235,9 @@
             <div>
               <v-btn @click="$delete(data.mounts, index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
             </div>
+          </v-row>
+          <v-row align="center" no-gutters class="mt-3" v-if="data.mounts.length > 0">
+            Mounts are custom for every room. Host path is relative to <code class="mx-1">&lt;storage path&gt;/room/&lt;room name&gt;</code>.
           </v-row>
         </template>
       </v-form>
