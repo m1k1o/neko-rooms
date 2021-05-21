@@ -14,7 +14,7 @@
             <v-text-field
               label="Name"
               v-model="data.name"
-              :rules="[ rules.containerNameStart, rules.containerName ]"
+              :rules="[ rules.minLen(2), rules.containerNameStart, rules.containerName ]"
               autocomplete="off"
             ></v-text-field>
           </v-col>
@@ -301,6 +301,9 @@ export default class RoomsCreate extends Vue {
     required(val: any) {
       return val === null || typeof val === 'undefined' || val === "" ? 'This filed is mandatory.' : true
     },
+    minLen: (min: number) =>
+      (val: string) => 
+        val ? (val.length >= min || 'This field must have atleast ' + min + ' characters') : true,
     onlyPositive(val: number) {
       return val < 0 ? 'Value cannot be negative.' : true
     },
@@ -308,7 +311,7 @@ export default class RoomsCreate extends Vue {
       return val === "0" ? 'Value cannot be zero.' : true
     },
     containerName(val: string) {
-      return val && !/^[a-zA-Z0-9][a-zA-Z0-9_.-]+$/.test(val) ? 'Must only contain a-z A-Z 0-9 _ . -' : true
+      return val && !/^[a-zA-Z0-9_.-]+$/.test(val) ? 'Must only contain a-z A-Z 0-9 _ . -' : true
     },
     containerNameStart(val: string) {
       return val && /^[_.-]/.test(val) ? 'Cannot start with _ . -' : true
