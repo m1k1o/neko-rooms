@@ -28,6 +28,8 @@ import (
 const (
 	frontendPort    = 8080
 	roomStoragePath = "./rooms"
+	roomStorageUid  = 1000
+	roomStorageGid  = 1000
 )
 
 func New(config *config.Room) *RoomManagerCtx {
@@ -204,6 +206,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		internalPath := path.Join(manager.config.StorageInternal, roomStoragePath, roomName, hostPath)
 
 		if err := os.MkdirAll(internalPath, os.ModePerm); err != nil {
+			return "", err
+		}
+
+		if err := utils.ChownR(internalPath, roomStorageUid, roomStorageGid); err != nil {
 			return "", err
 		}
 
