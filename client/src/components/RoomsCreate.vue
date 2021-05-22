@@ -212,18 +212,20 @@
               <h2> Mounts </h2>
               <v-btn @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
-          <v-row align="center" class="mb-2" v-for="({ host_path, container_path }, index) in data.mounts" :key="index">
+          <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="index">
             <v-col class="py-0" cols="2">
               <v-select
                 label="Type"
                 :items="mountTypes"
+                :value="type"
+                @input="$set(data.mounts, index, { type: $event, host_path, container_path })"
               ></v-select>
             </v-col>
             <v-col class="py-0 pl-0">
               <v-text-field
                 label="Host path"
                 :value="host_path"
-                @input="$set(data.mounts, index, { host_path: $event, container_path })"
+                @input="$set(data.mounts, index, { type, host_path: $event, container_path })"
                 :rules="[ rules.absolutePath ]"
                 autocomplete="off"
               ></v-text-field>
@@ -233,7 +235,7 @@
               <v-text-field
                 label="Container path"
                 :value="container_path"
-                @input="$set(data.mounts, index, { host_path, container_path: $event})"
+                @input="$set(data.mounts, index, { type, host_path, container_path: $event})"
                 :rules="[ rules.absolutePath ]"
                 autocomplete="off"
               ></v-text-field>
