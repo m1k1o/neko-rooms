@@ -22,6 +22,8 @@ type Room struct {
 	StorageInternal string
 	StorageExternal string
 
+	MountsWhitelist []string
+
 	InstanceName string
 	InstanceUrl  string
 
@@ -70,6 +72,11 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().String("storage.internal", "/data", "internal absolute path (inside container) to storage folder")
 	if err := viper.BindPFlag("storage.internal", cmd.PersistentFlags().Lookup("storage.internal")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().StringSlice("mounts.whitelist", []string{}, "whitelisted public mounts for containers")
+	if err := viper.BindPFlag("mounts.whitelist", cmd.PersistentFlags().Lookup("mounts.whitelist")); err != nil {
 		return err
 	}
 
@@ -157,6 +164,15 @@ func (s *Room) Set() {
 	} else {
 		log.Warn().Msg("missing `storage.internal` or `storage.external`, storage is unavailable")
 		s.StorageEnabled = false
+	}
+
+	s.MountsWhitelist = viper.GetStringSlice("mounts.whitelist")
+	for _, path := range s.MountsWhitelist {
+		path = filepath.Clean(path)
+
+		if !filepath.IsAbs(path) {
+			log.Panic().Msg("invalid `mounts.whitelist`, must be an absolute path")
+		}
 	}
 
 	s.InstanceName = viper.GetString("instance.name")

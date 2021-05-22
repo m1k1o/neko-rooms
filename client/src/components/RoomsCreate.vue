@@ -210,7 +210,7 @@
           </v-row>
           <v-row align="center" no-gutters class="mt-3">
               <h2> Mounts </h2>
-              <v-btn @click="data.mounts = [ ...data.mounts, { host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+              <v-btn @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
           <v-row align="center" v-for="({ host_path, container_path }, index) in data.mounts" :key="index">
             <v-col class="py-0">

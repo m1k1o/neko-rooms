@@ -246,6 +246,10 @@ components:
     RoomMount:
       type: object
       properties:
+        type:
+          type: string
+          enum: [ private, template, public ]
+          example: private
         host_path:
           type: string
           example: /profile

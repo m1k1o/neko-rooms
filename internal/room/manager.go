@@ -26,10 +26,11 @@ import (
 )
 
 const (
-	frontendPort    = 8080
-	roomStoragePath = "./rooms"
-	roomStorageUid  = 1000
-	roomStorageGid  = 1000
+	frontendPort        = 8080
+	templateStoragePath = "./templates"
+	privateStoragePath  = "./rooms"
+	privateStorageUid   = 1000
+	privateStorageGid   = 1000
 )
 
 func New(config *config.Room) *RoomManagerCtx {
@@ -195,6 +196,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	mounts := []dockerMount.Mount{}
 	for _, mount := range settings.Mounts {
+		readOnly := false
+
 		hostPath := filepath.Clean(mount.HostPath)
 		containerPath := filepath.Clean(mount.ContainerPath)
 
@@ -202,23 +205,49 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			return "", fmt.Errorf("mount paths must be absolute")
 		}
 
-		externalPath := path.Join(manager.config.StorageExternal, roomStoragePath, roomName, hostPath)
-		internalPath := path.Join(manager.config.StorageInternal, roomStoragePath, roomName, hostPath)
+		// private container's data
+		if mount.Type == types.MountPrivate {
+			// ensure that target exists
+			internalPath := path.Join(manager.config.StorageInternal, privateStoragePath, roomName, hostPath)
+			if err := os.MkdirAll(internalPath, os.ModePerm); err != nil {
+				return "", err
+			}
 
-		if err := os.MkdirAll(internalPath, os.ModePerm); err != nil {
-			return "", err
-		}
+			if err := utils.ChownR(internalPath, privateStorageUid, privateStorageGid); err != nil {
+				return "", err
+			}
 
-		if err := utils.ChownR(internalPath, roomStorageUid, roomStorageGid); err != nil {
-			return "", err
+			// prefix host path
+			hostPath = path.Join(manager.config.StorageExternal, privateStoragePath, roomName, hostPath)
+		} else if mount.Type == types.MountTemplate {
+			// readonly template data
+			readOnly = true
+
+			// prefix host path
+			hostPath = path.Join(manager.config.StorageExternal, templateStoragePath, hostPath)
+		} else if mount.Type == types.MountPublic {
+			// public whitelisted mounts
+			var isAllowed = false
+			for _, path := range manager.config.MountsWhitelist {
+				if strings.HasPrefix(hostPath, path) {
+					isAllowed = true
+					break
+				}
+			}
+
+			if !isAllowed {
+				return "", fmt.Errorf("mount path is not whitelisted in config")
+			}
+		} else {
+			return "", fmt.Errorf("unknown mount type %q", mount.Type)
 		}
 
 		mounts = append(mounts,
 			dockerMount.Mount{
 				Type:        dockerMount.TypeBind,
-				Source:      externalPath,
+				Source:      hostPath,
 				Target:      containerPath,
-				ReadOnly:    false,
+				ReadOnly:    readOnly,
 				Consistency: dockerMount.ConsistencyDefault,
 
 				BindOptions: &dockerMount.BindOptions{
@@ -349,11 +378,25 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		return nil, err
 	}
 
+	privateStorageRoot := path.Join(manager.config.StorageExternal, privateStoragePath, roomName)
+	templateStorageRoot := path.Join(manager.config.StorageExternal, templateStoragePath)
+
 	mounts := []types.RoomMount{}
-	dataRoot := path.Join(manager.config.StorageExternal, roomStoragePath, roomName)
 	for _, mount := range container.Mounts {
+		mountType := types.MountPublic
+		hostPath := mount.Source
+
+		if strings.HasPrefix(hostPath, privateStorageRoot) {
+			mountType = types.MountPrivate
+			hostPath = strings.TrimPrefix(hostPath, privateStorageRoot)
+		} else if strings.HasPrefix(hostPath, templateStorageRoot) {
+			mountType = types.MountTemplate
+			hostPath = strings.TrimPrefix(hostPath, templateStorageRoot)
+		}
+
 		mounts = append(mounts, types.RoomMount{
-			HostPath:      strings.TrimPrefix(mount.Source, dataRoot),
+			Type:          mountType,
+			HostPath:      hostPath,
 			ContainerPath: mount.Destination,
 		})
 	}

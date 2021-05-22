@@ -118,6 +118,12 @@ export interface RoomMount {
      * @type {string}
      * @memberof RoomMount
      */
+    type?: RoomMountTypeEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomMount
+     */
     host_path?: string;
     /**
      * 
@@ -126,6 +132,17 @@ export interface RoomMount {
      */
     container_path?: string;
 }
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum RoomMountTypeEnum {
+    private = 'private',
+    template = 'template',
+    public = 'public'
+}
+
 /**
  * 
  * @export

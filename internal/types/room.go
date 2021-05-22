@@ -39,9 +39,18 @@ type RoomEntry struct {
 	Created        time.Time `json:"created"`
 }
 
+type MountType string
+
+const (
+	MountPrivate  MountType = "private"
+	MountTemplate MountType = "template"
+	MountPublic   MountType = "public"
+)
+
 type RoomMount struct {
-	HostPath      string `json:"host_path"`
-	ContainerPath string `json:"container_path"`
+	Type          MountType `json:"type"`
+	HostPath      string    `json:"host_path"`
+	ContainerPath string    `json:"container_path"`
 }
 
 type RoomSettings struct {
