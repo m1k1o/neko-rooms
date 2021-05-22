@@ -212,8 +212,14 @@
               <h2> Mounts </h2>
               <v-btn @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
-          <v-row align="center" v-for="({ host_path, container_path }, index) in data.mounts" :key="index">
-            <v-col class="py-0">
+          <v-row align="center" class="mb-2" v-for="({ host_path, container_path }, index) in data.mounts" :key="index">
+            <v-col class="py-0" cols="2">
+              <v-select
+                label="Type"
+                :items="mountTypes"
+              ></v-select>
+            </v-col>
+            <v-col class="py-0 pl-0">
               <v-text-field
                 label="Host path"
                 :value="host_path"
@@ -236,8 +242,12 @@
               <v-btn @click="$delete(data.mounts, index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
             </div>
           </v-row>
-          <v-row align="center" no-gutters class="mt-3" v-if="data.mounts.length > 0">
-            Mounts are custom for every room. Host path is relative to <code class="mx-1">&lt;storage path&gt;/room/&lt;room name&gt;</code>.
+          <v-row align="center" no-gutters v-if="data.mounts.length > 0">
+            <p>
+              <strong>Private</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/rooms/&lt;room name&gt;/</code>. <br />
+              <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code> and is readonly. <br />
+              <strong>Public</strong>: Host path must be whitelisted in config and exists on the host.
+            </p>
           </v-row>
         </template>
       </v-form>
@@ -338,6 +348,23 @@ export default class RoomsCreate extends Vue {
 
   get availableScreens() {
     return this.$store.state.availableScreens
+  }
+
+  get mountTypes() {
+    return [
+      {
+        text: 'Private',
+        value: 'private',
+      },
+      {
+        text: 'Template',
+        value: 'template',
+      },
+      {
+        text: 'Public',
+        value: 'public',
+      },
+    ]
   }
 
   addEnv() {
