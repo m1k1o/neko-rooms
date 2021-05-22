@@ -110,6 +110,42 @@ export interface RoomMember {
 /**
  * 
  * @export
+ * @interface RoomMount
+ */
+export interface RoomMount {
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomMount
+     */
+    type?: RoomMountTypeEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomMount
+     */
+    host_path?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomMount
+     */
+    container_path?: string;
+}
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum RoomMountTypeEnum {
+    private = 'private',
+    template = 'template',
+    public = 'public'
+}
+
+/**
+ * 
+ * @export
  * @interface RoomSettings
  */
 export interface RoomSettings {
@@ -203,6 +239,12 @@ export interface RoomSettings {
      * @memberof RoomSettings
      */
     envs?: { [key: string]: string; };
+    /**
+     * 
+     * @type {Array<RoomMount>}
+     * @memberof RoomSettings
+     */
+    mounts?: Array<RoomMount>;
 }
 /**
  * 

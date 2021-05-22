@@ -14,7 +14,7 @@
             <v-text-field
               label="Name"
               v-model="data.name"
-              :rules="[ rules.slug ]"
+              :rules="[ rules.minLen(2), rules.containerNameStart, rules.containerName ]"
               autocomplete="off"
             ></v-text-field>
           </v-col>
@@ -187,7 +187,7 @@
             <v-btn @click="addEnv" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
           <v-row align="center" v-for="({ key, val }, index) in envList" :key="index">
-            <v-col class="pb-0">
+            <v-col class="py-0">
               <v-text-field
                 label="Key"
                 :value="key"
@@ -195,7 +195,8 @@
                 autocomplete="off"
               ></v-text-field>
             </v-col>
-            <v-col class="pb-0">
+            <div> : </div>
+            <v-col class="py-0">
               <v-text-field
                 label="Value"
                 :value="val"
@@ -206,6 +207,49 @@
             <div>
               <v-btn @click="delEnv(index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
             </div>
+          </v-row>
+          <v-row align="center" no-gutters class="mt-3">
+              <h2> Mounts </h2>
+              <v-btn @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+          </v-row>
+          <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="index">
+            <v-col class="py-0" cols="2">
+              <v-select
+                label="Type"
+                :items="mountTypes"
+                :value="type"
+                @input="$set(data.mounts, index, { type: $event, host_path, container_path })"
+              ></v-select>
+            </v-col>
+            <v-col class="py-0 pl-0">
+              <v-text-field
+                label="Host path"
+                :value="host_path"
+                @input="$set(data.mounts, index, { type, host_path: $event, container_path })"
+                :rules="[ rules.absolutePath ]"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <div> : </div>
+            <v-col class="py-0">
+              <v-text-field
+                label="Container path"
+                :value="container_path"
+                @input="$set(data.mounts, index, { type, host_path, container_path: $event})"
+                :rules="[ rules.absolutePath ]"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <div>
+              <v-btn @click="$delete(data.mounts, index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
+            </div>
+          </v-row>
+          <v-row align="center" no-gutters v-if="data.mounts.length > 0">
+            <p>
+              <strong>Private</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/rooms/&lt;room name&gt;/</code>. <br />
+              <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code> and is readonly. <br />
+              <strong>Public</strong>: Host path must be whitelisted in config and exists on the host.
+            </p>
           </v-row>
         </template>
       </v-form>
@@ -272,15 +316,24 @@ export default class RoomsCreate extends Vue {
     required(val: any) {
       return val === null || typeof val === 'undefined' || val === "" ? 'This filed is mandatory.' : true
     },
+    minLen: (min: number) =>
+      (val: string) => 
+        val ? (val.length >= min || 'This field must have atleast ' + min + ' characters') : true,
     onlyPositive(val: number) {
       return val < 0 ? 'Value cannot be negative.' : true
     },
     nonZero(val: string) {
       return val === "0" ? 'Value cannot be zero.' : true
     },
-    slug(val: string) {
-      return val && !/^[A-Za-z0-9-_.]+$/.test(val) ? 'Should only contain A-Z a-z 0-9 - _ .' : true
+    containerName(val: string) {
+      return val && !/^[a-zA-Z0-9_.-]+$/.test(val) ? 'Must only contain a-z A-Z 0-9 _ . -' : true
     },
+    containerNameStart(val: string) {
+      return val && /^[_.-]/.test(val) ? 'Cannot start with _ . -' : true
+    },
+    absolutePath(val: string) {
+      return val[0] !== "/" ? 'Must be absolute path, starting with /.' : true
+    }
   }
 
   get nekoImages() {
@@ -297,6 +350,23 @@ export default class RoomsCreate extends Vue {
 
   get availableScreens() {
     return this.$store.state.availableScreens
+  }
+
+  get mountTypes() {
+    return [
+      {
+        text: 'Private',
+        value: 'private',
+      },
+      {
+        text: 'Template',
+        value: 'template',
+      },
+      {
+        text: 'Public',
+        value: 'public',
+      },
+    ]
   }
 
   addEnv() {
