@@ -16,6 +16,18 @@ Simple room management system for [n.eko](https://github.com/m1k1o/neko). Self h
   <img src="https://github.com/m1k1o/neko-rooms/raw/master/docs/neko.gif" alt="n.eko">
 </div>
 
+## Zero-knowledge installation
+
+If you don't have any clue about docker and stuff but only want to have fun with friends in a shared browser, we got you covered!
+
+- Rent a VPS with public IP and OS Ubuntu.
+- Get a domain name pointing to your IP (you can even get some for free).
+- Run install script and follow instructions.
+
+```bash
+curl https://raw.githubusercontent.com/m1k1o/neko-rooms/master/install | sudo bash
+```
+
 ## How to start
 
 You need to have installed `Docker` and `docker-compose`. You need to have custom domain pointing to your server's IP.
