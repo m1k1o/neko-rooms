@@ -1,0 +1,256 @@
+#!/bin/bash
+
+echo 
+echo "---------------------------------------------------------------"
+echo "               __                                              "
+echo "   ____  ___  / /______        _________  ____  ____ ___  _____"
+echo "  / __ \/ _ \/ //_/ __ \      / ___/ __ \/ __ \/ __ '__ \/ ___/"
+echo " / / / /  __/ ,< / /_/ /_____/ /  / /_/ / /_/ / / / / / (__  ) "
+echo "/_/ /_/\___/_/|_|\____/_____/_/   \____/\____/_/ /_/ /_/____/  "
+echo "                                                               "
+echo "                 Automatic installer by m1k1o                  "
+echo "---------------------------------------------------------------"
+echo 
+echo "You need to have:"
+echo 
+echo " - OS:"
+echo "   - Kernel version 2 or higher."
+echo "   - Debian 9 or higher."
+echo "   - Ubuntu 18.04 or higher."
+echo 
+echo " - Hardware:"
+echo "   - Memory at least 2GB."
+echo "   - CPU at least 4 cores."
+echo "   - Disk at least 8GB."
+echo 
+echo " - Network:"
+echo "   - Public IP."
+echo "   - Free TCP ports 80 and 443."
+echo "   - Free UDP port range (59000-59100)."
+echo "   - Domain name pointing to your IP."
+echo 
+echo " - Run this script as superuser."
+echo 
+
+while true; do
+    read -p "Are you ready to continue? [Y/n] " yn
+    case $yn in
+        "" ) break;;
+        [Yy]* ) break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+# Detect Debian users running the script with "sh" instead of bash
+if readlink /proc/$$/exe | grep -q "dash"; then
+	echo 'This installer needs to be run with "bash", not "sh".'
+	exit
+fi
+
+# Detect Root
+if [[ "$EUID" -ne 0 ]]; then
+	echo "This installer needs to be run with superuser privileges."
+	exit
+fi
+
+# Detect OS
+if grep -qs "ubuntu" /etc/os-release; then
+	os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2 | tr -d '.')
+
+    if [[ "$os_version" -lt 1804 ]]; then
+        echo "Ubuntu 18.04 or higher is required to use this installer."
+        echo "This version of Ubuntu is too old and unsupported."
+        exit
+    fi
+elif [[ -e /etc/debian_version ]]; then
+	os_version=$(grep -oE '[0-9]+' /etc/debian_version | head -1)
+
+    if [[ "$os_version" -lt 9 ]]; then
+        echo "Debian 9 or higher is required to use this installer."
+        echo "This version of Debian is too old and unsupported."
+        exit
+    fi
+else
+	echo "This installer seems to be running on an unsupported distribution."
+    echo "Supported distributions are Ubuntu and Debian."
+	exit
+fi
+
+# Detect Kernel
+if [[ $(uname -r | cut -d "." -f 1) -eq 2 ]]; then
+	echo "The system is running an old kernel, which is incompatible with this installer."
+	exit
+fi
+
+#
+# Install docker
+#
+
+if ! dockerd --help 2>&1 >/dev/null;
+then
+    while true; do
+        read -p "Docker is not installed. Do you wish to install this program? [Y/n]" yn
+        case $yn in
+            [Yy]* ) break;;
+            [Nn]* ) exit;;
+            * ) echo "Please answer yes or no.";;
+        esac
+    done
+
+    apt-get remove docker docker-engine docker.io containerd runc
+    apt-get update
+    apt-get install \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+    echo \
+        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    apt-get update
+    apt-get install docker-ce docker-ce-cli containerd.io
+fi
+
+echo "[Y] Docker is installed..."
+
+#
+# Install dependencies
+#
+
+apt update
+apt install -y sed apache2-utils docker-compose
+
+echo "[Y] Dependencies are installed..."
+
+#
+# Prompt for data
+#
+
+# Epr
+read -p "Enter UDP port range: (default 59000-59100) " NEKO_ROOMS_EPR
+if [[ $NEKO_ROOMS_EPR = "" ]];
+then
+    NEKO_ROOMS_EPR="59000-59100"
+fi
+
+# Domain
+while true; do
+    read -p "Enter your domain name: (e.g. example.com) " NEKO_ROOMS_TRAEFIK_DOMAIN
+    if [[ $NEKO_ROOMS_TRAEFIK_DOMAIN = "" ]];
+    then
+        echo "Please enter your domain."
+        continue
+    fi
+
+    break
+done
+
+# Timezone
+TZ_DEF=$(cat /etc/timezone)
+read -p "Current timezone: (default ${TZ_DEF}) " TZ
+if [[ $TZ = "" ]];
+then
+    TZ="${TZ_DEF}"
+fi
+
+# Email
+while true; do
+    read -p "Enter your email for Let's Encrypt domain notification: " TRAEFIK_EMAIL
+    if [[ $TRAEFIK_EMAIL = "" ]];
+    then
+        echo "Please enter your email. Or, well, use fake if you want..."
+        continue
+    fi
+
+    break
+done
+
+mkdir -p "./traefik"
+touch "./traefik/usersfile"
+
+# Users
+while true; do
+    echo "Add new user:"
+
+    # Username
+    read -p " | - Username: (default admin) " USR_NAME
+    if [[ $USR_NAME = "" ]];
+    then
+        USR_NAME="admin"
+    fi
+
+    # Password
+    read -p " | - Password: (default admin) " -s USR_PASS
+    if [[ $USR_PASS = "" ]];
+    then
+        USR_PASS="admin"
+    fi
+
+    echo $(htpasswd -nb ${USR_NAME} ${USR_PASS}) >> traefik/usersfile
+
+    echo
+    read -p "Do you want to add another user? [y/N] " yn
+    case $yn in
+        "" ) break;;
+        [Yy]* ) echo;;
+        [Nn]* ) break;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
+echo "[Y] Got all settings..."
+
+#
+# Create env
+#
+
+echo "TZ=${TZ}" > .env
+echo "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}" >> .env
+echo "NEKO_ROOMS_TRAEFIK_DOMAIN=${NEKO_ROOMS_TRAEFIK_DOMAIN}" >> .env
+echo "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=websecure" >> .env
+echo "NEKO_ROOMS_TRAEFIK_NETWORK=neko-rooms-traefik" >> .env
+echo "NEKO_ROOMS_TRAEFIK_CERTRESOLVER=lets-encrypt" >> .env
+
+echo "[Y] Creating env..."
+
+#
+# Download traefik config
+#
+
+mkdir -p "./traefik/config"
+
+wget -O "./traefik/traefik.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/traefik.yml"
+sed -i "s/youname@example.com/${TRAEFIK_EMAIL}/g" "./traefik/traefik.yml"
+
+wget -O "./traefik/config/middlewares.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/middlewares.yml"
+wget -O "./traefik/config/routers.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/routers.yml"
+wget -O "./traefik/config/tls.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/tls.yml"
+
+touch "./traefik/acme.json"
+chmod 600 "./traefik/acme.json"
+
+echo "[Y] Downloading traefik config..."
+
+#
+# Download docker compose file
+#
+
+wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/docker-compose.yml"
+
+# Pull neko images
+docker pull m1k1o/neko:latest
+docker pull m1k1o/neko:chromium
+
+exit
+
+# Start
+docker-compose pull
+docker-compose up -d
+
+echo "[Y] Finished! You can now visit https://${NEKO_ROOMS_TRAEFIK_DOMAIN}/"
