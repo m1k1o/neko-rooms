@@ -45,6 +45,14 @@ export default class RoomActionBtn extends Vue {
           color: 'blue',
           icon: 'mdi-refresh',
         }
+      case 'recreate':
+        return {
+          dispatch: 'ROOMS_RECREATE',
+          msg: 'Room recreated!',
+          tooltip: 'Recreate',
+          color: 'blue',
+          icon: 'mdi-cloud-refresh',
+        }
       case 'remove':
         return {
           dispatch: 'ROOMS_REMOVE',
@@ -65,6 +73,17 @@ export default class RoomActionBtn extends Vue {
       const { value } = await this.$swal({
         title: "Remove room",
         text: "Do you really want to remove this room?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+      })
+
+      if (!value) return
+    } else if (this.action === 'recreate') {
+      const { value } = await this.$swal({
+        title: "Recreate room",
+        text: "Do you really want to recreate this room? It will detele all your non-persistent data.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: "Yes",

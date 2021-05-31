@@ -106,6 +106,12 @@ export default new Vuex.Store({
     async ROOMS_RESTART(_: ActionContext<State, State>, roomId: string) {
       await roomsApi.roomRestart(roomId)
     },
+    async ROOMS_RECREATE({ commit }: ActionContext<State, State>, roomId: string) {
+      const res = await roomsApi.roomRecreate(roomId)
+      commit('ROOMS_DEL', roomId)
+      commit('ROOMS_PUT', res.data)
+      return res.data
+    },
   },
   modules: {
   }

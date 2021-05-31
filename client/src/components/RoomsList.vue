@@ -22,6 +22,10 @@
           <span>Link to deployment</span>
         </v-tooltip>
       </template>
+      <template v-slot:[`item.neko_image`]="{ item }">
+        <RoomActionBtn action="recreate" :roomId="item.id" />
+        <span class="ml-3">{{ item.neko_image }}</span>
+      </template>
       <template v-slot:[`item.max_connections`]="{ item }">
         <span v-if="item.max_connections">{{ item.max_connections }}</span>
         <i v-else>--not-specified--</i>
