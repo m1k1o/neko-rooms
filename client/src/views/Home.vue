@@ -17,7 +17,12 @@
 
     <v-row>
       <v-col>
-        <v-btn @click="LoadRooms" class="mb-3" color="green" icon><v-icon>mdi-refresh</v-icon></v-btn>
+        <v-tooltip right open-delay="300">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn v-bind="attrs" v-on="on" @click="LoadRooms" class="mb-3" color="green" icon><v-icon>mdi-reload</v-icon></v-btn>
+          </template>
+          <span>Reload table</span>
+        </v-tooltip>
       </v-col>
       <v-col class="text-right">
         <RoomsQuick class="mr-3" />

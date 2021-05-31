@@ -33,9 +33,9 @@
       <template v-slot:[`item.status`]="{ item }">
         <v-tooltip bottom open-delay="300">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-bind="attrs" v-on="on" @click="Reload(item.id)" :loading="roomLoading.includes(item.id)" class="mr-3" color="green" icon><v-icon>mdi-refresh</v-icon></v-btn>
+            <v-btn v-bind="attrs" v-on="on" @click="Reload(item.id)" :loading="roomLoading.includes(item.id)" class="mr-3" color="green" icon><v-icon>mdi-reload</v-icon></v-btn>
           </template>
-          <span>Refresh data</span>
+          <span>Reload data</span>
         </v-tooltip>
         <v-chip :color="item.running ? 'green' : 'red'" dark small> {{ item.status }} </v-chip>
       </template>
