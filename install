@@ -226,7 +226,7 @@ echo "[Y] Creating env..."
 mkdir -p "./traefik/config"
 
 wget -O "./traefik/traefik.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/traefik.yml"
-sed -i "s/youname@example.com/${TRAEFIK_EMAIL}/g" "./traefik/traefik.yml"
+sed -i "s/yourname@example.com/${TRAEFIK_EMAIL}/g" "./traefik/traefik.yml"
 
 wget -O "./traefik/config/middlewares.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/middlewares.yml"
 wget -O "./traefik/config/routers.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/routers.yml"
