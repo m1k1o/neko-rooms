@@ -199,6 +199,27 @@ paths:
           description: OK
         '500':
           description: Internal server error
+  /api/rooms/{roomId}/recreate:
+    post:
+      tags:
+        - rooms
+      summary: Recreate room
+      operationId: roomRecreate
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomEntry'
+        '500':
+          description: Internal server error
 
 components:
   schemas:

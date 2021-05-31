@@ -55,6 +55,49 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(response)
 }
 
+func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Request) {
+	roomId := chi.URLParam(r, "roomId")
+
+	entry, err := manager.rooms.GetEntry(roomId)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	settings, err := manager.rooms.GetSettings(roomId)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	if err := manager.rooms.Remove(roomId); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	ID, err := manager.rooms.Create(*settings)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	if entry.Running {
+		if err := manager.rooms.Start(ID); err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+	}
+
+	response, err := manager.rooms.GetEntry(ID)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 func (manager *ApiManagerCtx) roomGetEntry(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 

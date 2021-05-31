@@ -465,6 +465,40 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Recreate room
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        roomRecreate: async (roomId: string, options: any = {}): Promise<RequestArgs> => {
+            // verify required parameter 'roomId' is not null or undefined
+            assertParamExists('roomRecreate', 'roomId', roomId)
+            const localVarPath = `/api/rooms/{roomId}/recreate`
+                .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter, options.query);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Remove room
          * @param {string} roomId 
          * @param {*} [options] Override http request option.
@@ -731,6 +765,17 @@ export const RoomsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Recreate room
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async roomRecreate(roomId: string, options?: any): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.roomRecreate(roomId, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
          * @summary Remove room
          * @param {string} roomId 
          * @param {*} [options] Override http request option.
@@ -837,6 +882,16 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
         },
         /**
          * 
+         * @summary Recreate room
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        roomRecreate(roomId: string, options?: any): AxiosPromise<RoomEntry> {
+            return localVarFp.roomRecreate(roomId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Remove room
          * @param {string} roomId 
          * @param {*} [options] Override http request option.
@@ -936,6 +991,18 @@ export class RoomsApi extends BaseAPI {
      */
     public roomGet(roomId: string, options?: any) {
         return RoomsApiFp(this.configuration).roomGet(roomId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Recreate room
+     * @param {string} roomId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RoomsApi
+     */
+    public roomRecreate(roomId: string, options?: any) {
+        return RoomsApiFp(this.configuration).roomRecreate(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
