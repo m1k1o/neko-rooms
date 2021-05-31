@@ -247,8 +247,6 @@ wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-roo
 docker pull m1k1o/neko:latest
 docker pull m1k1o/neko:chromium
 
-exit
-
 # Start
 docker-compose pull
 docker-compose up -d
