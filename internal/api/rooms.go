@@ -40,6 +40,11 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if err := manager.rooms.Start(ID); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
 	response, err := manager.rooms.GetEntry(ID)
 	if err != nil {
 		http.Error(w, err.Error(), 500)

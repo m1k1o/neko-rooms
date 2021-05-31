@@ -316,13 +316,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", err
 	}
 
-	// Start the actual container
-	err = manager.client.ContainerStart(context.Background(), container.ID, dockerTypes.ContainerStartOptions{})
-
-	if err != nil {
-		return "", err
-	}
-
 	return container.ID, nil
 }
 
