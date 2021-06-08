@@ -210,12 +210,15 @@ echo "[Y] Got all settings..."
 # Create env
 #
 
+NEKO_IMAGES="m1k1o/neko:latest m1k1o/neko:chromium m1k1o/neko:google-chrome"
+
 echo "TZ=${TZ}" > .env
 echo "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}" >> .env
 echo "NEKO_ROOMS_TRAEFIK_DOMAIN=${NEKO_ROOMS_TRAEFIK_DOMAIN}" >> .env
 echo "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=websecure" >> .env
 echo "NEKO_ROOMS_TRAEFIK_NETWORK=neko-rooms-traefik" >> .env
 echo "NEKO_ROOMS_TRAEFIK_CERTRESOLVER=lets-encrypt" >> .env
+echo "NEKO_ROOMS_NEKO_IMAGES=${NEKO_IMAGES}" >> .env
 
 echo "[Y] Creating env..."
 
@@ -244,8 +247,10 @@ echo "[Y] Downloading traefik config..."
 wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/docker-compose.yml"
 
 # Pull neko images
-docker pull m1k1o/neko:latest
-docker pull m1k1o/neko:chromium
+for NEKO_IMAGE in ${NEKO_IMAGES}
+do
+    docker pull ${NEKO_IMAGE}
+done
 
 # Start
 docker-compose pull
