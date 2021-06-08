@@ -21,6 +21,8 @@ services:
       - "8080:80"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      # OPTIONAL: Enable authentication.
+      # - "./traefik/usersfile:/usersfile:ro"
 
   neko-rooms:
     image: "m1k1o/neko-rooms:latest"
@@ -40,3 +42,6 @@ services:
       - "traefik.http.services.neko-rooms-frontend.loadbalancer.server.port=8080"
       - "traefik.http.routers.neko-rooms.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}"
       - "traefik.http.routers.neko-rooms.rule=Host(`${NEKO_ROOMS_TRAEFIK_DOMAIN}`)"
+      # OPTIONAL: Enable authentication.
+      # - "traefik.http.middlewares.nrooms-auth.basicauth.usersfile=/usersfile"
+      # - "traefik.http.routers.neko-rooms.middlewares=nrooms-auth"

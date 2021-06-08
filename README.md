@@ -46,7 +46,7 @@ You only need `.env.example`, `docker-compose.yml` and `traefik/`.
 - Your domain name specified for traefik must match domain name, that your proxy connects to. In docker-compose it is service name.
 - See example configuration for [nginx](docs/nginx).
 
-You can use `docker-compose.http.yml` that will expose this service to `8080` or any port. 
+You can use `docker-compose.http.yml` that will expose this service to `8080` or any port. Authentication is optional.
 
 ### Step 1
 
@@ -70,7 +70,7 @@ And add as many users as you like:
 echo $(htpasswd -nb user password) >> traefik/usersfile
 ```
 
-### Step 3
+### Step 3 (HTTPs only)
 
 Create `acme.json`
 
