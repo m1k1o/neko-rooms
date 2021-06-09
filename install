@@ -1,36 +1,36 @@
 #!/bin/bash
 
-echo 
-echo "---------------------------------------------------------------"
-echo "               __                                              "
-echo "   ____  ___  / /______        _________  ____  ____ ___  _____"
-echo "  / __ \/ _ \/ //_/ __ \      / ___/ __ \/ __ \/ __ '__ \/ ___/"
-echo " / / / /  __/ ,< / /_/ /_____/ /  / /_/ / /_/ / / / / / (__  ) "
-echo "/_/ /_/\___/_/|_|\____/_____/_/   \____/\____/_/ /_/ /_/____/  "
-echo "                                                               "
-echo "                 Automatic installer by m1k1o                  "
-echo "---------------------------------------------------------------"
-echo 
-echo "You need to have:"
-echo 
-echo " - OS:"
-echo "   - Kernel version 2 or higher."
-echo "   - Debian 9 or higher."
-echo "   - Ubuntu 18.04 or higher."
-echo 
-echo " - Hardware:"
-echo "   - Memory at least 2GB."
-echo "   - CPU at least 4 cores."
-echo "   - Disk at least 8GB."
-echo 
-echo " - Network:"
-echo "   - Public IP."
-echo "   - Free TCP ports 80 and 443."
-echo "   - Free UDP port range (59000-59100)."
-echo "   - Domain name pointing to your IP."
-echo 
-echo " - Run this script as superuser."
-echo 
+echo "
+---------------------------------------------------------------
+               __                                              
+   ____  ___  / /______        _________  ____  ____ ___  _____
+  / __ \/ _ \/ //_/ __ \      / ___/ __ \/ __ \/ __ '__ \/ ___/
+ / / / /  __/ ,< / /_/ /_____/ /  / /_/ / /_/ / / / / / (__  ) 
+/_/ /_/\___/_/|_|\____/_____/_/   \____/\____/_/ /_/ /_/____/  
+                                                               
+                 Automatic installer by m1k1o                  
+---------------------------------------------------------------
+
+You need to have:
+
+ - OS:
+   - Kernel version 2 or higher.
+   - Debian 9 or higher.
+   - Ubuntu 18.04 or higher.
+
+ - Hardware:
+   - Memory at least 2GB.
+   - CPU at least 4 cores.
+   - Disk at least 8GB.
+
+ - Network:
+   - Public IP.
+   - Free TCP ports 80 and 443.
+   - Free UDP port range (59000-59100).
+   - Domain name pointing to your IP.
+
+ - Run this script as superuser.
+"
 
 while true; do
     read -p "Are you ready to continue? [Y/n] " yn
