@@ -33,88 +33,87 @@ You need to have:
 "
 
 while true; do
-    read -p "Are you ready to continue? [Y/n] " yn
-    case $yn in
-        "" ) break;;
-        [Yy]* ) break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
+  read -rp "Are you ready to continue? [Y/n] " yn
+  case $yn in
+    "") break ;;
+    [Yy]*) break ;;
+    [Nn]*) exit 0 ;;
+    *) echo "Please answer yes or no." ;;
+  esac
 done
 
 # Detect Debian users running the script with "sh" instead of bash
-if readlink /proc/$$/exe | grep -q "dash"; then
-	echo 'This installer needs to be run with "bash", not "sh".'
-	exit
+if readlink /proc/"$$"/exe | grep -q "dash"; then
+  echo 'This installer needs to be run with "bash", not "sh".' >&2
+  exit 1
 fi
 
 # Detect Root
-if [[ "$EUID" -ne 0 ]]; then
-	echo "This installer needs to be run with superuser privileges."
-	exit
+if [[ "${EUID}" -ne 0 ]]; then
+  echo "This installer needs to be run with superuser privileges." >&2
+  exit 1
 fi
 
 # Detect OS
 if grep -qs "ubuntu" /etc/os-release; then
-	os_version=$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2 | tr -d '.')
+  OS_VERSION="$(grep 'VERSION_ID' /etc/os-release | cut -d '"' -f 2 | tr -d '.')"
 
-    if [[ "$os_version" -lt 1804 ]]; then
-        echo "Ubuntu 18.04 or higher is required to use this installer."
-        echo "This version of Ubuntu is too old and unsupported."
-        exit
-    fi
+  if [[ "${OS_VERSION}" -lt 1804 ]]; then
+    echo "Ubuntu 18.04 or higher is required to use this installer." >&2
+    echo "This version of Ubuntu is too old and unsupported." >&2
+    exit 1
+  fi
 elif [[ -e /etc/debian_version ]]; then
-	os_version=$(grep -oE '[0-9]+' /etc/debian_version | head -1)
+  OS_VERSION="$(grep -oE '[0-9]+' /etc/debian_version | head -1)"
 
-    if [[ "$os_version" -lt 9 ]]; then
-        echo "Debian 9 or higher is required to use this installer."
-        echo "This version of Debian is too old and unsupported."
-        exit
-    fi
+  if [[ "${OS_VERSION}" -lt 9 ]]; then
+    echo "Debian 9 or higher is required to use this installer." >&2
+    echo "This version of Debian is too old and unsupported." >&2
+    exit 1
+  fi
 else
-	echo "This installer seems to be running on an unsupported distribution."
-    echo "Supported distributions are Ubuntu and Debian."
-	exit
+  echo "This installer seems to be running on an unsupported distribution." >&2
+  echo "Supported distributions are Ubuntu and Debian." >&2
+  exit 1
 fi
 
 # Detect Kernel
-if [[ $(uname -r | cut -d "." -f 1) -eq 2 ]]; then
-	echo "The system is running an old kernel, which is incompatible with this installer."
-	exit
+if [[ "$(uname -r | cut -d "." -f 1)" -eq 2 ]]; then
+  echo "The system is running an old kernel, which is incompatible with this installer." >&2
+  exit 1
 fi
 
 #
 # Install docker
 #
 
-if ! dockerd --help 2>&1 >/dev/null;
-then
-    while true; do
-        read -p "Docker is not installed. Do you wish to install this program? [Y/n]" yn
-        case $yn in
-            [Yy]* ) break;;
-            [Nn]* ) exit;;
-            * ) echo "Please answer yes or no.";;
-        esac
-    done
+if ! dockerd --help > /dev/null 2>&1; then
+  while true; do
+    read -rp "Docker is not installed. Do you wish to install this program? [Y/n]" yn
+    case $yn in
+      [Yy]*) break ;;
+      [Nn]*) exit 0 ;;
+      *) echo "Please answer yes or no." ;;
+    esac
+  done
 
-    apt-get remove docker docker-engine docker.io containerd runc
-    apt-get update
-    apt-get install -y \
-        apt-transport-https \
-        ca-certificates \
-        curl \
-        gnupg \
-        lsb-release
+  apt-get remove containerd docker docker-engine docker.io runc
+  apt-get update
+  apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
 
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
-    echo \
-        "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  echo \
+    "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
         $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-    apt-get update
-    apt-get install -y docker-ce docker-ce-cli containerd.io
+  apt-get update
+  apt-get install -y containerd.io docker-ce docker-ce-cli
 fi
 
 echo "[Y] Docker is installed..."
@@ -124,7 +123,7 @@ echo "[Y] Docker is installed..."
 #
 
 apt-get update
-apt-get install -y sed apache2-utils docker-compose
+apt-get install -y apache2-utils docker-compose sed
 
 echo "[Y] Dependencies are installed..."
 
@@ -133,42 +132,38 @@ echo "[Y] Dependencies are installed..."
 #
 
 # Epr
-read -p "Enter UDP port range: (default 59000-59100) " NEKO_ROOMS_EPR
-if [[ $NEKO_ROOMS_EPR = "" ]];
-then
-    NEKO_ROOMS_EPR="59000-59100"
+read -rp "Enter UDP port range: (default 59000-59100) " NEKO_ROOMS_EPR
+if [[ -z "${NEKO_ROOMS_EPR}" ]]; then
+  NEKO_ROOMS_EPR="59000-59100"
 fi
 
 # Domain
 while true; do
-    read -p "Enter your domain name: (e.g. example.com) " NEKO_ROOMS_TRAEFIK_DOMAIN
-    if [[ $NEKO_ROOMS_TRAEFIK_DOMAIN = "" ]];
-    then
-        echo "Please enter your domain."
-        continue
-    fi
+  read -rp "Enter your domain name: (e.g. example.com) " NEKO_ROOMS_TRAEFIK_DOMAIN
+  if [[ -z "${NEKO_ROOMS_TRAEFIK_DOMAIN}" ]]; then
+    echo "Please enter your domain."
+    continue
+  fi
 
-    break
+  break
 done
 
 # Timezone
-TZ_DEF=$(cat /etc/timezone)
-read -p "Current timezone: (default ${TZ_DEF}) " TZ
-if [[ $TZ = "" ]];
-then
-    TZ="${TZ_DEF}"
+TZ_DEF="$(cat /etc/timezone)"
+read -rp "Current timezone: (default ${TZ_DEF}) " TZ
+if [[ -z "${TZ}" ]]; then
+  TZ="${TZ_DEF}"
 fi
 
 # Email
 while true; do
-    read -p "Enter your email for Let's Encrypt domain notification: " TRAEFIK_EMAIL
-    if [[ $TRAEFIK_EMAIL = "" ]];
-    then
-        echo "Please enter your email. Or, well, use fake if you want..."
-        continue
-    fi
+  read -rp "Enter your email for Let's Encrypt domain notification: " TRAEFIK_EMAIL
+  if [[ -z "${TRAEFIK_EMAIL}" ]]; then
+    echo "Please enter your email. Or, well, use fake if you want..."
+    continue
+  fi
 
-    break
+  break
 done
 
 mkdir -p "./traefik"
@@ -176,32 +171,30 @@ touch "./traefik/usersfile"
 
 # Users
 while true; do
-    echo "Add new user:"
+  echo "Add new user:"
 
-    # Username
-    read -p " | - Username: (default admin) " USR_NAME
-    if [[ $USR_NAME = "" ]];
-    then
-        USR_NAME="admin"
-    fi
+  # Username
+  read -rp " | - Username: (default admin) " USR_NAME
+  if [[ -z "${USR_NAME}" ]]; then
+    USR_NAME="admin"
+  fi
 
-    # Password
-    read -p " | - Password: (default admin) " -s USR_PASS
-    if [[ $USR_PASS = "" ]];
-    then
-        USR_PASS="admin"
-    fi
+  # Password
+  read -rp " | - Password: (default admin) " -s USR_PASS
+  if [[ -z "${USR_PASS}" ]]; then
+    USR_PASS="admin"
+  fi
 
-    echo $(htpasswd -nb ${USR_NAME} ${USR_PASS}) >> traefik/usersfile
+  htpasswd -nb "${USR_NAME}" "${USR_PASS}" >> traefik/usersfile
 
-    echo
-    read -p "Do you want to add another user? [y/N] " yn
-    case $yn in
-        "" ) break;;
-        [Yy]* ) echo;;
-        [Nn]* ) break;;
-        * ) echo "Please answer yes or no.";;
-    esac
+  echo
+  read -rp "Do you want to add another user? [y/N] " yn
+  case $yn in
+    "") break ;;
+    [Yy]*) echo ;;
+    [Nn]*) break ;;
+    *) echo "Please answer yes or no." ;;
+  esac
 done
 
 echo "[Y] Got all settings..."
@@ -212,13 +205,15 @@ echo "[Y] Got all settings..."
 
 NEKO_IMAGES="m1k1o/neko:latest m1k1o/neko:chromium m1k1o/neko:google-chrome"
 
-echo "TZ=${TZ}" > .env
-echo "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}" >> .env
-echo "NEKO_ROOMS_TRAEFIK_DOMAIN=${NEKO_ROOMS_TRAEFIK_DOMAIN}" >> .env
-echo "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=websecure" >> .env
-echo "NEKO_ROOMS_TRAEFIK_NETWORK=neko-rooms-traefik" >> .env
-echo "NEKO_ROOMS_TRAEFIK_CERTRESOLVER=lets-encrypt" >> .env
-echo "NEKO_ROOMS_NEKO_IMAGES=${NEKO_IMAGES}" >> .env
+{
+  echo "TZ=${TZ}"
+  echo "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}"
+  echo "NEKO_ROOMS_TRAEFIK_DOMAIN=${NEKO_ROOMS_TRAEFIK_DOMAIN}"
+  echo "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=websecure"
+  echo "NEKO_ROOMS_TRAEFIK_NETWORK=neko-rooms-traefik"
+  echo "NEKO_ROOMS_TRAEFIK_CERTRESOLVER=lets-encrypt"
+  echo "NEKO_ROOMS_NEKO_IMAGES=${NEKO_IMAGES}"
+} > .env
 
 echo "[Y] Creating env..."
 
@@ -247,9 +242,8 @@ echo "[Y] Downloading traefik config..."
 wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/docker-compose.yml"
 
 # Pull neko images
-for NEKO_IMAGE in ${NEKO_IMAGES}
-do
-    docker pull ${NEKO_IMAGE}
+for NEKO_IMAGE in ${NEKO_IMAGES}; do
+  docker pull "${NEKO_IMAGE}"
 done
 
 # Start
