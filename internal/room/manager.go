@@ -207,14 +207,16 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 		// private container's data
 		if mount.Type == types.MountPrivate {
-			// ensure that target exists
+			// ensure that target exists with correct permissions
 			internalPath := path.Join(manager.config.StorageInternal, privateStoragePath, roomName, hostPath)
-			if err := os.MkdirAll(internalPath, os.ModePerm); err != nil {
-				return "", err
-			}
+			if _, err := os.Stat(internalPath); os.IsNotExist(err) {
+				if err := os.MkdirAll(internalPath, os.ModePerm); err != nil {
+					return "", err
+				}
 
-			if err := utils.ChownR(internalPath, privateStorageUid, privateStorageGid); err != nil {
-				return "", err
+				if err := utils.ChownR(internalPath, privateStorageUid, privateStorageGid); err != nil {
+					return "", err
+				}
 			}
 
 			// prefix host path
