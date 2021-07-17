@@ -98,6 +98,14 @@ docker-compose pull
 docker-compose up -d
 ```
 
+### Enable storage
+
+You might have encountered this error:
+
+> Mounts cannot be specified because storage is diabled or unavailable.
+
+If you didn't specify storage yet, you can do it using [this tutorial](./docs/storage.md).
+
 ### Roadmap:
  - [x] add GUI
  - [x] add HTTPS support
