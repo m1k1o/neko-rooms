@@ -57,9 +57,7 @@ func New(ApiManager types.ApiManager, conf *config.Server) *HttpManagerCtx {
 	router.Get("/{roomName}", ApiManager.RoomLobby)
 	router.Get("/{roomName}/", ApiManager.RoomLobby)
 
-	router.NotFound(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
-	}))
+	router.NotFound(http.HandlerFunc(http.NotFound))
 
 	http := &http.Server{
 		Addr:    conf.Bind,
