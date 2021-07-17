@@ -30,7 +30,7 @@ curl https://raw.githubusercontent.com/m1k1o/neko-rooms/master/install | sudo ba
 
 ## How to start
 
-You need to have installed `Docker` and `docker-compose`. You need to have custom domain pointing to your server's IP.
+You need to have installed `Docker` and `docker-compose`. You need to have a custom domain pointing to your server's IP.
 
 You can watch installation video provided by *Dr R1ck*:
 
@@ -43,7 +43,7 @@ You only need `.env.example`, `docker-compose.yml` and `traefik/`.
 #### Do I need to use traefik?
 
 - Traefik needs to be used to forward traffic to the rooms. You can put nginx in front of it, but not replace it.
-- Your domain name specified for traefik must match domain name, that your proxy connects to. In docker-compose it is service name.
+- Your domain name specified for traefik must match the domain name, that your proxy connects to. In docker-compose it is the service name.
 - See example configuration for [nginx](docs/nginx).
 
 You can use `docker-compose.http.yml` that will expose this service to `8080` or any port. Authentication is optional.
@@ -70,7 +70,7 @@ And add as many users as you like:
 echo $(htpasswd -nb user password) >> traefik/usersfile
 ```
 
-### Step 3 (HTTPs only)
+### Step 3 (HTTPS only)
 
 Create `acme.json`
 
@@ -83,7 +83,7 @@ Update your email in `traefik/traefik.yml`.
 
 ### Download images / update
 
-You need to pull all your images, that you want to use with neko-room. Otherwise you might get this error: `Error response from daemon: No such image:` (see issue #1).
+You need to pull all your images, that you want to use with neko-room. Otherwise, you might get this error: `Error response from daemon: No such image:` (see issue #1).
 
 ```sh
 docker pull m1k1o/neko:latest
@@ -91,7 +91,7 @@ docker pull m1k1o/neko:chromium
 # etc...
 ```
 
-If you want to update neko image, you need to pull new image and recreate all rooms, that use old image. To update neko rooms, simpy run:
+If you want to update neko image, you need to pull new image and recreate all rooms, that use old image. To update neko rooms, simply run:
 
 ```sh
 docker-compose pull
@@ -102,7 +102,7 @@ docker-compose up -d
 
 You might have encountered this error:
 
-> Mounts cannot be specified because storage is diabled or unavailable.
+> Mounts cannot be specified because storage is disabled or unavailable.
 
 If you didn't specify storage yet, you can do it using [this tutorial](./docs/storage.md).
 
@@ -111,10 +111,10 @@ If you didn't specify storage yet, you can do it using [this tutorial](./docs/st
  - [x] add HTTPS support
  - [x] add authentication provider for traefik
  - [x] allow specifying custom ENV variables
- - [x] allow mounting direcotries for persistent data
+ - [x] allow mounting directories for persistent data
  - [ ] add upgrade button
  - [ ] auto pull images, that do not exist
  - [ ] add bearer token to for API
- - [ ] add docker ssh / tcp support
+ - [ ] add docker SSH / TCP support
  - [ ] add docker swarm support
  - [ ] add k8s support

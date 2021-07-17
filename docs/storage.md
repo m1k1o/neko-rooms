@@ -28,23 +28,23 @@ This needs to be specified in docker-compose:
 ```
 
 Where:
-- `NEKO_ROOMS_STORAGE_INTERNAL` is the directory inside container.
+- `NEKO_ROOMS_STORAGE_INTERNAL` is the directory inside the container.
 - `NEKO_ROOMS_STORAGE_EXTERNAL` is the directory outside container.
 - `"/opt/neko-rooms/data:/data"` is volume mount.
 
 Please note, that **neko-rooms** must be aware of external storage path, as it is going to mount it to the room itself. That needs to be available to **neko-rooms** as well, in order to manage that folder.
 
-Inside storage path (e.g. `/opt/neko-rooms/data`) there will be available these mountpoints:
+Inside storage path (e.g. `/opt/neko-rooms/data`) there will be available these mount points:
 
 - `/opt/neko-rooms/data/`**`rooms/<room name>/`** where will be stored private room data.
-- `/opt/neko-rooms/data/`**`templates/`** where templates. will be accessible.
+- `/opt/neko-rooms/data/`**`templates/`** where templates will be accessible.
 
 ## How can it be used?
 
 You can mount e.g. browser policies and this way customize browser.
 
-You can always refer to [google-chrome dockerfile](https://github.com/m1k1o/neko/blob/1800d077d8138bdb23c25028bf4201a0469f91aa/.m1k1o/google-chrome/Dockerfile). In this case, policies are mounted to `/etc/opt/chrome/policies/managed/policies.json`. So you can mount custom file to this location.
+You can always refer to [google-chrome Dockerfile](https://github.com/m1k1o/neko/blob/1800d077d8138bdb23c25028bf4201a0469f91aa/.m1k1o/google-chrome/Dockerfile). In this case, policies are mounted to `/etc/opt/chrome/policies/managed/policies.json`. So you can mount custom file to this location.
 
-For this purpose, template path is corect. You can then store your policies file to e.g. `/opt/neko-rooms/data/templates/policies.json` and have it mounted.
+For this purpose, template path is correct. You can then store your policies file to e.g. `/opt/neko-rooms/data/templates/policies.json` and have it mounted.
 
-![storage](storage.png)
+![Storage](storage.png)
