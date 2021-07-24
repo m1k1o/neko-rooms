@@ -24,6 +24,56 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 /**
  * 
  * @export
+ * @interface Extension
+ */
+export interface Extension {
+    /**
+     * 
+     * @type {string}
+     * @memberof Extension
+     */
+    id?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof Extension
+     */
+    url?: string;
+}
+/**
+ * 
+ * @export
+ * @interface Policies
+ */
+export interface Policies {
+    /**
+     * 
+     * @type {string}
+     * @memberof Policies
+     */
+    homepage?: string;
+    /**
+     * 
+     * @type {Array<Extension>}
+     * @memberof Policies
+     */
+    extensions?: Array<Extension>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Policies
+     */
+    developer_tools?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Policies
+     */
+    persistent_data?: boolean;
+}
+/**
+ * 
+ * @export
  * @interface RoomEntry
  */
 export interface RoomEntry {
@@ -245,6 +295,12 @@ export interface RoomSettings {
      * @memberof RoomSettings
      */
     mounts?: Array<RoomMount>;
+    /**
+     * 
+     * @type {Policies}
+     * @memberof RoomSettings
+     */
+    policies?: Policies;
 }
 /**
  * 

@@ -75,6 +75,8 @@ type RoomSettings struct {
 
 	Envs   map[string]string `json:"envs"`
 	Mounts []RoomMount       `json:"mounts"`
+
+	Policies *Policies `json:"policies,omitempty"`
 }
 
 func (settings *RoomSettings) ToEnv() []string {

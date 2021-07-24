@@ -330,6 +330,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RoomMount'
+        policies:
+          $ref: '#/components/schemas/Policies'
 
     RoomStats:
       type: object
@@ -360,3 +362,30 @@ components:
         muted:
           type: boolean
           example: false
+
+    Policies:
+      type: object
+      properties:
+        homepage:
+          type: string
+          example: https://google.com
+        extensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Extension'
+        developer_tools:
+          type: boolean
+          example: true
+        persistent_data:
+          type: boolean
+          example: false
+    
+    Extension:
+      type: object
+      properties:
+        id:
+          type: string
+          example: uBlock0@raymondhill.net
+        url:
+          type: string
+          example: https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi

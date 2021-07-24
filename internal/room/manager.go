@@ -21,6 +21,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"m1k1o/neko_rooms/internal/config"
+	"m1k1o/neko_rooms/internal/policies"
 	"m1k1o/neko_rooms/internal/types"
 	"m1k1o/neko_rooms/internal/utils"
 )
@@ -192,6 +193,47 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// optional nat mapping
 	if len(manager.config.NAT1To1IPs) > 0 {
 		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")))
+	}
+
+	// browser policies
+	if settings.Policies != nil {
+		if !manager.config.StorageEnabled {
+			return "", fmt.Errorf("policies cannot be specified, because storage is disabled or unavailable")
+		}
+
+		policyConfig := policies.GetConfig(settings.NekoImage)
+		if policyConfig == nil {
+			return "", fmt.Errorf("policy config for this image does not exist")
+		}
+
+		policyJson, err := policies.Generate(*settings.Policies, policyConfig.Type)
+		if err != nil {
+			return "", err
+		}
+
+		// create policy path (+ also get host path)
+		policyPath := fmt.Sprintf("/%s-%s-policy.json", roomName, policyConfig.Type)
+		templateInternalPath := path.Join(manager.config.StorageInternal, templateStoragePath)
+		policyInternalPath := path.Join(templateInternalPath, policyPath)
+
+		// create dir if does not exist
+		if _, err := os.Stat(templateInternalPath); os.IsNotExist(err) {
+			if err := os.MkdirAll(templateInternalPath, os.ModePerm); err != nil {
+				return "", err
+			}
+		}
+
+		// write policy to file
+		if err := os.WriteFile(policyInternalPath, []byte(policyJson), 0644); err != nil {
+			return "", err
+		}
+
+		// mount policy file
+		settings.Mounts = append(settings.Mounts, types.RoomMount{
+			Type:          types.MountTemplate,
+			HostPath:      policyPath,
+			ContainerPath: policyConfig.Path,
+		})
 	}
 
 	mounts := []dockerMount.Mount{}
@@ -396,11 +438,35 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		})
 	}
 
+	var policiesData *types.Policies
+	policyConfig := policies.GetConfig(nekoImage)
+	if policyConfig != nil {
+		var policyMount *types.RoomMount
+		for _, mount := range mounts {
+			if mount.ContainerPath == policyConfig.Path {
+				policyMount = &mount
+				break
+			}
+		}
+
+		// TODO: Refactor.
+		if policyMount != nil {
+			if _, err := os.Stat(policyMount.HostPath); !os.IsNotExist(err) {
+				if data, err := os.ReadFile(policyMount.HostPath); err == nil {
+					if pData, err := policies.Parse(string(data), policyConfig.Type); err == nil {
+						policiesData = pData
+					}
+				}
+			}
+		}
+	}
+
 	settings := types.RoomSettings{
 		Name:           roomName,
 		NekoImage:      nekoImage,
 		MaxConnections: epr.Max - epr.Min + 1,
 		Mounts:         mounts,
+		Policies:       policiesData,
 	}
 
 	err = settings.FromEnv(container.Config.Env)
