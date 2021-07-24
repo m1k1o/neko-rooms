@@ -23,11 +23,9 @@ func Generate(policies types.Policies) (string, error) {
 	// Homepage
 	//
 
-	if policies.Homepage != "" {
-		policiesTmpl.Policies["Homepage"] = map[string]interface{}{
-			"URL":       policies.Homepage,
-			"StartPage": "homepage",
-		}
+	policiesTmpl.Policies["Homepage"] = map[string]interface{}{
+		"URL":       policies.Homepage,
+		"StartPage": "homepage",
 	}
 
 	//
@@ -58,15 +56,11 @@ func Generate(policies types.Policies) (string, error) {
 	// Persistent Data
 	//
 
-	if policies.PersistentData {
-		Preferences := policiesTmpl.Policies["Preferences"].(map[string]interface{})
-		Preferences["browser.urlbar.suggest.history"] = true
-		Preferences["places.history.enabled"] = true
-		policiesTmpl.Policies["Preferences"] = Preferences
-		policiesTmpl.Policies["SanitizeOnShutdown"] = false
-	} else {
-		policiesTmpl.Policies["SanitizeOnShutdown"] = true
-	}
+	Preferences := policiesTmpl.Policies["Preferences"].(map[string]interface{})
+	Preferences["browser.urlbar.suggest.history"] = policies.PersistentData
+	Preferences["places.history.enabled"] = policies.PersistentData
+	policiesTmpl.Policies["Preferences"] = Preferences
+	policiesTmpl.Policies["SanitizeOnShutdown"] = !policies.PersistentData
 
 	data, err := json.MarshalIndent(policiesTmpl, "", "  ")
 	if err != nil {

@@ -22,9 +22,7 @@ func Generate(policies types.Policies) (string, error) {
 	// Homepage
 	//
 
-	if policies.Homepage != "" {
-		policiesTmpl["HomepageLocation"] = policies.Homepage
-	}
+	policiesTmpl["HomepageLocation"] = policies.Homepage
 
 	//
 	// Extensions
@@ -79,6 +77,8 @@ func Generate(policies types.Policies) (string, error) {
 	} else {
 		// Keep cookies for the duration of the session
 		policiesTmpl["DefaultCookiesSetting"] = 4
+		// Open New Tab Page
+		policiesTmpl["RestoreOnStartup"] = 5
 	}
 
 	data, err := json.MarshalIndent(policiesTmpl, "", "  ")
