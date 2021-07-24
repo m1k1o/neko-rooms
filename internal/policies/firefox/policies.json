@@ -115,15 +115,6 @@
       "ui.key.menuAccessKeyFocuses": false
     },
     "PromptForDownloadLocation": false,
-    "SanitizeOnShutdown": {
-      "Cache": true,
-      "Cookies": true,
-      "Downloads": true,
-      "FormData": true,
-      "History": true,
-      "OfflineApps": true,
-      "Sessions": true,
-      "SiteSettings": true
-    }
+    "SanitizeOnShutdown": true
   }
 }

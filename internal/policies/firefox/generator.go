@@ -1,87 +1,74 @@
 package firefox
 
+// https://github.com/mozilla/policy-templates/blob/master/README.md#homepage
+
 import (
 	_ "embed"
 	"encoding/json"
-	"net/url"
+	"m1k1o/neko_rooms/internal/types"
 )
-
-type Settings struct {
-	Bookmarks      []string          `json:"bookmarks"`
-	Extensions     map[string]string `json:"extensions"`
-	DeveloperTools bool              `json:"developer_tools"`
-}
 
 //go:embed policies.json
 var policiesJson string
 
-func Generate(settings Settings) (string, error) {
-	policiesObj := struct {
+func Generate(policies types.Policies) (string, error) {
+	policiesTmpl := struct {
 		Policies map[string]interface{} `json:"policies"`
 	}{}
-	if err := json.Unmarshal([]byte(policiesJson), &policiesObj); err != nil {
+	if err := json.Unmarshal([]byte(policiesJson), &policiesTmpl); err != nil {
 		return "", err
 	}
 
 	//
-	// Bookmarks
+	// Homepage
 	//
 
-	// Do not append
-	//Bookmarks := policiesObj.Policies["Bookmarks"].([]interface{})
-	Bookmarks := []interface{}{}
-
-	for _, URL := range settings.Bookmarks {
-		title := URL
-
-		if u, err := url.Parse(URL); err == nil {
-			title = u.Hostname()
+	if policies.Homepage != "" {
+		policiesTmpl.Policies["Homepage"] = map[string]interface{}{
+			"URL":       policies.Homepage,
+			"StartPage": "homepage",
 		}
-
-		Bookmarks = append(Bookmarks, map[string]interface{}{
-			"Title": title,
-			"URL":   URL,
-			//"Favicon":   URL + "/favicon.ico",
-			"Folder":    "Pages",
-			"Placement": "toolbar",
-		})
-	}
-
-	if len(settings.Bookmarks) > 0 {
-		policiesObj.Policies["Bookmarks"] = Bookmarks
 	}
 
 	//
 	// Extensions
 	//
 
-	// Do not append
-	//Extensions := policiesObj.Policies["ExtensionSettings"].(map[string]interface{})
-	Extensions := map[string]interface{}{}
-
-	// block all
-	Extensions["*"] = map[string]interface{}{
+	ExtensionSettings := map[string]interface{}{}
+	ExtensionSettings["*"] = map[string]interface{}{
 		"installation_mode": "blocked",
 	}
 
-	for id, url := range settings.Extensions {
-		Extensions[id] = map[string]interface{}{
-			"install_url":       url,
+	for _, e := range policies.Extensions {
+		ExtensionSettings[e.ID] = map[string]interface{}{
+			"install_url":       e.URL,
 			"installation_mode": "force_installed",
 		}
 	}
 
-	if len(settings.Extensions) > 0 {
-		policiesObj.Policies["ExtensionSettings"] = Extensions
+	policiesTmpl.Policies["ExtensionSettings"] = ExtensionSettings
+
+	//
+	// Developer Tools
+	//
+
+	policiesTmpl.Policies["DisableDeveloperTools"] = !policies.DeveloperTools
+
+	//
+	// Persistent Data
+	//
+
+	if policies.PersistentData {
+		Preferences := policiesTmpl.Policies["Preferences"].(map[string]interface{})
+		Preferences["browser.urlbar.suggest.history"] = true
+		Preferences["places.history.enabled"] = true
+		policiesTmpl.Policies["Preferences"] = Preferences
+		policiesTmpl.Policies["SanitizeOnShutdown"] = false
+	} else {
+		policiesTmpl.Policies["SanitizeOnShutdown"] = true
 	}
 
-	//
-	// DeveloperTools
-	//
-
-	policiesObj.Policies["DisableDeveloperTools"] = settings.DeveloperTools
-
-	data, err := json.MarshalIndent(policiesObj, "", "  ")
+	data, err := json.MarshalIndent(policiesTmpl, "", "  ")
 	if err != nil {
 		return "", err
 	}
