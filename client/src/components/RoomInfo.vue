@@ -154,6 +154,19 @@
           </tbody>
         </template>
       </v-simple-table>
+
+      <div class="my-3 headline">Policies</div>
+      <v-simple-table v-if="settings.policies">
+        <template v-slot:default>
+          <tbody>
+            <tr><th> Homepage </th><td>{{ settings.policies.homepage }}</td></tr>
+            <tr><th> Extensions </th><td>{{ settings.policies.extensions }}</td></tr>
+            <tr><th> Developer tools </th><td>{{ settings.policies.developer_tools }}</td></tr>
+            <tr><th> Persistent data </th><td>{{ settings.policies.persistent_data }}</td></tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+      <div v-else> none </div>
     </template>
   </div>
 </template>

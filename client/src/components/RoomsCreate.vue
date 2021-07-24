@@ -208,7 +208,7 @@
               <v-btn @click="delEnv(index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
             </div>
           </v-row>
-          <v-row align="center" no-gutters class="mt-3">
+          <v-row align="center" no-gutters class="my-3">
               <h2> Mounts </h2>
               <v-btn @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
@@ -252,6 +252,59 @@
             </p>
           </v-row>
         </template>
+
+        <hr />
+
+        <v-row align="center" no-gutters class="my-3">
+          <h2 class="my-3">
+            Browser policies <small>(experimental)</small>
+          </h2>
+          <v-checkbox
+            v-model="policiesEnabled"
+            hide-details
+            class="shrink ml-2 mt-0"
+          ></v-checkbox>
+        </v-row>
+
+        <v-row align="center">
+          <v-col>
+            <v-text-field
+              v-model="data.policies.homepage"
+              label="Homepage"
+              :disabled="!policiesEnabled"
+            ></v-text-field>
+          </v-col>
+          <v-col>
+            <v-select
+              v-model="data.policies.extensions"
+              label="Extensions"
+              :items="[ 'TODO' ]"
+              multiple
+              :disabled="!policiesEnabled"
+            ></v-select>
+          </v-col>
+        </v-row>
+
+        <v-row align="center">
+          <v-col>
+            <v-checkbox
+              v-model="data.policies.developer_tools"
+              label="Enable developer tools"
+              hide-details
+              class="shrink ml-2 mt-0"
+              :disabled="!policiesEnabled"
+            ></v-checkbox>
+          </v-col>
+          <v-col>
+            <v-checkbox
+              v-model="data.policies.persistent_data"
+              label="Allow persistent data"
+              hide-details
+              class="shrink ml-2 mt-0"
+              :disabled="!policiesEnabled"
+            ></v-checkbox>
+          </v-col>
+        </v-row>
       </v-form>
     </v-card-text>
     <v-card-actions>
@@ -305,6 +358,7 @@ export default class RoomsCreate extends Vue {
   private videoPipelineEnabled = false
   private audioPipelineEnabled = false
   private broadcastPipelineEnabled = false
+  private policiesEnabled = false
 
   private loading = false
   private data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
@@ -407,6 +461,7 @@ export default class RoomsCreate extends Vue {
         // eslint-disable-next-line
         broadcast_pipeline: this.broadcastPipelineEnabled ? this.data.broadcast_pipeline : '',
         envs,
+        policies: this.policiesEnabled ? this.data.policies : undefined,
       })
       this.Clear()
       this.$emit('finished', true)

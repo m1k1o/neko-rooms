@@ -42,6 +42,15 @@ export const state = {
     envs: {},
     // eslint-disable-next-line
     mounts: [],
+
+    policies: {
+      homepage: "https://google.com/?hl=en",
+      extensions: [],
+      // eslint-disable-next-line
+      developer_tools: false,
+      // eslint-disable-next-line
+      persistent_data: false,
+    }
   } as RoomSettings,
   videoCodecs: [
     "VP8",
