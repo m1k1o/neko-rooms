@@ -48,12 +48,6 @@ export interface Extension {
 export interface Policies {
     /**
      * 
-     * @type {string}
-     * @memberof Policies
-     */
-    homepage?: string;
-    /**
-     * 
      * @type {Array<Extension>}
      * @memberof Policies
      */

@@ -255,7 +255,7 @@
 
         <hr />
 
-        <v-row align="center" no-gutters class="my-3">
+        <v-row align="center" no-gutters class="mt-3">
           <h2 class="my-3">
             Browser policies <small>(experimental)</small>
           </h2>
@@ -266,14 +266,7 @@
           ></v-checkbox>
         </v-row>
 
-        <v-row align="center">
-          <v-col>
-            <v-text-field
-              v-model="policies.homepage"
-              label="Homepage"
-              :disabled="!policiesEnabled"
-            ></v-text-field>
-          </v-col>
+        <v-row align="center" no-gutters class="mt-0">
           <v-col>
             <v-select
               v-model="policies.extensions"

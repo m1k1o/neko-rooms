@@ -366,9 +366,6 @@ components:
     Policies:
       type: object
       properties:
-        homepage:
-          type: string
-          example: https://google.com
         extensions:
           type: array
           items:
