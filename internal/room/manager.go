@@ -450,9 +450,10 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		}
 
 		// TODO: Refactor.
-		if policyMount != nil {
-			if _, err := os.Stat(policyMount.HostPath); !os.IsNotExist(err) {
-				if data, err := os.ReadFile(policyMount.HostPath); err == nil {
+		if policyMount != nil && policyMount.Type == types.MountTemplate {
+			templateInternalPath := path.Join(manager.config.StorageInternal, templateStoragePath, policyMount.HostPath)
+			if _, err := os.Stat(templateInternalPath); !os.IsNotExist(err) {
+				if data, err := os.ReadFile(templateInternalPath); err == nil {
 					if pData, err := policies.Parse(string(data), policyConfig.Type); err == nil {
 						policiesData = pData
 					}
