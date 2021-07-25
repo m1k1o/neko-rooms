@@ -245,8 +245,14 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		}
 	}
 
+	paths := map[string]bool{}
 	mounts := []dockerMount.Mount{}
 	for _, mount := range settings.Mounts {
+		// ignore duplicates
+		if _, ok := paths[mount.ContainerPath]; ok {
+			continue
+		}
+
 		readOnly := false
 
 		hostPath := filepath.Clean(mount.HostPath)
@@ -309,6 +315,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 				},
 			},
 		)
+
+		paths[mount.ContainerPath] = true
 	}
 
 	config := &container.Config{
