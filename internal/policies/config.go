@@ -15,8 +15,9 @@ const (
 )
 
 type PoliciesConfig struct {
-	Type PolicyType
-	Path string
+	Type    PolicyType
+	Path    string
+	Profile string
 }
 
 func GetConfig(image string) *PoliciesConfig {
@@ -25,13 +26,15 @@ func GetConfig(image string) *PoliciesConfig {
 		fallthrough
 	case "m1k1o/neko:firefox":
 		return &PoliciesConfig{
-			Type: Firefox,
-			Path: "/usr/lib/firefox/distribution/policies.json",
+			Type:    Firefox,
+			Path:    "/usr/lib/firefox/distribution/policies.json",
+			Profile: "/home/neko/.mozilla/firefox/profile.default",
 		}
 	case "m1k1o/neko:arm-firefox":
 		return &PoliciesConfig{
-			Type: Firefox,
-			Path: "/usr/lib/firefox-esr/distribution/policies.json",
+			Type:    Firefox,
+			Path:    "/usr/lib/firefox-esr/distribution/policies.json",
+			Profile: "/home/neko/.mozilla/firefox/profile.default",
 		}
 	case "m1k1o/neko:chromium":
 		fallthrough
@@ -39,18 +42,21 @@ func GetConfig(image string) *PoliciesConfig {
 		fallthrough
 	case "m1k1o/neko:ungoogled-chromium":
 		return &PoliciesConfig{
-			Type: Chromium,
-			Path: "/etc/chromium/policies/managed/policies.json",
+			Type:    Chromium,
+			Path:    "/etc/chromium/policies/managed/policies.json",
+			Profile: "/home/neko/.config/chromium",
 		}
 	case "m1k1o/neko:google-chrome":
 		return &PoliciesConfig{
-			Type: Chromium,
-			Path: "/etc/opt/chrome/policies/managed/policies.json",
+			Type:    Chromium,
+			Path:    "/etc/opt/chrome/policies/managed/policies.json",
+			Profile: "/home/neko/.config/google-chrome",
 		}
 	case "m1k1o/neko:brave":
 		return &PoliciesConfig{
-			Type: Chromium,
-			Path: "/etc/brave/policies/managed/policies.json",
+			Type:    Chromium,
+			Path:    "/etc/brave/policies/managed/policies.json",
+			Profile: "/home/neko/.config/brave",
 		}
 	}
 

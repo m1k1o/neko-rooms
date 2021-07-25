@@ -234,6 +234,15 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			HostPath:      policyPath,
 			ContainerPath: policyConfig.Path,
 		})
+
+		// mount persistent folder
+		if settings.Policies.PersistentData && policyConfig.Profile != "" {
+			settings.Mounts = append(settings.Mounts, types.RoomMount{
+				Type:          types.MountPrivate,
+				HostPath:      "/profile",
+				ContainerPath: policyConfig.Profile,
+			})
+		}
 	}
 
 	mounts := []dockerMount.Mount{}
