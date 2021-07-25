@@ -19,12 +19,6 @@ func Generate(policies types.Policies) (string, error) {
 	}
 
 	//
-	// Homepage
-	//
-
-	policiesTmpl["HomepageLocation"] = policies.Homepage
-
-	//
 	// Extensions
 	//
 

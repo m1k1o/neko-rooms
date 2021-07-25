@@ -20,15 +20,6 @@ func Generate(policies types.Policies) (string, error) {
 	}
 
 	//
-	// Homepage
-	//
-
-	policiesTmpl.Policies["Homepage"] = map[string]interface{}{
-		"URL":       policies.Homepage,
-		"StartPage": "homepage",
-	}
-
-	//
 	// Extensions
 	//
 
@@ -61,6 +52,16 @@ func Generate(policies types.Policies) (string, error) {
 	Preferences["places.history.enabled"] = policies.PersistentData
 	policiesTmpl.Policies["Preferences"] = Preferences
 	policiesTmpl.Policies["SanitizeOnShutdown"] = !policies.PersistentData
+
+	if policies.PersistentData {
+		policiesTmpl.Policies["Homepage"] = map[string]interface{}{
+			"StartPage": "previous-session",
+		}
+	} else {
+		policiesTmpl.Policies["Homepage"] = map[string]interface{}{
+			"StartPage": "homepage",
+		}
+	}
 
 	data, err := json.MarshalIndent(policiesTmpl, "", "  ")
 	if err != nil {

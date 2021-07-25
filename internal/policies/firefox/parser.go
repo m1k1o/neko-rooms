@@ -24,16 +24,6 @@ func Parse(policiesJson string) (*types.Policies, error) {
 	}
 
 	//
-	// Homepage
-	//
-
-	if homepage, ok := policiesTmpl.Policies["Homepage"].(map[string]interface{}); ok {
-		if url, ok := homepage["URL"]; ok {
-			policies.Homepage = url.(string)
-		}
-	}
-
-	//
 	// Extensions
 	//
 
