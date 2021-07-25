@@ -270,8 +270,21 @@
           <v-col>
             <v-select
               v-model="policies.extensions"
-              label="Extensions"
-              :items="[ 'TODO' ]"
+              label="Extensions (chromium only now)"
+              :items="[
+                {
+                  text: 'uBlock Origin',
+                  value: { id: 'cjpalhdlnbpafiamejdnhcphjbkeiagm' },
+                },
+                {
+                  text: 'NordVPN',
+                  value: { id: 'fjoaledfpmneenckfbpdfhkmimnjocfa' },
+                },
+                {
+                  text: 'SponsorBlock for YouTube',
+                  value: { id: 'mnjggcdmjocbbbhaepdhchncahnbgone' },
+                }
+              ]"
               multiple
               :disabled="!policiesEnabled"
             ></v-select>
