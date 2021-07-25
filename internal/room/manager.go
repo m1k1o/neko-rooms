@@ -239,7 +239,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		if settings.Policies.PersistentData && policyConfig.Profile != "" {
 			settings.Mounts = append(settings.Mounts, types.RoomMount{
 				Type:          types.MountPrivate,
-				HostPath:      "/profile",
+				HostPath:      fmt.Sprintf("/%s-profile", policyConfig.Type),
 				ContainerPath: policyConfig.Profile,
 			})
 		}
