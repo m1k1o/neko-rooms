@@ -2,6 +2,7 @@ import {
   RoomsConfig,
   RoomEntry,
   RoomSettings,
+  Policies,
 } from '@/api/index'
 
 export const state = {
@@ -42,16 +43,15 @@ export const state = {
     envs: {},
     // eslint-disable-next-line
     mounts: [],
-
-    policies: {
-      homepage: "https://google.com/?hl=en",
-      extensions: [],
-      // eslint-disable-next-line
-      developer_tools: false,
-      // eslint-disable-next-line
-      persistent_data: false,
-    }
   } as RoomSettings,
+  defaultPolicies: {
+    homepage: "https://google.com/?hl=en",
+    extensions: [],
+    // eslint-disable-next-line
+    developer_tools: false,
+    // eslint-disable-next-line
+    persistent_data: false,
+  } as Policies,
   videoCodecs: [
     "VP8",
     "VP9",

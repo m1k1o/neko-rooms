@@ -269,14 +269,14 @@
         <v-row align="center">
           <v-col>
             <v-text-field
-              v-model="data.policies.homepage"
+              v-model="policies.homepage"
               label="Homepage"
               :disabled="!policiesEnabled"
             ></v-text-field>
           </v-col>
           <v-col>
             <v-select
-              v-model="data.policies.extensions"
+              v-model="policies.extensions"
               label="Extensions"
               :items="[ 'TODO' ]"
               multiple
@@ -288,7 +288,7 @@
         <v-row align="center">
           <v-col>
             <v-checkbox
-              v-model="data.policies.developer_tools"
+              v-model="policies.developer_tools"
               label="Enable developer tools"
               hide-details
               class="shrink ml-2 mt-0"
@@ -297,7 +297,7 @@
           </v-col>
           <v-col>
             <v-checkbox
-              v-model="data.policies.persistent_data"
+              v-model="policies.persistent_data"
               label="Allow persistent data"
               hide-details
               class="shrink ml-2 mt-0"
@@ -333,6 +333,7 @@ import { Vue, Component, Ref } from 'vue-property-decorator'
 
 import {
   RoomSettings,
+  Policies,
 } from '@/api/index'
 
 export type VForm = Vue & {
@@ -362,6 +363,7 @@ export default class RoomsCreate extends Vue {
 
   private loading = false
   private data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
+  private policies: Policies = { ...this.$store.state.defaultPolicies }
   private envList: { key: string; val: string }[] = []
 
   // eslint-disable-next-line
@@ -461,7 +463,7 @@ export default class RoomsCreate extends Vue {
         // eslint-disable-next-line
         broadcast_pipeline: this.broadcastPipelineEnabled ? this.data.broadcast_pipeline : '',
         envs,
-        policies: this.policiesEnabled ? this.data.policies : undefined,
+        policies: this.policiesEnabled ? this.policies : undefined,
       })
       this.Clear()
       this.$emit('finished', true)
@@ -490,6 +492,9 @@ export default class RoomsCreate extends Vue {
       ...this.$store.state.defaultRoomSettings,
       // eslint-disable-next-line
       neko_image: this.nekoImages[0],
+    }
+    this.policies = {
+      ...this.$store.state.defaultPolicies,
     }
     this.envList = Object.entries({...this.data.envs}).map(([ key, val ]) => ({ key, val, }))
   }
