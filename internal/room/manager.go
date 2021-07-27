@@ -114,6 +114,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		}
 	}
 
+	//
+	// Allocate ports
+	//
+
 	epr, err := manager.allocatePorts(settings.MaxConnections)
 	if err != nil {
 		return "", err
@@ -137,7 +141,32 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		exposedPorts[portKey] = struct{}{}
 	}
 
+	//
+	// Set traefik labels
+	//
+
 	containerName := manager.config.InstanceName + "-" + roomName
+
+	traefikLabels := map[string]string{
+		"traefik.enable": "true",
+		"traefik.http.services." + containerName + "-frontend.loadbalancer.server.port": fmt.Sprintf("%d", frontendPort),
+		"traefik.http.routers." + containerName + ".entrypoints":                        manager.config.TraefikEntrypoint,
+		"traefik.http.routers." + containerName + ".rule":                               "Host(`" + manager.config.TraefikDomain + "`) && PathPrefix(`/" + roomName + "`)",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        "/" + roomName + "$$",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + roomName + "/",
+		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + roomName + "/",
+		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
+	}
+
+	// optional HTTPS
+	if manager.config.TraefikCertresolver != "" {
+		traefikLabels["traefik.http.routers."+containerName+".tls"] = "true"
+		traefikLabels["traefik.http.routers."+containerName+".tls.certresolver"] = manager.config.TraefikCertresolver
+	}
+
+	//
+	// Set internal labels
+	//
 
 	instanceUrl := manager.config.InstanceUrl
 	if instanceUrl == "" {
@@ -157,31 +186,20 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		instanceUrl = instanceUrl + "/"
 	}
 
-	labels := map[string]string{
-		// Set internal labels
-		"m1k1o.neko_rooms.name":       roomName,
-		"m1k1o.neko_rooms.url":        instanceUrl + roomName + "/",
-		"m1k1o.neko_rooms.instance":   manager.config.InstanceName,
-		"m1k1o.neko_rooms.epr.min":    fmt.Sprintf("%d", epr.Min),
-		"m1k1o.neko_rooms.epr.max":    fmt.Sprintf("%d", epr.Max),
-		"m1k1o.neko_rooms.neko_image": settings.NekoImage,
+	labels := manager.serializeLabels(RoomLabels{
+		Name:      roomName,
+		URL:       instanceUrl + roomName + "/",
+		Epr:       epr,
+		NekoImage: settings.NekoImage,
+	})
 
-		// Set traefik labels
-		"traefik.enable": "true",
-		"traefik.http.services." + containerName + "-frontend.loadbalancer.server.port": fmt.Sprintf("%d", frontendPort),
-		"traefik.http.routers." + containerName + ".entrypoints":                        manager.config.TraefikEntrypoint,
-		"traefik.http.routers." + containerName + ".rule":                               "Host(`" + manager.config.TraefikDomain + "`) && PathPrefix(`/" + roomName + "`)",
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        "/" + roomName + "$$",
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + roomName + "/",
-		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + roomName + "/",
-		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
+	for k, v := range traefikLabels {
+		labels[k] = v
 	}
 
-	// optional HTTPS
-	if manager.config.TraefikCertresolver != "" {
-		labels["traefik.http.routers."+containerName+".tls"] = "true"
-		labels["traefik.http.routers."+containerName+".tls.certresolver"] = manager.config.TraefikCertresolver
-	}
+	//
+	// Set environment variables
+	//
 
 	env := []string{
 		fmt.Sprintf("NEKO_BIND=:%d", frontendPort),
@@ -193,6 +211,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	if len(manager.config.NAT1To1IPs) > 0 {
 		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")))
 	}
+
+	//
+	// Set container mounts
+	//
 
 	mounts := []dockerMount.Mount{}
 	for _, mount := range settings.Mounts {
@@ -259,6 +281,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			},
 		)
 	}
+
+	//
+	// Set container configs
+	//
 
 	config := &container.Config{
 		// Hostname
@@ -358,22 +384,12 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		return nil, err
 	}
 
-	roomName, ok := container.Config.Labels["m1k1o.neko_rooms.name"]
-	if !ok {
-		return nil, fmt.Errorf("damaged container labels: name not found")
-	}
-
-	nekoImage, ok := container.Config.Labels["m1k1o.neko_rooms.neko_image"]
-	if !ok {
-		return nil, fmt.Errorf("damaged container labels: neko_image not found")
-	}
-
-	epr, err := manager.getEprFromLabels(container.Config.Labels)
+	labels, err := manager.extractLabels(container.Config.Labels)
 	if err != nil {
 		return nil, err
 	}
 
-	privateStorageRoot := path.Join(manager.config.StorageExternal, privateStoragePath, roomName)
+	privateStorageRoot := path.Join(manager.config.StorageExternal, privateStoragePath, labels.Name)
 	templateStorageRoot := path.Join(manager.config.StorageExternal, templateStoragePath)
 
 	mounts := []types.RoomMount{}
@@ -397,9 +413,9 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 	}
 
 	settings := types.RoomSettings{
-		Name:           roomName,
-		NekoImage:      nekoImage,
-		MaxConnections: epr.Max - epr.Min + 1,
+		Name:           labels.Name,
+		NekoImage:      labels.NekoImage,
+		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Mounts:         mounts,
 	}
 
