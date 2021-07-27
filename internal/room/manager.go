@@ -472,8 +472,10 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 
 	var browserPolicy *types.BrowserPolicy
 	if labels.BrowserPolicy != nil {
-		browserPolicy.Type = labels.BrowserPolicy.Type
-		browserPolicy.Path = labels.BrowserPolicy.Path
+		browserPolicy = &types.BrowserPolicy{
+			Type: labels.BrowserPolicy.Type,
+			Path: labels.BrowserPolicy.Path,
+		}
 
 		var policyMount *types.RoomMount
 		for _, mount := range mounts {
