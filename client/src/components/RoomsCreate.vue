@@ -257,60 +257,58 @@
 
         <v-row align="center" no-gutters class="mt-3">
           <h2 class="my-3">
-            Browser policies <small>(experimental)</small>
+            Browser policy
           </h2>
           <v-checkbox
-            v-model="policiesEnabled"
+            v-model="browserPolicyEnabled"
+            :disabled="!browserPolicyConfig"
             hide-details
             class="shrink ml-2 mt-0"
           ></v-checkbox>
         </v-row>
 
-        <v-row align="center" no-gutters class="mt-0">
-          <v-col>
-            <v-select
-              v-model="policies.extensions"
-              label="Extensions (chromium only now)"
-              :items="[
-                {
-                  text: 'uBlock Origin',
-                  value: { id: 'cjpalhdlnbpafiamejdnhcphjbkeiagm' },
-                },
-                {
-                  text: 'NordVPN',
-                  value: { id: 'fjoaledfpmneenckfbpdfhkmimnjocfa' },
-                },
-                {
-                  text: 'SponsorBlock for YouTube',
-                  value: { id: 'mnjggcdmjocbbbhaepdhchncahnbgone' },
-                }
-              ]"
-              multiple
-              :disabled="!policiesEnabled"
-            ></v-select>
-          </v-col>
-        </v-row>
+        <template v-if="browserPolicyConfig">
+          <v-row align="center" no-gutters class="mt-0">
+            <v-col>
+              <v-select
+                v-model="browserPolicyContent.extensions"
+                label="Extensions"
+                :items="browserPolicyExtensions"
+                multiple
+                :disabled="!browserPolicyEnabled"
+              ></v-select>
+            </v-col>
+          </v-row>
 
-        <v-row align="center">
-          <v-col>
-            <v-checkbox
-              v-model="policies.developer_tools"
-              label="Enable developer tools"
-              hide-details
-              class="shrink ml-2 mt-0"
-              :disabled="!policiesEnabled"
-            ></v-checkbox>
-          </v-col>
-          <v-col>
-            <v-checkbox
-              v-model="policies.persistent_data"
-              label="Allow persistent data"
-              hide-details
-              class="shrink ml-2 mt-0"
-              :disabled="!policiesEnabled"
-            ></v-checkbox>
-          </v-col>
-        </v-row>
+          <v-row align="center">
+            <v-col>
+              <v-checkbox
+                v-model="browserPolicyContent.developer_tools"
+                label="Enable developer tools"
+                hide-details
+                class="shrink ml-2 mt-0"
+                :disabled="!browserPolicyEnabled"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                v-model="browserPolicyContent.persistent_data"
+                label="Allow persistent data"
+                hide-details
+                class="shrink ml-2 mt-0"
+                :disabled="!browserPolicyEnabled"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+        </template>
+        <v-alert
+          border="left"
+          type="info"
+          v-else
+        >
+          <p><strong>Not available!</strong></p>
+          <p class="mb-0">Browser policy is not available for this image.</p>
+        </v-alert>
       </v-form>
     </v-card-text>
     <v-card-actions>
@@ -339,7 +337,9 @@ import { Vue, Component, Ref } from 'vue-property-decorator'
 
 import {
   RoomSettings,
-  Policies,
+  BrowserPolicyContent,
+  BrowserPolicyExtension,
+  BrowserPolicyTypeEnum,
 } from '@/api/index'
 
 export type VForm = Vue & {
@@ -365,11 +365,11 @@ export default class RoomsCreate extends Vue {
   private videoPipelineEnabled = false
   private audioPipelineEnabled = false
   private broadcastPipelineEnabled = false
-  private policiesEnabled = false
+  private browserPolicyEnabled = false
 
   private loading = false
   private data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
-  private policies: Policies = { ...this.$store.state.defaultPolicies }
+  private browserPolicyContent: BrowserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
   private envList: { key: string; val: string }[] = []
 
   // eslint-disable-next-line
@@ -431,6 +431,28 @@ export default class RoomsCreate extends Vue {
     ]
   }
 
+  get browserPolicyConfig() {
+    const nekoImage = this.data.neko_image
+    if (!nekoImage) return undefined
+  
+    return this.$store.state.browserPolicyConfig.find(({ images }: { images: string[] }): boolean => images.includes(nekoImage))
+  }
+
+  get browserPolicyExtensions() {
+    const config = this.browserPolicyConfig
+    if (!config) return []
+  
+    return this.$store.state.browserPolicyExtensions.map(({ text, value }: {
+      text: string;
+      value: Record<BrowserPolicyTypeEnum, BrowserPolicyExtension>;
+    }) => {
+      return {
+        text,
+        value: value[config.type as BrowserPolicyTypeEnum],
+      }
+    })
+  }
+
   addEnv() {
     Vue.set(this, 'envList', [ ...this.envList, { key: '', val: '' } ])
   }
@@ -469,7 +491,12 @@ export default class RoomsCreate extends Vue {
         // eslint-disable-next-line
         broadcast_pipeline: this.broadcastPipelineEnabled ? this.data.broadcast_pipeline : '',
         envs,
-        policies: this.policiesEnabled ? this.policies : undefined,
+        // eslint-disable-next-line
+        browser_policy: this.browserPolicyEnabled && this.browserPolicyConfig ? {
+          type: this.browserPolicyConfig.type,
+          path: this.browserPolicyConfig.path,
+          content: this.browserPolicyContent
+        } : undefined,
       })
       this.Clear()
       this.$emit('finished', true)
@@ -499,9 +526,7 @@ export default class RoomsCreate extends Vue {
       // eslint-disable-next-line
       neko_image: this.nekoImages[0],
     }
-    this.policies = {
-      ...this.$store.state.defaultPolicies,
-    }
+    this.browserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
     this.envList = Object.entries({...this.data.envs}).map(([ key, val ]) => ({ key, val, }))
   }
 
