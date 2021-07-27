@@ -330,8 +330,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RoomMount'
-        policies:
-          $ref: '#/components/schemas/Policies'
+        browser_policy:
+          $ref: '#/components/schemas/BrowserPolicy'
 
     RoomStats:
       type: object
@@ -363,13 +363,25 @@ components:
           type: boolean
           example: false
 
-    Policies:
+    BrowserPolicy:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ firefox, chromium ]
+        path:
+          type: string
+          example: /home/neko/.mozilla/firefox/profile.default
+        content:
+          $ref: '#/components/schemas/BrowserPolicyContent'
+
+    BrowserPolicyContent:
       type: object
       properties:
         extensions:
           type: array
           items:
-            $ref: '#/components/schemas/Extension'
+            $ref: '#/components/schemas/BrowserPolicyExtension'
         developer_tools:
           type: boolean
           example: true
@@ -377,7 +389,7 @@ components:
           type: boolean
           example: false
     
-    Extension:
+    BrowserPolicyExtension:
       type: object
       properties:
         id:

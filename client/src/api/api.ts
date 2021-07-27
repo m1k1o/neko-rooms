@@ -24,46 +24,81 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 /**
  * 
  * @export
- * @interface Extension
+ * @interface BrowserPolicy
  */
-export interface Extension {
+export interface BrowserPolicy {
     /**
      * 
      * @type {string}
-     * @memberof Extension
+     * @memberof BrowserPolicy
      */
-    id?: string;
+    type?: BrowserPolicyTypeEnum;
     /**
      * 
      * @type {string}
-     * @memberof Extension
+     * @memberof BrowserPolicy
      */
-    url?: string;
+    path?: string;
+    /**
+     * 
+     * @type {BrowserPolicyContent}
+     * @memberof BrowserPolicy
+     */
+    content?: BrowserPolicyContent;
 }
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum BrowserPolicyTypeEnum {
+    firefox = 'firefox',
+    chromium = 'chromium'
+}
+
 /**
  * 
  * @export
- * @interface Policies
+ * @interface BrowserPolicyContent
  */
-export interface Policies {
+export interface BrowserPolicyContent {
     /**
      * 
-     * @type {Array<Extension>}
-     * @memberof Policies
+     * @type {Array<BrowserPolicyExtension>}
+     * @memberof BrowserPolicyContent
      */
-    extensions?: Array<Extension>;
+    extensions?: Array<BrowserPolicyExtension>;
     /**
      * 
      * @type {boolean}
-     * @memberof Policies
+     * @memberof BrowserPolicyContent
      */
     developer_tools?: boolean;
     /**
      * 
      * @type {boolean}
-     * @memberof Policies
+     * @memberof BrowserPolicyContent
      */
     persistent_data?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface BrowserPolicyExtension
+ */
+export interface BrowserPolicyExtension {
+    /**
+     * 
+     * @type {string}
+     * @memberof BrowserPolicyExtension
+     */
+    id?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof BrowserPolicyExtension
+     */
+    url?: string;
 }
 /**
  * 
@@ -291,10 +326,10 @@ export interface RoomSettings {
     mounts?: Array<RoomMount>;
     /**
      * 
-     * @type {Policies}
+     * @type {BrowserPolicy}
      * @memberof RoomSettings
      */
-    policies?: Policies;
+    browser_policy?: BrowserPolicy;
 }
 /**
  * 
