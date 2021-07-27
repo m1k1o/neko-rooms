@@ -371,7 +371,7 @@ components:
           enum: [ firefox, chromium ]
         path:
           type: string
-          example: /home/neko/.mozilla/firefox/profile.default
+          example: /usr/lib/firefox/distribution/policies.json
         content:
           $ref: '#/components/schemas/BrowserPolicyContent'
 

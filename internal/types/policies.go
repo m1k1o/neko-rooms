@@ -4,7 +4,7 @@ type BrowserPolicyType string
 
 const (
 	ChromiumBrowserPolicy BrowserPolicyType = "chromium"
-	FirefoxBrowserPolicy  BrowserPolicyType = "friefox"
+	FirefoxBrowserPolicy  BrowserPolicyType = "firefox"
 )
 
 type BrowserPolicy struct {
