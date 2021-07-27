@@ -3,7 +3,6 @@ package room
 import (
 	"fmt"
 	"sort"
-	"strconv"
 )
 
 type EprPorts struct {
@@ -51,12 +50,12 @@ func (manager *RoomManagerCtx) getUsedPorts() ([]EprPorts, error) {
 
 	result := []EprPorts{}
 	for _, container := range containers {
-		epr, err := manager.getEprFromLabels(container.Labels)
+		labels, err := manager.extractLabels(container.Labels)
 		if err != nil {
 			return nil, err
 		}
 
-		result = append(result, epr)
+		result = append(result, labels.Epr)
 	}
 
 	sort.SliceStable(result, func(i, j int) bool {
@@ -64,33 +63,4 @@ func (manager *RoomManagerCtx) getUsedPorts() ([]EprPorts, error) {
 	})
 
 	return result, nil
-}
-
-func (manager *RoomManagerCtx) getEprFromLabels(labels map[string]string) (EprPorts, error) {
-	var err error
-	epr := EprPorts{}
-
-	eprMinStr, ok := labels["m1k1o.neko_rooms.epr.min"]
-	if !ok {
-		return epr, fmt.Errorf("damaged container labels: epr.min not found")
-	}
-
-	eprMin, err := strconv.ParseUint(eprMinStr, 10, 16)
-	if err != nil {
-		return epr, err
-	}
-
-	eprMaxStr, ok := labels["m1k1o.neko_rooms.epr.max"]
-	if !ok {
-		return epr, fmt.Errorf("damaged container labels: epr.max not found")
-	}
-
-	eprMax, err := strconv.ParseUint(eprMaxStr, 10, 16)
-	if err != nil {
-		return epr, err
-	}
-
-	epr.Min = uint16(eprMin)
-	epr.Max = uint16(eprMax)
-	return epr, nil
 }
