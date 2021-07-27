@@ -155,13 +155,23 @@
         </template>
       </v-simple-table>
 
-      <div class="my-3 headline">Policies</div>
-      <v-simple-table v-if="settings.policies">
+      <div class="my-3 headline">Browser policy</div>
+      <v-simple-table v-if="settings.browser_policy">
         <template v-slot:default>
           <tbody>
-            <tr><th> Extensions </th><td>{{ settings.policies.extensions }}</td></tr>
-            <tr><th> Developer tools </th><td>{{ settings.policies.developer_tools }}</td></tr>
-            <tr><th> Persistent data </th><td>{{ settings.policies.persistent_data }}</td></tr>
+            <tr><th> Type </th><td>{{ settings.browser_policy.type }}</td></tr>
+            <tr><th> Path </th><td>{{ settings.browser_policy.path }}</td></tr>
+            <tr><th> Content </th><td>
+              <v-simple-table>
+                <template v-slot:default>
+                  <tbody>
+                    <tr><th> Extensions </th><td>{{ settings.browser_policy.content.extensions }}</td></tr>
+                    <tr><th> Developer tools </th><td>{{ settings.browser_policy.content.developer_tools }}</td></tr>
+                    <tr><th> Persistent data </th><td>{{ settings.browser_policy.content.persistent_data }}</td></tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+            </td></tr>
           </tbody>
         </template>
       </v-simple-table>
