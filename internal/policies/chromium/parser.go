@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-func Parse(policiesJson string) (*types.Policies, error) {
-	policies := types.Policies{}
+func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
+	policies := types.BrowserPolicyContent{}
 
 	policiesTmpl := map[string]interface{}{}
 	if err := json.Unmarshal([]byte(policiesJson), &policiesTmpl); err != nil {
@@ -21,12 +21,12 @@ func Parse(policiesJson string) (*types.Policies, error) {
 	//
 
 	if extensions, ok := policiesTmpl["ExtensionInstallForcelist"]; ok {
-		policies.Extensions = []types.Extension{}
+		policies.Extensions = []types.BrowserPolicyExtension{}
 		for _, val := range extensions.([]interface{}) {
 			s := strings.Split(val.(string), ";")
 			policies.Extensions = append(
 				policies.Extensions,
-				types.Extension{
+				types.BrowserPolicyExtension{
 					ID:  s[0],
 					URL: s[1],
 				},

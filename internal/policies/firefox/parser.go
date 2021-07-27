@@ -8,8 +8,8 @@ import (
 	"m1k1o/neko_rooms/internal/types"
 )
 
-func Parse(policiesJson string) (*types.Policies, error) {
-	policies := types.Policies{}
+func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
+	policies := types.BrowserPolicyContent{}
 
 	policiesTmpl := struct {
 		Policies map[string]interface{} `json:"policies"`
@@ -28,7 +28,7 @@ func Parse(policiesJson string) (*types.Policies, error) {
 	//
 
 	if extensions, ok := policiesTmpl.Policies["ExtensionSettings"]; ok {
-		policies.Extensions = []types.Extension{}
+		policies.Extensions = []types.BrowserPolicyExtension{}
 		for id, val := range extensions.(map[string]interface{}) {
 			if id == "*" {
 				continue
@@ -39,7 +39,7 @@ func Parse(policiesJson string) (*types.Policies, error) {
 
 			policies.Extensions = append(
 				policies.Extensions,
-				types.Extension{
+				types.BrowserPolicyExtension{
 					ID:  id,
 					URL: url,
 				},

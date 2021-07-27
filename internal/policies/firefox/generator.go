@@ -11,7 +11,7 @@ import (
 //go:embed policies.json
 var policiesJson string
 
-func Generate(policies types.Policies) (string, error) {
+func Generate(policies types.BrowserPolicyContent) (string, error) {
 	policiesTmpl := struct {
 		Policies map[string]interface{} `json:"policies"`
 	}{}

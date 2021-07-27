@@ -187,11 +187,21 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		instanceUrl = instanceUrl + "/"
 	}
 
+	var browserPolicyLabels *BrowserPolicyLabels
+	if settings.BrowserPolicy != nil {
+		browserPolicyLabels = &BrowserPolicyLabels{
+			Type: settings.BrowserPolicy.Type,
+			Path: settings.BrowserPolicy.Path,
+		}
+	}
+
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
 		URL:       instanceUrl + roomName + "/",
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
+
+		BrowserPolicy: browserPolicyLabels,
 	})
 
 	for k, v := range traefikLabels {
@@ -213,24 +223,22 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")))
 	}
 
-	// browser policies
-	if settings.Policies != nil {
+	//
+	// Set browser policies
+	//
+
+	if settings.BrowserPolicy != nil {
 		if !manager.config.StorageEnabled {
 			return "", fmt.Errorf("policies cannot be specified, because storage is disabled or unavailable")
 		}
 
-		policyConfig := policies.GetConfig(settings.NekoImage)
-		if policyConfig == nil {
-			return "", fmt.Errorf("policy config for this image does not exist")
-		}
-
-		policyJson, err := policies.Generate(*settings.Policies, policyConfig.Type)
+		policyJson, err := policies.Generate(settings.BrowserPolicy.Content, settings.BrowserPolicy.Type)
 		if err != nil {
 			return "", err
 		}
 
 		// create policy path (+ also get host path)
-		policyPath := fmt.Sprintf("/%s-%s-policy.json", roomName, policyConfig.Type)
+		policyPath := fmt.Sprintf("/%s-%s-policy.json", roomName, settings.BrowserPolicy.Type)
 		templateInternalPath := path.Join(manager.config.StorageInternal, templateStoragePath)
 		policyInternalPath := path.Join(templateInternalPath, policyPath)
 
@@ -250,17 +258,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		settings.Mounts = append(settings.Mounts, types.RoomMount{
 			Type:          types.MountTemplate,
 			HostPath:      policyPath,
-			ContainerPath: policyConfig.Path,
+			ContainerPath: settings.BrowserPolicy.Path,
 		})
-
-		// mount persistent folder
-		if settings.Policies.PersistentData && policyConfig.Profile != "" {
-			settings.Mounts = append(settings.Mounts, types.RoomMount{
-				Type:          types.MountPrivate,
-				HostPath:      fmt.Sprintf("/%s-profile", policyConfig.Type),
-				ContainerPath: policyConfig.Profile,
-			})
-		}
 	}
 
 	//
@@ -471,12 +470,14 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		})
 	}
 
-	var policiesData *types.Policies
-	policyConfig := policies.GetConfig(labels.NekoImage)
-	if policyConfig != nil {
+	var browserPolicy *types.BrowserPolicy
+	if labels.BrowserPolicy != nil {
+		browserPolicy.Type = labels.BrowserPolicy.Type
+		browserPolicy.Path = labels.BrowserPolicy.Path
+
 		var policyMount *types.RoomMount
 		for _, mount := range mounts {
-			if mount.ContainerPath == policyConfig.Path {
+			if mount.ContainerPath == labels.BrowserPolicy.Path {
 				policyMount = &mount
 				break
 			}
@@ -487,8 +488,8 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 			templateInternalPath := path.Join(manager.config.StorageInternal, templateStoragePath, policyMount.HostPath)
 			if _, err := os.Stat(templateInternalPath); !os.IsNotExist(err) {
 				if data, err := os.ReadFile(templateInternalPath); err == nil {
-					if pData, err := policies.Parse(string(data), policyConfig.Type); err == nil {
-						policiesData = pData
+					if content, err := policies.Parse(string(data), labels.BrowserPolicy.Type); err == nil {
+						browserPolicy.Content = *content
 					}
 				}
 			}
@@ -500,7 +501,7 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		NekoImage:      labels.NekoImage,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Mounts:         mounts,
-		Policies:       policiesData,
+		BrowserPolicy:  browserPolicy,
 	}
 
 	err = settings.FromEnv(container.Config.Env)

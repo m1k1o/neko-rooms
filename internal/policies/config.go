@@ -7,80 +7,24 @@ import (
 	"m1k1o/neko_rooms/internal/types"
 )
 
-type PolicyType string
-
-const (
-	Chromium PolicyType = "chromium"
-	Firefox  PolicyType = "friefox"
-)
-
-type PoliciesConfig struct {
-	Type    PolicyType
-	Path    string
-	Profile string
-}
-
-func GetConfig(image string) *PoliciesConfig {
-	switch image {
-	case "m1k1o/neko:latest":
-		fallthrough
-	case "m1k1o/neko:firefox":
-		return &PoliciesConfig{
-			Type:    Firefox,
-			Path:    "/usr/lib/firefox/distribution/policies.json",
-			Profile: "/home/neko/.mozilla/firefox/profile.default",
-		}
-	case "m1k1o/neko:arm-firefox":
-		return &PoliciesConfig{
-			Type:    Firefox,
-			Path:    "/usr/lib/firefox-esr/distribution/policies.json",
-			Profile: "/home/neko/.mozilla/firefox/profile.default",
-		}
-	case "m1k1o/neko:chromium":
-		fallthrough
-	case "m1k1o/neko:arm-chromium":
-		fallthrough
-	case "m1k1o/neko:ungoogled-chromium":
-		return &PoliciesConfig{
-			Type:    Chromium,
-			Path:    "/etc/chromium/policies/managed/policies.json",
-			Profile: "/home/neko/.config/chromium",
-		}
-	case "m1k1o/neko:google-chrome":
-		return &PoliciesConfig{
-			Type:    Chromium,
-			Path:    "/etc/opt/chrome/policies/managed/policies.json",
-			Profile: "/home/neko/.config/google-chrome",
-		}
-	case "m1k1o/neko:brave":
-		return &PoliciesConfig{
-			Type:    Chromium,
-			Path:    "/etc/brave/policies/managed/policies.json",
-			Profile: "/home/neko/.config/brave",
-		}
-	}
-
-	return nil
-}
-
-func Generate(policies types.Policies, policyType PolicyType) (string, error) {
-	if policyType == Chromium {
+func Generate(policies types.BrowserPolicyContent, policyType types.BrowserPolicyType) (string, error) {
+	if policyType == types.ChromiumBrowserPolicy {
 		return chromium.Generate(policies)
 	}
 
-	if policyType == Firefox {
+	if policyType == types.FirefoxBrowserPolicy {
 		return firefox.Generate(policies)
 	}
 
 	return "", errors.New("unknown policy type")
 }
 
-func Parse(policiesJson string, policyType PolicyType) (*types.Policies, error) {
-	if policyType == Chromium {
+func Parse(policiesJson string, policyType types.BrowserPolicyType) (*types.BrowserPolicyContent, error) {
+	if policyType == types.ChromiumBrowserPolicy {
 		return chromium.Parse(policiesJson)
 	}
 
-	if policyType == Firefox {
+	if policyType == types.FirefoxBrowserPolicy {
 		return firefox.Parse(policiesJson)
 	}
 

@@ -1,12 +1,25 @@
 package types
 
-type Policies struct {
-	Extensions     []Extension `json:"extensions"`
-	DeveloperTools bool        `json:"developer_tools"`
-	PersistentData bool        `json:"persistent_data"`
+type BrowserPolicyType string
+
+const (
+	ChromiumBrowserPolicy BrowserPolicyType = "chromium"
+	FirefoxBrowserPolicy  BrowserPolicyType = "friefox"
+)
+
+type BrowserPolicy struct {
+	Type    BrowserPolicyType    `json:"type"`
+	Path    string               `json:"path"`
+	Content BrowserPolicyContent `json:"content"`
 }
 
-type Extension struct {
+type BrowserPolicyContent struct {
+	Extensions     []BrowserPolicyExtension `json:"extensions"`
+	DeveloperTools bool                     `json:"developer_tools"`
+	PersistentData bool                     `json:"persistent_data"`
+}
+
+type BrowserPolicyExtension struct {
 	ID  string `json:"id"`
 	URL string `json:"url"`
 }
