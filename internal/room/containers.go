@@ -13,34 +13,17 @@ import (
 )
 
 func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container) (*types.RoomEntry, error) {
-	roomName, ok := container.Labels["m1k1o.neko_rooms.name"]
-	if !ok {
-		return nil, fmt.Errorf("damaged container labels: name not found")
-	}
-
-	nekoImage, ok := container.Labels["m1k1o.neko_rooms.neko_image"]
-	if !ok {
-		// Backward compatibility.
-		nekoImage = container.Image
-		//return nil, fmt.Errorf("Damaged container labels: neko_image not found.")
-	}
-
-	URL, ok := container.Labels["m1k1o.neko_rooms.url"]
-	if !ok {
-		return nil, fmt.Errorf("damaged container labels: url not found")
-	}
-
-	epr, err := manager.getEprFromLabels(container.Labels)
+	labels, err := manager.extractLabels(container.Labels)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.RoomEntry{
 		ID:             container.ID,
-		URL:            URL,
-		Name:           roomName,
-		NekoImage:      nekoImage,
-		MaxConnections: epr.Max - epr.Min + 1,
+		URL:            labels.URL,
+		Name:           labels.Name,
+		NekoImage:      labels.NekoImage,
+		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Running:        container.State == "running",
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),
