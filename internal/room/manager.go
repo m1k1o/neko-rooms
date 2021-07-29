@@ -147,11 +147,26 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	containerName := manager.config.InstanceName + "-" + roomName
 
+	// create traefik rule
+	traefikRule := "PathPrefix(`/" + roomName + "`)"
+	if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
+		// match *.domain.tld as subdomain
+		if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
+			traefikRule = fmt.Sprintf(
+				"Host(`%s.%s`)",
+				roomName,
+				strings.TrimPrefix(manager.config.TraefikDomain, "*."),
+			)
+		} else {
+			traefikRule += " && Host(`" + manager.config.TraefikDomain + "`)"
+		}
+	}
+
 	traefikLabels := map[string]string{
 		"traefik.enable": "true",
 		"traefik.http.services." + containerName + "-frontend.loadbalancer.server.port": fmt.Sprintf("%d", frontendPort),
 		"traefik.http.routers." + containerName + ".entrypoints":                        manager.config.TraefikEntrypoint,
-		"traefik.http.routers." + containerName + ".rule":                               "Host(`" + manager.config.TraefikDomain + "`) && PathPrefix(`/" + roomName + "`)",
+		"traefik.http.routers." + containerName + ".rule":                               traefikRule,
 		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        "/" + roomName + "$$",
 		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + roomName + "/",
 		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + roomName + "/",
@@ -169,6 +184,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	//
 
 	instanceUrl := manager.config.InstanceUrl
+	instanceSuffix := roomName + "/"
 	if instanceUrl == "" {
 		urlProto := "http"
 		if manager.config.TraefikCertresolver != "" {
@@ -181,14 +197,25 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			port = ":" + manager.config.TraefikPort
 		}
 
-		instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port + "/"
+		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
+			// match *.domain.tld as subdomain
+			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
+				instanceUrl = urlProto + "://" + roomName + "." + strings.TrimPrefix(manager.config.TraefikDomain, "*.") + port + "/"
+				instanceSuffix = ""
+			} else {
+				instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port + "/"
+			}
+		} else {
+			// domain is not known
+			instanceUrl = urlProto + "://127.0.0.1" + port + "/"
+		}
 	} else if !strings.HasSuffix(instanceUrl, "/") {
 		instanceUrl = instanceUrl + "/"
 	}
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
-		URL:       instanceUrl + roomName + "/",
+		URL:       instanceUrl + instanceSuffix,
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 	})

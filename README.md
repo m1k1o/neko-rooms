@@ -43,7 +43,6 @@ You only need `.env.example`, `docker-compose.yml` and `traefik/`.
 #### Do I need to use traefik?
 
 - Traefik needs to be used to forward traffic to the rooms. You can put nginx in front of it, but not replace it.
-- Your domain name specified for traefik must match the domain name, that your proxy connects to. In docker-compose it is the service name.
 - See example configuration for [nginx](docs/nginx).
 
 You can use `docker-compose.http.yml` that will expose this service to `8080` or any port. Authentication is optional.
