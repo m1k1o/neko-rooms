@@ -203,7 +203,7 @@ echo "[Y] Got all settings..."
 # Create env
 #
 
-NEKO_IMAGES=(m1k1o/neko:latest m1k1o/neko:chromium m1k1o/neko:google-chrome)
+NEKO_IMAGES=(m1k1o/neko:firefox m1k1o/neko:chromium m1k1o/neko:google-chrome)
 
 {
   echo "TZ=${TZ}"

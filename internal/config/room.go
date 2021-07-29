@@ -46,10 +46,11 @@ func (Room) Init(cmd *cobra.Command) error {
 	}
 
 	cmd.PersistentFlags().StringSlice("neko_images", []string{
-		"m1k1o/neko:latest",
+		"m1k1o/neko:firefox",
 		"m1k1o/neko:chromium",
 		"m1k1o/neko:google-chrome",
 		"m1k1o/neko:ungoogled-chromium",
+		"m1k1o/neko:brave",
 		"m1k1o/neko:tor-browser",
 		"m1k1o/neko:vlc",
 		"m1k1o/neko:vncviewer",
@@ -95,7 +96,7 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	// Traefik
 
-	cmd.PersistentFlags().String("traefik.domain", "neko.lan", "traefik: domain on which will be container hosted")
+	cmd.PersistentFlags().String("traefik.domain", "", "traefik: domain on which will be container hosted (if empty or '*', match all; for neko-rooms as subdomain use '*.domain.tld')")
 	if err := viper.BindPFlag("traefik.domain", cmd.PersistentFlags().Lookup("traefik.domain")); err != nil {
 		return err
 	}
