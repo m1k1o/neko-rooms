@@ -160,6 +160,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		} else {
 			traefikRule += " && Host(`" + manager.config.TraefikDomain + "`)"
 		}
+	} else {
+		traefikRule += " && HostRegexp(`{host:.+}`)"
 	}
 
 	traefikLabels := map[string]string{
