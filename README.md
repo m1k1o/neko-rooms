@@ -85,7 +85,7 @@ Update your email in `traefik/traefik.yml`.
 You need to pull all your images, that you want to use with neko-room. Otherwise, you might get this error: `Error response from daemon: No such image:` (see issue #1).
 
 ```sh
-docker pull m1k1o/neko:latest
+docker pull m1k1o/neko:firefox
 docker pull m1k1o/neko:chromium
 # etc...
 ```
