@@ -46,10 +46,11 @@ func (Room) Init(cmd *cobra.Command) error {
 	}
 
 	cmd.PersistentFlags().StringSlice("neko_images", []string{
-		"m1k1o/neko:latest",
+		"m1k1o/neko:firefox",
 		"m1k1o/neko:chromium",
 		"m1k1o/neko:google-chrome",
 		"m1k1o/neko:ungoogled-chromium",
+		"m1k1o/neko:brave",
 		"m1k1o/neko:tor-browser",
 		"m1k1o/neko:vlc",
 		"m1k1o/neko:vncviewer",
