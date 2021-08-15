@@ -333,13 +333,14 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Ref } from 'vue-property-decorator'
+import { Vue, Component, Ref, Watch } from 'vue-property-decorator'
 
 import {
   RoomSettings,
   BrowserPolicyContent,
   BrowserPolicyExtension,
   BrowserPolicyTypeEnum,
+  RoomMountTypeEnum,
 } from '@/api/index'
 
 export type VForm = Vue & {
@@ -451,6 +452,20 @@ export default class RoomsCreate extends Vue {
         value: value[config.type as BrowserPolicyTypeEnum],
       }
     })
+  }
+
+  @Watch('browserPolicyContent.persistent_data')
+  onPersistentDataUpdate(enabled: boolean) {
+    const config = this.browserPolicyConfig
+    if (!config) return
+
+    if (enabled) {
+      // eslint-disable-next-line
+      this.data.mounts = [ ...(this.data.mounts || []), { type: RoomMountTypeEnum.private, host_path: '/profile', container_path: config.profile }]
+    } else {
+      // eslint-disable-next-line
+      this.data.mounts = (this.data.mounts || []).filter(({ type, container_path }) => type != RoomMountTypeEnum.private && container_path != config.profile)
+    }
   }
 
   addEnv() {
