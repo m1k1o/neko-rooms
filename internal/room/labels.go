@@ -3,6 +3,8 @@ package room
 import (
 	"fmt"
 	"strconv"
+
+	"m1k1o/neko_rooms/internal/types"
 )
 
 type RoomLabels struct {
@@ -10,6 +12,13 @@ type RoomLabels struct {
 	URL       string
 	Epr       EprPorts
 	NekoImage string
+
+	BrowserPolicy *BrowserPolicyLabels
+}
+
+type BrowserPolicyLabels struct {
+	Type types.BrowserPolicyType
+	Path string
 }
 
 func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLabels, error) {
@@ -48,6 +57,24 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 		return nil, err
 	}
 
+	var browserPolicy *BrowserPolicyLabels
+	if val, ok := labels["m1k1o.neko_rooms.browser_policy"]; ok && val == "true" {
+		policyType, ok := labels["m1k1o.neko_rooms.browser_policy.type"]
+		if !ok {
+			return nil, fmt.Errorf("damaged container labels: browser_policy.type not found")
+		}
+
+		policyPath, ok := labels["m1k1o.neko_rooms.browser_policy.path"]
+		if !ok {
+			return nil, fmt.Errorf("damaged container labels: browser_policy.path not found")
+		}
+
+		browserPolicy = &BrowserPolicyLabels{
+			Type: types.BrowserPolicyType(policyType),
+			Path: policyPath,
+		}
+	}
+
 	return &RoomLabels{
 		Name:      name,
 		URL:       url,
@@ -56,11 +83,12 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 			Min: uint16(eprMin),
 			Max: uint16(eprMax),
 		},
+		BrowserPolicy: browserPolicy,
 	}, nil
 }
 
 func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]string {
-	return map[string]string{
+	labelsMap := map[string]string{
 		"m1k1o.neko_rooms.name":       labels.Name,
 		"m1k1o.neko_rooms.url":        labels.URL,
 		"m1k1o.neko_rooms.instance":   manager.config.InstanceName,
@@ -68,4 +96,12 @@ func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]str
 		"m1k1o.neko_rooms.epr.max":    fmt.Sprintf("%d", labels.Epr.Max),
 		"m1k1o.neko_rooms.neko_image": labels.NekoImage,
 	}
+
+	if labels.BrowserPolicy != nil {
+		labelsMap["m1k1o.neko_rooms.browser_policy"] = "true"
+		labelsMap["m1k1o.neko_rooms.browser_policy.type"] = string(labels.BrowserPolicy.Type)
+		labelsMap["m1k1o.neko_rooms.browser_policy.path"] = labels.BrowserPolicy.Path
+	}
+
+	return labelsMap
 }

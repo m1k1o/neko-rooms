@@ -2,9 +2,30 @@ import {
   RoomsConfig,
   RoomEntry,
   RoomSettings,
+  BrowserPolicyContent,
+  BrowserPolicyTypeEnum,
+  BrowserPolicyExtension,
 } from '@/api/index'
 
+export interface BrowserPolicyConfig {
+  type: BrowserPolicyTypeEnum;
+  path: string;
+  profile: string;
+  images: string[];
+}
+
+export interface BrowserPolicyExtensions {
+  type: BrowserPolicyTypeEnum;
+  path: string;
+  profile: string;
+  images: string[];
+}
+
 export const state = {
+  //
+  // rooms
+  //
+
   roomsConfig: {} as RoomsConfig,
   rooms: [] as RoomEntry[],
   defaultRoomSettings: {
@@ -95,6 +116,88 @@ export const state = {
     "640x400@60",
     "640x360@60"
   ] as string[],
+
+  //
+  // browser policy
+  //
+
+  browserPolicyConfig: [
+    {
+      type: BrowserPolicyTypeEnum.firefox,
+      path: '/usr/lib/firefox/distribution/policies.json',
+      profile: '/home/neko/.mozilla/firefox/profile.default',
+      images: [ 'm1k1o/neko:latest', 'm1k1o/neko:firefox' ],
+    },
+    {
+      type: BrowserPolicyTypeEnum.firefox,
+      path: '/usr/lib/firefox-esr/distribution/policies.json',
+      profile: '/home/neko/.mozilla/firefox/profile.default',
+      images: [ 'm1k1o/neko:arm-firefox' ],
+    },
+    {
+      type: BrowserPolicyTypeEnum.chromium,
+      path: '/etc/chromium/policies/managed/policies.json',
+      profile: '/home/neko/.config/chromium',
+      images: [ 'm1k1o/neko:chromium', 'm1k1o/neko:arm-chromium', 'm1k1o/neko:ungoogled-chromium' ],
+    },
+    {
+      type: BrowserPolicyTypeEnum.chromium,
+      path: '/etc/opt/chrome/policies/managed/policies.json',
+      profile: '/home/neko/.config/google-chrome',
+      images: [ 'm1k1o/neko:google-chrome' ],
+    },
+    {
+      type: BrowserPolicyTypeEnum.chromium,
+      path: '/etc/brave/policies/managed/policies.json',
+      profile: '/home/neko/.config/brave',
+      images: [ 'm1k1o/neko:brave' ],
+    },
+  ] as BrowserPolicyConfig[],
+  browserPolicyExtensions: [
+    {
+      text: 'uBlock Origin',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'uBlock0@raymondhill.net',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'cjpalhdlnbpafiamejdnhcphjbkeiagm',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'NordVPN',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'nordvpnproxy@nordvpn.com',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/nordvpn-proxy-extension/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'fjoaledfpmneenckfbpdfhkmimnjocfa',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'SponsorBlock for YouTube',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'sponsorBlocker@ajay.app',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'mnjggcdmjocbbbhaepdhchncahnbgone',
+        } as BrowserPolicyExtension,
+      },
+    },
+  ],
+  defaultBrowserPolicyContent: {
+    extensions: [],
+    // eslint-disable-next-line
+    developer_tools: false,
+    // eslint-disable-next-line
+    persistent_data: false,
+  } as BrowserPolicyContent,
 }
 
 export type State = typeof state

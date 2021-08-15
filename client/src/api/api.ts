@@ -24,6 +24,85 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 /**
  * 
  * @export
+ * @interface BrowserPolicy
+ */
+export interface BrowserPolicy {
+    /**
+     * 
+     * @type {string}
+     * @memberof BrowserPolicy
+     */
+    type?: BrowserPolicyTypeEnum;
+    /**
+     * 
+     * @type {string}
+     * @memberof BrowserPolicy
+     */
+    path?: string;
+    /**
+     * 
+     * @type {BrowserPolicyContent}
+     * @memberof BrowserPolicy
+     */
+    content?: BrowserPolicyContent;
+}
+
+/**
+    * @export
+    * @enum {string}
+    */
+export enum BrowserPolicyTypeEnum {
+    firefox = 'firefox',
+    chromium = 'chromium'
+}
+
+/**
+ * 
+ * @export
+ * @interface BrowserPolicyContent
+ */
+export interface BrowserPolicyContent {
+    /**
+     * 
+     * @type {Array<BrowserPolicyExtension>}
+     * @memberof BrowserPolicyContent
+     */
+    extensions?: Array<BrowserPolicyExtension>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof BrowserPolicyContent
+     */
+    developer_tools?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof BrowserPolicyContent
+     */
+    persistent_data?: boolean;
+}
+/**
+ * 
+ * @export
+ * @interface BrowserPolicyExtension
+ */
+export interface BrowserPolicyExtension {
+    /**
+     * 
+     * @type {string}
+     * @memberof BrowserPolicyExtension
+     */
+    id?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof BrowserPolicyExtension
+     */
+    url?: string;
+}
+/**
+ * 
+ * @export
  * @interface RoomEntry
  */
 export interface RoomEntry {
@@ -245,6 +324,12 @@ export interface RoomSettings {
      * @memberof RoomSettings
      */
     mounts?: Array<RoomMount>;
+    /**
+     * 
+     * @type {BrowserPolicy}
+     * @memberof RoomSettings
+     */
+    browser_policy?: BrowserPolicy;
 }
 /**
  * 
@@ -289,6 +374,12 @@ export interface RoomsConfig {
      * @memberof RoomsConfig
      */
     neko_images?: Array<string>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RoomsConfig
+     */
+    storage_enabled?: boolean;
 }
 
 /**

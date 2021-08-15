@@ -208,10 +208,18 @@
               <v-btn @click="delEnv(index)" icon color="red"><v-icon>mdi-close</v-icon></v-btn>
             </div>
           </v-row>
-          <v-row align="center" no-gutters class="mt-3">
+          <v-row align="center" no-gutters class="my-3">
               <h2> Mounts </h2>
-              <v-btn @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+              <v-btn :disabled="!storageEnabled" @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
+          <v-alert
+            border="left"
+            type="warning"
+            v-if="!storageEnabled"
+          >
+            <p><strong>Not available!</strong></p>
+            <p class="mb-0">Mounts are not available, because storage is not enabled.</p>
+          </v-alert>
           <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="index">
             <v-col class="py-0" cols="2">
               <v-select
@@ -252,6 +260,71 @@
             </p>
           </v-row>
         </template>
+
+        <hr />
+
+        <v-row align="center" no-gutters class="mt-3">
+          <h2 class="my-3">
+            Browser policy
+          </h2>
+          <v-checkbox
+            v-model="browserPolicyEnabled"
+            :disabled="!browserPolicyConfig || !storageEnabled"
+            hide-details
+            class="shrink ml-2 mt-0"
+          ></v-checkbox>
+        </v-row>
+
+        <v-alert
+          border="left"
+          type="warning"
+          v-if="!storageEnabled"
+        >
+          <p><strong>Not available!</strong></p>
+          <p class="mb-0">Browser policy is not available, because storage is not enabled.</p>
+        </v-alert>
+        <template v-else-if="browserPolicyConfig">
+          <v-row align="center" no-gutters class="mt-0">
+            <v-col>
+              <v-select
+                v-model="browserPolicyContent.extensions"
+                label="Extensions"
+                :items="browserPolicyExtensions"
+                multiple
+                :disabled="!browserPolicyEnabled"
+              ></v-select>
+            </v-col>
+          </v-row>
+
+          <v-row align="center">
+            <v-col>
+              <v-checkbox
+                v-model="browserPolicyContent.developer_tools"
+                label="Enable developer tools"
+                hide-details
+                class="shrink ml-2 mt-0"
+                :disabled="!browserPolicyEnabled"
+              ></v-checkbox>
+            </v-col>
+            <v-col>
+              <v-checkbox
+                v-model="browserPolicyContent.persistent_data"
+                label="Allow persistent data"
+                hide-details
+                class="shrink ml-2 mt-0"
+                :disabled="!browserPolicyEnabled"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+        </template>
+        <v-alert
+          border="left"
+          type="info"
+          v-else
+        >
+          <p><strong>Not available!</strong></p>
+          <p class="mb-0">Browser policy is not available for this image.</p>
+        </v-alert>
       </v-form>
     </v-card-text>
     <v-card-actions>
@@ -276,10 +349,14 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Ref } from 'vue-property-decorator'
+import { Vue, Component, Ref, Watch } from 'vue-property-decorator'
 
 import {
   RoomSettings,
+  BrowserPolicyContent,
+  BrowserPolicyExtension,
+  BrowserPolicyTypeEnum,
+  RoomMountTypeEnum,
 } from '@/api/index'
 
 export type VForm = Vue & {
@@ -305,9 +382,11 @@ export default class RoomsCreate extends Vue {
   private videoPipelineEnabled = false
   private audioPipelineEnabled = false
   private broadcastPipelineEnabled = false
+  private browserPolicyEnabled = false
 
   private loading = false
   private data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
+  private browserPolicyContent: BrowserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
   private envList: { key: string; val: string }[] = []
 
   // eslint-disable-next-line
@@ -340,6 +419,10 @@ export default class RoomsCreate extends Vue {
     return this.$store.state.roomsConfig.neko_images
   }
 
+  get storageEnabled() {
+    return this.$store.state.roomsConfig.storage_enabled
+  }
+
   get videoCodecs() {
     return this.$store.state.videoCodecs
   }
@@ -367,6 +450,42 @@ export default class RoomsCreate extends Vue {
         value: 'public',
       },
     ]
+  }
+
+  get browserPolicyConfig() {
+    const nekoImage = this.data.neko_image
+    if (!nekoImage) return undefined
+  
+    return this.$store.state.browserPolicyConfig.find(({ images }: { images: string[] }): boolean => images.includes(nekoImage))
+  }
+
+  get browserPolicyExtensions() {
+    const config = this.browserPolicyConfig
+    if (!config) return []
+  
+    return this.$store.state.browserPolicyExtensions.map(({ text, value }: {
+      text: string;
+      value: Record<BrowserPolicyTypeEnum, BrowserPolicyExtension>;
+    }) => {
+      return {
+        text,
+        value: value[config.type as BrowserPolicyTypeEnum],
+      }
+    })
+  }
+
+  @Watch('browserPolicyContent.persistent_data')
+  onPersistentDataUpdate(enabled: boolean) {
+    const config = this.browserPolicyConfig
+    if (!config) return
+
+    if (enabled) {
+      // eslint-disable-next-line
+      this.data.mounts = [ ...(this.data.mounts || []), { type: RoomMountTypeEnum.private, host_path: '/profile', container_path: config.profile }]
+    } else {
+      // eslint-disable-next-line
+      this.data.mounts = (this.data.mounts || []).filter(({ type, container_path }) => type != RoomMountTypeEnum.private && container_path != config.profile)
+    }
   }
 
   addEnv() {
@@ -407,6 +526,12 @@ export default class RoomsCreate extends Vue {
         // eslint-disable-next-line
         broadcast_pipeline: this.broadcastPipelineEnabled ? this.data.broadcast_pipeline : '',
         envs,
+        // eslint-disable-next-line
+        browser_policy: this.browserPolicyEnabled && this.browserPolicyConfig ? {
+          type: this.browserPolicyConfig.type,
+          path: this.browserPolicyConfig.path,
+          content: this.browserPolicyContent
+        } : undefined,
       })
       this.Clear()
       this.$emit('finished', true)
@@ -436,6 +561,7 @@ export default class RoomsCreate extends Vue {
       // eslint-disable-next-line
       neko_image: this.nekoImages[0],
     }
+    this.browserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
     this.envList = Object.entries({...this.data.envs}).map(([ key, val ]) => ({ key, val, }))
   }
 

@@ -24,8 +24,9 @@ var blacklistedEnvs = []string{
 }
 
 type RoomsConfig struct {
-	Connections uint16   `json:"connections"`
-	NekoImages  []string `json:"neko_images"`
+	Connections    uint16   `json:"connections"`
+	NekoImages     []string `json:"neko_images"`
+	StorageEnabled bool     `json:"storage_enabled"`
 }
 
 type RoomEntry struct {
@@ -75,6 +76,8 @@ type RoomSettings struct {
 
 	Envs   map[string]string `json:"envs"`
 	Mounts []RoomMount       `json:"mounts"`
+
+	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 
 func (settings *RoomSettings) ToEnv() []string {

@@ -234,6 +234,9 @@ components:
           items:
             type: string
             example: m1k1o/neko:latest
+        storage_enabled:
+          type: boolean
+          example: true
 
     RoomEntry:
       type: object
@@ -330,6 +333,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RoomMount'
+        browser_policy:
+          $ref: '#/components/schemas/BrowserPolicy'
 
     RoomStats:
       type: object
@@ -360,3 +365,39 @@ components:
         muted:
           type: boolean
           example: false
+
+    BrowserPolicy:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ firefox, chromium ]
+        path:
+          type: string
+          example: /usr/lib/firefox/distribution/policies.json
+        content:
+          $ref: '#/components/schemas/BrowserPolicyContent'
+
+    BrowserPolicyContent:
+      type: object
+      properties:
+        extensions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BrowserPolicyExtension'
+        developer_tools:
+          type: boolean
+          example: true
+        persistent_data:
+          type: boolean
+          example: false
+    
+    BrowserPolicyExtension:
+      type: object
+      properties:
+        id:
+          type: string
+          example: uBlock0@raymondhill.net
+        url:
+          type: string
+          example: https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi

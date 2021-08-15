@@ -21,6 +21,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"m1k1o/neko_rooms/internal/config"
+	"m1k1o/neko_rooms/internal/policies"
 	"m1k1o/neko_rooms/internal/types"
 	"m1k1o/neko_rooms/internal/utils"
 )
@@ -58,8 +59,9 @@ type RoomManagerCtx struct {
 
 func (manager *RoomManagerCtx) Config() types.RoomsConfig {
 	return types.RoomsConfig{
-		Connections: manager.config.EprMax - manager.config.EprMin + 1,
-		NekoImages:  manager.config.NekoImages,
+		Connections:    manager.config.EprMax - manager.config.EprMin + 1,
+		NekoImages:     manager.config.NekoImages,
+		StorageEnabled: manager.config.StorageEnabled,
 	}
 }
 
@@ -215,11 +217,21 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		instanceUrl = instanceUrl + "/"
 	}
 
+	var browserPolicyLabels *BrowserPolicyLabels
+	if settings.BrowserPolicy != nil {
+		browserPolicyLabels = &BrowserPolicyLabels{
+			Type: settings.BrowserPolicy.Type,
+			Path: settings.BrowserPolicy.Path,
+		}
+	}
+
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
 		URL:       instanceUrl + instanceSuffix,
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
+
+		BrowserPolicy: browserPolicyLabels,
 	})
 
 	for k, v := range traefikLabels {
@@ -242,11 +254,56 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	//
+	// Set browser policies
+	//
+
+	if settings.BrowserPolicy != nil {
+		if !manager.config.StorageEnabled {
+			return "", fmt.Errorf("policies cannot be specified, because storage is disabled or unavailable")
+		}
+
+		policyJson, err := policies.Generate(settings.BrowserPolicy.Content, settings.BrowserPolicy.Type)
+		if err != nil {
+			return "", err
+		}
+
+		// create policy path (+ also get host path)
+		policyPath := fmt.Sprintf("/%s-%s-policy.json", roomName, settings.BrowserPolicy.Type)
+		templateInternalPath := path.Join(manager.config.StorageInternal, templateStoragePath)
+		policyInternalPath := path.Join(templateInternalPath, policyPath)
+
+		// create dir if does not exist
+		if _, err := os.Stat(templateInternalPath); os.IsNotExist(err) {
+			if err := os.MkdirAll(templateInternalPath, os.ModePerm); err != nil {
+				return "", err
+			}
+		}
+
+		// write policy to file
+		if err := os.WriteFile(policyInternalPath, []byte(policyJson), 0644); err != nil {
+			return "", err
+		}
+
+		// mount policy file
+		settings.Mounts = append(settings.Mounts, types.RoomMount{
+			Type:          types.MountTemplate,
+			HostPath:      policyPath,
+			ContainerPath: settings.BrowserPolicy.Path,
+		})
+	}
+
+	//
 	// Set container mounts
 	//
 
+	paths := map[string]bool{}
 	mounts := []dockerMount.Mount{}
 	for _, mount := range settings.Mounts {
+		// ignore duplicates
+		if _, ok := paths[mount.ContainerPath]; ok {
+			continue
+		}
+
 		readOnly := false
 
 		hostPath := filepath.Clean(mount.HostPath)
@@ -309,6 +366,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 				},
 			},
 		)
+
+		paths[mount.ContainerPath] = true
 	}
 
 	//
@@ -441,11 +500,40 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		})
 	}
 
+	var browserPolicy *types.BrowserPolicy
+	if labels.BrowserPolicy != nil {
+		browserPolicy = &types.BrowserPolicy{
+			Type: labels.BrowserPolicy.Type,
+			Path: labels.BrowserPolicy.Path,
+		}
+
+		var policyMount *types.RoomMount
+		for _, mount := range mounts {
+			if mount.ContainerPath == labels.BrowserPolicy.Path {
+				policyMount = &mount
+				break
+			}
+		}
+
+		// TODO: Refactor.
+		if policyMount != nil && policyMount.Type == types.MountTemplate {
+			templateInternalPath := path.Join(manager.config.StorageInternal, templateStoragePath, policyMount.HostPath)
+			if _, err := os.Stat(templateInternalPath); !os.IsNotExist(err) {
+				if data, err := os.ReadFile(templateInternalPath); err == nil {
+					if content, err := policies.Parse(string(data), labels.BrowserPolicy.Type); err == nil {
+						browserPolicy.Content = *content
+					}
+				}
+			}
+		}
+	}
+
 	settings := types.RoomSettings{
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Mounts:         mounts,
+		BrowserPolicy:  browserPolicy,
 	}
 
 	err = settings.FromEnv(container.Config.Env)

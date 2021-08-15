@@ -150,17 +150,45 @@
       <v-simple-table>
         <template v-slot:default>
           <tbody>
-            <tr v-for="({ host_path, container_path }, index) in settings.mounts" :key="index"><td style="width:50%;">{{ host_path }}</td><td>{{ container_path }}</td></tr>
+            <tr v-for="({ type, host_path, container_path }, index) in settings.mounts" :key="index"><td style="width:50%;">{{ host_path }} <v-chip small>{{ type }}</v-chip></td><td>{{ container_path }}</td></tr>
           </tbody>
         </template>
       </v-simple-table>
+
+      <div class="my-3 headline">Browser policy</div>
+      <v-simple-table v-if="settings.browser_policy">
+        <template v-slot:default>
+          <tbody>
+            <tr><th> Type </th><td>{{ settings.browser_policy.type }}</td></tr>
+            <tr><th> Path </th><td>{{ settings.browser_policy.path }}</td></tr>
+            <tr><th> Content </th><td>
+              <v-simple-table>
+                <template v-slot:default>
+                  <tbody>
+                    <tr><th> Extensions </th><td>{{ BrowserExtensions(settings.browser_policy.content.extensions).join(', ') }}</td></tr>
+                    <tr><th> Developer tools </th><td>{{ settings.browser_policy.content.developer_tools }}</td></tr>
+                    <tr><th> Persistent data </th><td>{{ settings.browser_policy.content.persistent_data }}</td></tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+            </td></tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+      <div v-else> none </div>
     </template>
   </div>
 </template>
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
-import { RoomStats, RoomMember, RoomSettings, RoomEntry } from '@/api/index'
+
+import {
+  RoomStats,
+  RoomMember,
+  RoomSettings,
+  RoomEntry,
+} from '@/api/index'
 
 @Component
 export default class RoomInfo extends Vue {
@@ -230,6 +258,28 @@ export default class RoomInfo extends Vue {
     } finally {
       this.statsLoading = false
     }
+  }
+
+  get allBrowserExtensions() {
+    if (!this.settings?.browser_policy?.type) return {}
+
+    /*return this.$store.state.browserPolicyExtensions.map(({ text, value }: {
+        text: string;
+        value: Record<BrowserPolicyTypeEnum, BrowserPolicyExtension>;
+      }) => [value[this.settings.browser_policy.type], text])*/
+    
+    const obj = {} as Record<string, string>
+    for (const { value, text } of this.$store.state.browserPolicyExtensions) {
+      const id = value[this.settings.browser_policy.type].id
+      obj[id] = text
+    }
+
+    return obj
+  }
+
+  BrowserExtensions(extensions: { id: string }[]) {
+    return extensions.map(({ id }: { id: string }) =>
+      id in this.allBrowserExtensions ? this.allBrowserExtensions[id] : id)
   }
 }
 </script>
