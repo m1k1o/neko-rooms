@@ -374,6 +374,12 @@ export interface RoomsConfig {
      * @memberof RoomsConfig
      */
     neko_images?: Array<string>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RoomsConfig
+     */
+    storage_enabled?: boolean;
 }
 
 /**

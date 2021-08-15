@@ -210,8 +210,16 @@
           </v-row>
           <v-row align="center" no-gutters class="my-3">
               <h2> Mounts </h2>
-              <v-btn @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+              <v-btn :disabled="!storageEnabled" @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
+          <v-alert
+            border="left"
+            type="warning"
+            v-if="!storageEnabled"
+          >
+            <p><strong>Not available!</strong></p>
+            <p class="mb-0">Mounts are not available, because storage is not enabled.</p>
+          </v-alert>
           <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="index">
             <v-col class="py-0" cols="2">
               <v-select
@@ -261,13 +269,21 @@
           </h2>
           <v-checkbox
             v-model="browserPolicyEnabled"
-            :disabled="!browserPolicyConfig"
+            :disabled="!browserPolicyConfig || !storageEnabled"
             hide-details
             class="shrink ml-2 mt-0"
           ></v-checkbox>
         </v-row>
 
-        <template v-if="browserPolicyConfig">
+        <v-alert
+          border="left"
+          type="warning"
+          v-if="!storageEnabled"
+        >
+          <p><strong>Not available!</strong></p>
+          <p class="mb-0">Browser policy is not available, because storage is not enabled.</p>
+        </v-alert>
+        <template v-else-if="browserPolicyConfig">
           <v-row align="center" no-gutters class="mt-0">
             <v-col>
               <v-select
@@ -401,6 +417,10 @@ export default class RoomsCreate extends Vue {
 
   get nekoImages() {
     return this.$store.state.roomsConfig.neko_images
+  }
+
+  get storageEnabled() {
+    return this.$store.state.roomsConfig.storage_enabled
   }
 
   get videoCodecs() {

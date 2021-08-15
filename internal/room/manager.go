@@ -59,8 +59,9 @@ type RoomManagerCtx struct {
 
 func (manager *RoomManagerCtx) Config() types.RoomsConfig {
 	return types.RoomsConfig{
-		Connections: manager.config.EprMax - manager.config.EprMin + 1,
-		NekoImages:  manager.config.NekoImages,
+		Connections:    manager.config.EprMax - manager.config.EprMin + 1,
+		NekoImages:     manager.config.NekoImages,
+		StorageEnabled: manager.config.StorageEnabled,
 	}
 }
 

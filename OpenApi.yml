@@ -234,6 +234,9 @@ components:
           items:
             type: string
             example: m1k1o/neko:latest
+        storage_enabled:
+          type: boolean
+          example: true
 
     RoomEntry:
       type: object
