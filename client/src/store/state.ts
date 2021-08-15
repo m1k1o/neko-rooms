@@ -192,7 +192,6 @@ export const state = {
     },
   ],
   defaultBrowserPolicyContent: {
-    homepage: "https://google.com/?hl=en",
     extensions: [],
     // eslint-disable-next-line
     developer_tools: false,
