@@ -150,7 +150,7 @@
       <v-simple-table>
         <template v-slot:default>
           <tbody>
-            <tr v-for="({ host_path, container_path }, index) in settings.mounts" :key="index"><td style="width:50%;">{{ host_path }}</td><td>{{ container_path }}</td></tr>
+            <tr v-for="({ type, host_path, container_path }, index) in settings.mounts" :key="index"><td style="width:50%;">{{ host_path }} <v-chip small>{{ type }}</v-chip></td><td>{{ container_path }}</td></tr>
           </tbody>
         </template>
       </v-simple-table>
