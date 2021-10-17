@@ -3,22 +3,22 @@ version: "3.7"
 networks:
   default:
     attachable: "true"
-    name: "${NEKO_ROOMS_TRAEFIK_NETWORK}"
+    name: "neko-rooms-traefik"
 
 services:
   traefik:
     image: "traefik:2.4"
     restart: "unless-stopped"
     environment:
-      - "TZ"
+      - "TZ=Europe/Vienna"
     command:
       - "--providers.docker=true"
       - "--providers.docker.watch=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=${NEKO_ROOMS_TRAEFIK_NETWORK}"
-      - "--entrypoints.${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}.address=:80"
+      - "--providers.docker.network=neko-rooms-traefik"
+      - "--entrypoints.web.address=:8080"
     ports:
-      - "8080:80"
+      - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       # OPTIONAL: Enable authentication.
@@ -28,20 +28,20 @@ services:
     image: "m1k1o/neko-rooms:latest"
     restart: "unless-stopped"
     environment:
-      - "TZ"
-      - "NEKO_ROOMS_EPR"
-      - "NEKO_ROOMS_NAT1TO1"
-      - "NEKO_ROOMS_TRAEFIK_DOMAIN"
-      - "NEKO_ROOMS_TRAEFIK_ENTRYPOINT"
-      - "NEKO_ROOMS_TRAEFIK_NETWORK"
-      - "NEKO_ROOMS_INSTANCE_URL=http://${NEKO_ROOMS_TRAEFIK_DOMAIN}:8080/" # external URL
+      - "TZ=Europe/Vienna"
+      - "NEKO_ROOMS_EPR=59000-59049"
+      - "NEKO_ROOMS_NAT1TO1=10.8.0.1" # IP address of your server
+      - "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=web"
+      - "NEKO_ROOMS_TRAEFIK_NETWORK=neko-rooms-traefik"
+      - "NEKO_ROOMS_INSTANCE_URL=http://10.8.0.1:8080/" # external URL
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.neko-rooms-frontend.loadbalancer.server.port=8080"
-      - "traefik.http.routers.neko-rooms.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}"
-      - "traefik.http.routers.neko-rooms.rule=Host(`${NEKO_ROOMS_TRAEFIK_DOMAIN}`)"
+      - "traefik.http.routers.neko-rooms.entrypoints=web"
+      - "traefik.http.routers.neko-rooms.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.routers.neko-rooms.priority=1"
       # OPTIONAL: Enable authentication.
       # - "traefik.http.middlewares.nrooms-auth.basicauth.usersfile=/usersfile"
       # - "traefik.http.routers.neko-rooms.middlewares=nrooms-auth"
