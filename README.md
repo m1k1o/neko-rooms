@@ -45,7 +45,7 @@ You only need `.env.example`, `docker-compose.yml` and `traefik/`.
 - Traefik needs to be used to forward traffic to the rooms. You can put nginx in front of it, but not replace it.
 - See example configuration for [nginx](docs/nginx).
 
-You can use `docker-compose.http.yml` that will expose this service to `8080` or any port. Authentication is optional.
+You can use `docker-compose.http.yml` that will expose this service to `8080` or any port. Authentication is optional. Start it quickly with `docker-compose -f docker-compose.http.yml up -d`.
 
 ### Step 1
 
