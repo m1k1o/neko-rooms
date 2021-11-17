@@ -16,6 +16,8 @@
               v-model="data.name"
               :rules="[ rules.minLen(2), rules.containerNameStart, rules.containerName ]"
               autocomplete="off"
+              :hint="!data.name && '... using random name'"
+              persistent-hint
             ></v-text-field>
           </v-col>
           <v-col class="pb-0">
@@ -28,26 +30,28 @@
         </v-row>
 
         <v-row align="center">
-          <v-col class="py-0">
+          <v-col>
             <v-text-field
               label="User password"
-              :rules="[ rules.required ]"
               v-model="data.user_pass"
               :append-icon="showUserPass ? 'mdi-eye' : 'mdi-eye-off'"
               :type="showUserPass ? 'text' : 'password'"
               @click:append="showUserPass = !showUserPass"
               autocomplete="off"
+              :hint="!data.user_pass && '... using random password'"
+              persistent-hint
             ></v-text-field>
           </v-col>
-          <v-col class="py-0">
+          <v-col>
             <v-text-field
               label="Admin password"
-              :rules="[ rules.required ]"
               v-model="data.admin_pass"
               :append-icon="showAdminPass ? 'mdi-eye' : 'mdi-eye-off'"
               :type="showAdminPass ? 'text' : 'password'"
               @click:append="showAdminPass = !showAdminPass"
               autocomplete="off"
+              :hint="!data.admin_pass && '... using random password'"
+              persistent-hint
             ></v-text-field>
           </v-col>
         </v-row>
@@ -82,6 +86,7 @@
             <v-row align="center" no-gutters>
               <v-text-field
                 :disabled="!maxFpsEnabled"
+                :rules="[ rules.required, rules.nonZero, rules.onlyPositive ]"
                 label="Max frames per second"
                 v-model="data.video_max_fps"
               ></v-text-field>
@@ -111,7 +116,7 @@
               <v-text-field
                 label="Video bitrate"
                 type="number"
-                :rules="[ rules.nonZero, rules.onlyPositive ]"
+                :rules="[ rules.required, rules.nonZero, rules.onlyPositive ]"
                 v-model="data.video_bitrate"
               ></v-text-field>
             </v-col>
@@ -128,7 +133,7 @@
               <v-text-field
                 label="Audio bitrate"
                 type="number"
-                :rules="[ rules.nonZero, rules.onlyPositive ]"
+                :rules="[ rules.required, rules.nonZero, rules.onlyPositive ]"
                 v-model="data.audio_bitrate"
               ></v-text-field>
             </v-col>
@@ -350,6 +355,7 @@
 
 <script lang="ts">
 import { Vue, Component, Ref, Watch } from 'vue-property-decorator'
+import { randomPassword } from '@/utils/random'
 
 import {
   RoomSettings,
@@ -511,6 +517,10 @@ export default class RoomsCreate extends Vue {
 
       await this.$store.dispatch('ROOMS_CREATE', {
         ...this.data,
+        // eslint-disable-next-line
+        user_pass: this.data.user_pass || randomPassword(),
+        // eslint-disable-next-line
+        admin_pass: this.data.admin_pass || randomPassword(),
         // eslint-disable-next-line
         max_connections: Number(this.data.max_connections),
         // eslint-disable-next-line

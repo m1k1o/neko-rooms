@@ -47,6 +47,7 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
 import RoomInfo from '@/components/RoomInfo.vue'
+import { randomPassword } from '@/utils/random'
 
 @Component({
   components: {
@@ -72,9 +73,9 @@ export default class RoomActionBtn extends Vue {
         // eslint-disable-next-line
         neko_image,
         // eslint-disable-next-line
-        user_pass: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+        user_pass: randomPassword(),
         // eslint-disable-next-line
-        admin_pass: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+        admin_pass: randomPassword(),
       })
 
       this.roomId = entry.id
