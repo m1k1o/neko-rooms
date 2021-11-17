@@ -200,7 +200,7 @@
                 autocomplete="off"
               ></v-text-field>
             </v-col>
-            <div> : </div>
+            <div> = </div>
             <v-col class="py-0">
               <v-text-field
                 label="Value"
