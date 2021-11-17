@@ -361,6 +361,42 @@ export interface RoomStats {
      * @memberof RoomStats
      */
     'members'?: Array<RoomMember>;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof RoomStats
+     */
+    'banned'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof RoomStats
+     */
+    'locked'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomStats
+     */
+    'server_started_at'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomStats
+     */
+    'last_admin_left_at'?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomStats
+     */
+    'last_user_left_at'?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RoomStats
+     */
+    'control_protection'?: boolean;
 }
 /**
  * 

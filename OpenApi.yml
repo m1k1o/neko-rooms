@@ -352,6 +352,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RoomMember'
+        banned:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            192.168.1.8: session_id
+        locked:
+          type: object
+          additionalProperties: 
+            type: string
+          example:
+            control: session_id
+            login: session_id
+        server_started_at:
+          type: string
+          format: datetime
+          example: "2021-03-07T21:56:34Z"
+        last_admin_left_at:
+          type: string
+          nullable: true
+          format: datetime
+          example: null
+        last_user_left_at:
+          type: string
+          nullable: true
+          format: datetime
+          example: "2021-03-07T21:56:34Z"
+        control_protection:
+          type: boolean
+          example: true
 
     RoomMember:
       type: object
