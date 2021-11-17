@@ -55,9 +55,10 @@ type RoomMount struct {
 }
 
 type RoomSettings struct {
-	Name           string `json:"name"`
-	NekoImage      string `json:"neko_image"`
-	MaxConnections uint16 `json:"max_connections"`
+	Name              string `json:"name"`
+	NekoImage         string `json:"neko_image"`
+	MaxConnections    uint16 `json:"max_connections"`
+	ControlProtection bool   `json:"control_protection"`
 
 	UserPass  string `json:"user_pass"`
 	AdminPass string `json:"admin_pass"`
@@ -86,6 +87,10 @@ func (settings *RoomSettings) ToEnv() []string {
 		fmt.Sprintf("NEKO_PASSWORD_ADMIN=%s", settings.AdminPass),
 		fmt.Sprintf("NEKO_SCREEN=%s", settings.Screen),
 		fmt.Sprintf("NEKO_MAX_FPS=%d", settings.VideoMaxFPS),
+	}
+
+	if settings.ControlProtection {
+		env = append(env, "NEKO_CONTROL_PROTECTION=true")
 	}
 
 	if settings.VideoCodec == "VP8" || settings.VideoCodec == "VP9" || settings.VideoCodec == "H264" {
@@ -138,6 +143,10 @@ func (settings *RoomSettings) FromEnv(envs []string) error {
 			settings.UserPass = val
 		case "NEKO_PASSWORD_ADMIN":
 			settings.AdminPass = val
+		case "NEKO_CONTROL_PROTECTION":
+			if ok, _ := strconv.ParseBool(val); ok {
+				settings.ControlProtection = true
+			}
 		case "NEKO_SCREEN":
 			settings.Screen = val
 		case "NEKO_MAX_FPS":

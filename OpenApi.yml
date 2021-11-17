@@ -299,6 +299,9 @@ components:
         admin_pass:
           type: string
           example: admin
+        control_protection:
+          type: boolean
+          example: true
         broadcast_pipeline:
           type: string
         screen:

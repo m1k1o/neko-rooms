@@ -66,7 +66,13 @@
             ></v-text-field>
           </v-col>
           <v-col class="pt-0">
-            
+            <v-checkbox
+              v-model="data.control_protection"
+              label="Enable control protection"
+              hide-details
+              class="shrink ml-2 mt-0"
+            ></v-checkbox>
+            <div style="margin-left: 41px;"><i>Users can gain control only if at least one admin is in the room.</i></div>
           </v-col>
         </v-row>
 
@@ -523,6 +529,8 @@ export default class RoomsCreate extends Vue {
         admin_pass: this.data.admin_pass || randomPassword(),
         // eslint-disable-next-line
         max_connections: Number(this.data.max_connections),
+        // eslint-disable-next-line
+        control_protection: Boolean(this.data.control_protection),
         // eslint-disable-next-line
         video_bitrate: Number(this.data.video_bitrate),
         // eslint-disable-next-line
