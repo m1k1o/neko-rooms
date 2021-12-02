@@ -25,7 +25,8 @@ If you don't have any clue about docker and stuff but only want to have fun with
 - Run install script and follow instructions.
 
 ```bash
-curl https://raw.githubusercontent.com/m1k1o/neko-rooms/master/install | sudo bash
+wget -O neko-rooms.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/install
+sudo bash neko-rooms.sh
 ```
 
 ## How to start
