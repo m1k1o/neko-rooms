@@ -225,6 +225,37 @@ export enum RoomMountTypeEnum {
 /**
  * 
  * @export
+ * @interface RoomResources
+ */
+export interface RoomResources {
+    /**
+     * relative weight vs. other containers
+     * @type {number}
+     * @memberof RoomResources
+     */
+    'cpu_shares'?: number;
+    /**
+     * in units of 10^-9 CPUs
+     * @type {number}
+     * @memberof RoomResources
+     */
+    'nano_cpus'?: number;
+    /**
+     * in bytes
+     * @type {number}
+     * @memberof RoomResources
+     */
+    'shm_size'?: number;
+    /**
+     * in bytes
+     * @type {number}
+     * @memberof RoomResources
+     */
+    'memory'?: number;
+}
+/**
+ * 
+ * @export
  * @interface RoomSettings
  */
 export interface RoomSettings {
@@ -330,6 +361,12 @@ export interface RoomSettings {
      * @memberof RoomSettings
      */
     'mounts'?: Array<RoomMount>;
+    /**
+     * 
+     * @type {RoomResources}
+     * @memberof RoomSettings
+     */
+    'resources'?: RoomResources;
     /**
      * 
      * @type {BrowserPolicy}
