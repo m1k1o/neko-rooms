@@ -407,9 +407,15 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			"SYS_ADMIN",
 		},
 		// Total shm memory usage
-		ShmSize: 2 * 10e9,
+		ShmSize: settings.Resources.ShmSize,
 		// Mounts specs used by the container
 		Mounts: mounts,
+		// Resources contains container's resources (cgroups config, ulimits...)
+		Resources: container.Resources{
+			CPUShares: settings.Resources.CPUShares,
+			NanoCPUs:  settings.Resources.NanoCPUs,
+			Memory:    settings.Resources.Memory,
+		},
 	}
 
 	networkingConfig := &network.NetworkingConfig{
@@ -528,12 +534,23 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		}
 	}
 
+	var roomResources types.RoomResources
+	if container.HostConfig != nil {
+		roomResources = types.RoomResources{
+			CPUShares: container.HostConfig.CPUShares,
+			NanoCPUs:  container.HostConfig.NanoCPUs,
+			ShmSize:   container.HostConfig.ShmSize,
+			Memory:    container.HostConfig.Memory,
+		}
+	}
+
 	settings := types.RoomSettings{
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Mounts:         mounts,
 		BrowserPolicy:  browserPolicy,
+		Resources:      roomResources,
 	}
 
 	err = settings.FromEnv(container.Config.Env)

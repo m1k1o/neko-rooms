@@ -54,6 +54,13 @@ type RoomMount struct {
 	ContainerPath string    `json:"container_path"`
 }
 
+type RoomResources struct {
+	CPUShares int64 `json:"cpu_shares"` // relative weight vs. other containers
+	NanoCPUs  int64 `json:"nano_cpus"`  // in units of 10^-9 CPUs
+	ShmSize   int64 `json:"shm_size"`   // in bytes
+	Memory    int64 `json:"memory"`     // in bytes
+}
+
 type RoomSettings struct {
 	Name              string `json:"name"`
 	NekoImage         string `json:"neko_image"`
@@ -75,8 +82,9 @@ type RoomSettings struct {
 
 	BroadcastPipeline string `json:"broadcast_pipeline,omitempty"`
 
-	Envs   map[string]string `json:"envs"`
-	Mounts []RoomMount       `json:"mounts"`
+	Envs      map[string]string `json:"envs"`
+	Mounts    []RoomMount       `json:"mounts"`
+	Resources RoomResources     `json:"resources"`
 
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }

@@ -28,7 +28,14 @@ func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) 
 }
 
 func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request) {
-	request := types.RoomSettings{}
+	// Default values
+	request := types.RoomSettings{
+		MaxConnections: 10,
+		Resources: types.RoomResources{
+			ShmSize: 2 * 1e9,
+		},
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, err.Error(), 400)
 		return

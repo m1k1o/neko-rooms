@@ -281,6 +281,23 @@ components:
           type: string
           example: /home/neko/.config/chromium
 
+    RoomResources:
+      type: object
+      properties:
+        cpu_shares:
+          type: number
+          description: relative weight vs. other containers
+        nano_cpus:
+          type: number
+          description: in units of 10^-9 CPUs
+        shm_size:
+          type: number
+          description: in bytes
+          default: 2000000000
+        memory:
+          type: number
+          description: in bytes
+
     RoomSettings:
       type: object
       properties:
@@ -292,7 +309,7 @@ components:
           example: m1k1o/neko:latest
         max_connections:
           type: number
-          example: 10
+          default: 10
         user_pass:
           type: string
           example: neko
@@ -336,6 +353,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RoomMount'
+        resources:
+          $ref: '#/components/schemas/RoomResources'
         browser_policy:
           $ref: '#/components/schemas/BrowserPolicy'
 
