@@ -160,10 +160,10 @@
       <v-simple-table>
         <template v-slot:default>
           <tbody>
-            <tr><th style="width:50%;"> CPU Shares </th><td :title="settings.resources.cpu_shares"><span v-if="settings.resources.cpu_shares">{{ settings.resources.cpu_shares | bytes }}</span><i v-else>--unlimited--</i></td></tr>
-            <tr><th> Nano CPUs </th><td :title="settings.resources.nano_cpus"><span v-if="settings.resources.nano_cpus">{{ settings.resources.nano_cpus | bytes }}</span><i v-else>--unlimited--</i></td></tr>
-            <tr><th> Shm Size </th><td :title="settings.resources.shm_size">{{ settings.resources.shm_size | bytes }}</td></tr>
-            <tr><th> Memory </th><td :title="settings.resources.memory"><span v-if="settings.resources.memory">{{ settings.resources.memory | bytes }}</span><i v-else>--unlimited--</i></td></tr>
+            <tr><th style="width:50%;"> CPUs </th><td :title="settings.resources.nano_cpus"><span v-if="settings.resources.nano_cpus">{{ settings.resources.nano_cpus | nanocpus }}</span><i v-else>--undefined--</i></td></tr>
+            <tr><th> Memory </th><td :title="settings.resources.memory"><span v-if="settings.resources.memory">{{ settings.resources.memory | memory }}</span><i v-else>--undefined--</i></td></tr>
+            <tr><th> CPU Shares </th><td :title="settings.resources.cpu_shares"><span v-if="settings.resources.cpu_shares">{{ settings.resources.cpu_shares }}</span><i v-else>--undefined--</i></td></tr>
+            <tr><th> Shm Size </th><td :title="settings.resources.shm_size">{{ settings.resources.shm_size | memory }}</td></tr>
           </tbody>
         </template>
       </v-simple-table>

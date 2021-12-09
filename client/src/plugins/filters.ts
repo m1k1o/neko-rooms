@@ -21,20 +21,23 @@ Vue.filter('percent', function(value: any) {
 })
 
 // eslint-disable-next-line
-Vue.filter('bytes', function(value: any) {
-  if (Math.abs(value) < 1000) {
-    return value + ' B';
+Vue.filter('memory', function(value: any) {
+  if (value < 1e3) {
+    return value + 'B'
   }
 
-  const units = ['K', 'M', 'G']
-  let u = -1;
-  const r = 10**2;
+  if (value < 1e6) {
+    return (value / 1e3).toFixed(0) + 'K'
+  }
 
-  do {
-    value /= 1000;
-    ++u;
-  } while (Math.round(Math.abs(value) * r) / r >= 1000 && u < units.length - 1);
+  if (value < 1e9) {
+    return (value / 1e6).toFixed(0) + 'M'
+  }
 
+  return (value / 1e9).toFixed(1) + 'G'
+})
 
-  return value.toFixed(2) + units[u];
+// eslint-disable-next-line
+Vue.filter('nanocpus', function(value: any) {
+  return (value / 1e9).toFixed(1) + 'x'
 })

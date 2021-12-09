@@ -270,6 +270,45 @@
               <strong>Public</strong>: Host path must be whitelisted in config and exists on the host.
             </p>
           </v-row>
+          <v-row align="center" no-gutters>
+            <h2> Resources </h2>
+          </v-row>
+          <v-row align="center">
+            <v-col>
+              <v-slider
+                v-model="data.resources.memory"
+                label="Memory"
+                thumb-label="always"
+                :thumb-size="30"
+                :min="0"
+                :max="8*1e9"
+                :step="0.2*1e9"
+                color="blue"
+              >
+                <template v-slot:thumb-label="{ value }">
+                  <span v-if="value">{{ value | memory }}</span>
+                  <span v-else>N/A</span>
+                </template>
+              </v-slider>
+            </v-col>
+            <v-col>
+              <v-slider
+                v-model="data.resources.nano_cpus"
+                label="CPUs"
+                thumb-label="always"
+                :thumb-size="30"
+                :min="0"
+                :max="8*1e9"
+                :step="0.2*1e9"
+                color="blue"
+              >
+                <template v-slot:thumb-label="{ value }">
+                  <span v-if="value">{{ value | nanocpus }}</span>
+                  <span v-else>N/A</span>
+                </template>
+              </v-slider>
+            </v-col>
+          </v-row>
         </template>
 
         <hr />
@@ -578,6 +617,11 @@ export default class RoomsCreate extends Vue {
       ...this.$store.state.defaultRoomSettings,
       // eslint-disable-next-line
       neko_image: this.nekoImages[0],
+      resources: {
+        // eslint-disable-next-line
+        nano_cpus: 0,
+        memory: 0,
+      },
     }
     this.browserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
     this.envList = Object.entries({...this.data.envs}).map(([ key, val ]) => ({ key, val, }))
