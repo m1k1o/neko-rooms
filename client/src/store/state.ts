@@ -154,6 +154,12 @@ export const state = {
       profile: '/home/neko/.config/brave',
       images: [ 'm1k1o/neko:brave' ],
     },
+    {
+      type: BrowserPolicyTypeEnum.chromium,
+      path: '/etc/opt/edge/policies/managed/policies.json',
+      profile: '/home/neko/.config/microsoft-edge',
+      images: [ 'm1k1o/neko:microsoft-edge' ],
+    },
   ] as BrowserPolicyConfig[],
   browserPolicyExtensions: [
     {
