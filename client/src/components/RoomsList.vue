@@ -25,6 +25,12 @@
       <template v-slot:[`item.neko_image`]="{ item }">
         <RoomActionBtn action="recreate" :roomId="item.id" />
         <span class="ml-3">{{ item.neko_image }}</span>
+        <v-tooltip bottom open-delay="300" v-if="item.is_outdated">
+          <template v-slot:activator="{ on, attrs }">
+            <v-icon v-bind="attrs" v-on="on" class="ml-2" color="warning">mdi-update</v-icon>
+          </template>
+          <div class="text-center">This image is outdated. <br> Recreate room to update it.</div>
+        </v-tooltip>
       </template>
       <template v-slot:[`item.max_connections`]="{ item }">
         <span v-if="item.max_connections">{{ item.max_connections }}</span>
@@ -90,7 +96,11 @@ export default class RoomsList extends Vue {
   private roomLoading = [] as Array<string>
 
   private headers = [
-    { text: 'Deployment', value: 'url' },
+    {
+      text: 'Deployment',
+      value: 'url',
+      sortable: false,
+    },
     { text: 'Name', value: 'name' },
     { text: 'Max connections', value: 'max_connections' },
     { text: 'Neko image', value: 'neko_image' },
