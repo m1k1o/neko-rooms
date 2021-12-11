@@ -34,6 +34,7 @@ type RoomEntry struct {
 	URL            string    `json:"url"`
 	Name           string    `json:"name"`
 	NekoImage      string    `json:"neko_image"`
+	IsOutdated     bool      `json:"is_outdated"`
 	MaxConnections uint16    `json:"max_connections"`
 	Running        bool      `json:"running"`
 	Status         string    `json:"status"`

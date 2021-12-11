@@ -253,6 +253,9 @@ components:
         neko_image:
           type: string
           example: m1k1o/neko:latest
+        is_outdated:
+          type: boolean
+          example: true
         max_connections:
           type: number
           example: 10

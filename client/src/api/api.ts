@@ -132,6 +132,12 @@ export interface RoomEntry {
     'neko_image'?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof RoomEntry
+     */
+    'is_outdated'?: boolean;
+    /**
+     * 
      * @type {number}
      * @memberof RoomEntry
      */

@@ -23,6 +23,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		URL:            labels.URL,
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
+		IsOutdated:     labels.NekoImage != container.Image,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Running:        container.State == "running",
 		Status:         container.Status,
