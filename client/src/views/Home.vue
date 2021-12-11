@@ -16,12 +16,22 @@
     </div>
 
     <v-row>
-      <v-col>
+      <v-col class="mb-3">
+        <v-select
+          v-model="autoRefresh"
+          :items="autoRefreshItems"
+          dense
+          outlined
+          hide-details
+          label="Auto refresh"
+          class="mr-2"
+          style="width:100px;display:inline-block"
+        ></v-select>
         <v-tooltip right open-delay="300">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-bind="attrs" v-on="on" @click="LoadRooms" class="mb-3" color="green" icon><v-icon>mdi-reload</v-icon></v-btn>
+            <v-btn v-bind="attrs" v-on="on" @click="LoadRooms" color="green" icon><v-icon>mdi-reload</v-icon></v-btn>
           </template>
-          <span>Reload table</span>
+          <span>Manual refresh</span>
         </v-tooltip>
       </v-col>
       <v-col class="text-right">
@@ -52,7 +62,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 import RoomsList from '@/components/RoomsList.vue'
 import RoomsQuick from '@/components/RoomsQuick.vue'
 import RoomsCreate from '@/components/RoomsCreate.vue'
@@ -68,6 +78,16 @@ import { RoomEntry } from '@/api/index'
 export default class Home extends Vue {
   private loading = false
   private dialog = false
+
+  private interval!: number
+  private autoRefresh = 10
+  private autoRefreshItems = [
+    { text: 'Off', value: 0 },
+    { text: '5s', value: 5 },
+    { text: '10s', value: 10 },
+    { text: '30s', value: 30 },
+    { text: '60s', value: 60 },
+  ]
 
   get configConnections() {
     return this.$store.state.roomsConfig.connections
@@ -88,9 +108,25 @@ export default class Home extends Vue {
     }
   }
 
+
+  @Watch('autoRefresh', { immediate: true })
+  onautoRefresh() {
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
+  
+    if (this.autoRefresh) {
+      this.interval = setInterval(this.LoadRooms, this.autoRefresh * 1000)
+    }
+  }
+
   mounted() {
     this.$store.dispatch('ROOMS_CONFIG')
     this.LoadRooms()
+  }
+
+  beforeDestroy() {
+    this.autoRefresh = 0
   }
 }
 </script>
