@@ -5,6 +5,7 @@ import {
   BrowserPolicyContent,
   BrowserPolicyTypeEnum,
   BrowserPolicyExtension,
+  PullStatus,
 } from '@/api/index'
 
 export interface BrowserPolicyConfig {
@@ -208,6 +209,13 @@ export const state = {
     // eslint-disable-next-line
     persistent_data: false,
   } as BrowserPolicyContent,
+
+  //
+  // default
+  //
+  pullStatus: {
+    active: false,
+  } as PullStatus
 }
 
 export type State = typeof state

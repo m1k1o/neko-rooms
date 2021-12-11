@@ -103,6 +103,118 @@ export interface BrowserPolicyExtension {
 /**
  * 
  * @export
+ * @interface PullLayer
+ */
+export interface PullLayer {
+    /**
+     * 
+     * @type {string}
+     * @memberof PullLayer
+     */
+    'status'?: string;
+    /**
+     * 
+     * @type {PullLayerProgressDetail}
+     * @memberof PullLayer
+     */
+    'progressDetail'?: PullLayerProgressDetail;
+    /**
+     * 
+     * @type {string}
+     * @memberof PullLayer
+     */
+    'progress'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PullLayer
+     */
+    'id'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface PullLayerProgressDetail
+ */
+export interface PullLayerProgressDetail {
+    /**
+     * 
+     * @type {number}
+     * @memberof PullLayerProgressDetail
+     */
+    'current'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof PullLayerProgressDetail
+     */
+    'total'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface PullStart
+ */
+export interface PullStart {
+    /**
+     * 
+     * @type {string}
+     * @memberof PullStart
+     */
+    'neko_image'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PullStart
+     */
+    'registry_user'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PullStart
+     */
+    'registry_pass'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface PullStatus
+ */
+export interface PullStatus {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PullStatus
+     */
+    'active'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof PullStatus
+     */
+    'started'?: string;
+    /**
+     * 
+     * @type {{ [key: string]: PullLayer; }}
+     * @memberof PullStatus
+     */
+    'layers'?: { [key: string]: PullLayer; };
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof PullStatus
+     */
+    'status'?: Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof PullStatus
+     */
+    'finished'?: string;
+}
+/**
+ * 
+ * @export
  * @interface RoomEntry
  */
 export interface RoomEntry {
@@ -573,6 +685,231 @@ export class ConfigApi extends BaseAPI {
      */
     public roomsConfig(options?: AxiosRequestConfig) {
         return ConfigApiFp(this.configuration).roomsConfig(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+/**
+ * DefaultApi - axios parameter creator
+ * @export
+ */
+export const DefaultApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Start new pull
+         * @param {PullStart} [pullStart] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pullStart: async (pullStart?: PullStart, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/pull`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(pullStart, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get pull status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pullStatus: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/pull`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Stop existing pull in progress
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pullStop: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/pull`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * DefaultApi - functional programming interface
+ * @export
+ */
+export const DefaultApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = DefaultApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Start new pull
+         * @param {PullStart} [pullStart] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async pullStart(pullStart?: PullStart, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PullStatus>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.pullStart(pullStart, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Get pull status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async pullStatus(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PullStatus>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.pullStatus(options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Stop existing pull in progress
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async pullStop(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.pullStop(options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+    }
+};
+
+/**
+ * DefaultApi - factory interface
+ * @export
+ */
+export const DefaultApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = DefaultApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Start new pull
+         * @param {PullStart} [pullStart] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pullStart(pullStart?: PullStart, options?: any): AxiosPromise<PullStatus> {
+            return localVarFp.pullStart(pullStart, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get pull status
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pullStatus(options?: any): AxiosPromise<PullStatus> {
+            return localVarFp.pullStatus(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Stop existing pull in progress
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pullStop(options?: any): AxiosPromise<void> {
+            return localVarFp.pullStop(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * DefaultApi - object-oriented interface
+ * @export
+ * @class DefaultApi
+ * @extends {BaseAPI}
+ */
+export class DefaultApi extends BaseAPI {
+    /**
+     * 
+     * @summary Start new pull
+     * @param {PullStart} [pullStart] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public pullStart(pullStart?: PullStart, options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).pullStart(pullStart, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get pull status
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public pullStatus(options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).pullStatus(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Stop existing pull in progress
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public pullStop(options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).pullStop(options).then((request) => request(this.axios, this.basePath));
     }
 }
 
