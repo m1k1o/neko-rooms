@@ -55,6 +55,7 @@ type RoomManagerCtx struct {
 	logger zerolog.Logger
 	config *config.Room
 	client *dockerClient.Client
+	pull   PullConfig
 }
 
 func (manager *RoomManagerCtx) Config() types.RoomsConfig {

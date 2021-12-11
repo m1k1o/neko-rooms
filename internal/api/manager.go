@@ -41,4 +41,10 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 		r.Post("/restart", manager.roomGenericAction(manager.rooms.Restart))
 		r.Post("/recreate", manager.roomRecreate)
 	})
+
+	r.Route("/pull", func(r chi.Router) {
+		r.Get("/", manager.roomPullStatus)
+		r.Post("/", manager.roomPullStart)
+		r.Delete("/", manager.roomPullStop)
+	})
 }

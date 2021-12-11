@@ -9,6 +9,8 @@ import {
   RoomSettings,
   RoomStats,
   RoomsApi,
+  DefaultApi,
+  PullStatus,
 } from '@/api/index'
 
 import { state, State } from './state'
@@ -21,6 +23,7 @@ const configuration = new Configuration({
 
 const configApi = new ConfigApi(configuration)
 const roomsApi = new RoomsApi(configuration)
+const defaultApi = new DefaultApi(configuration)
 
 export default new Vuex.Store({
   state,
@@ -54,6 +57,9 @@ export default new Vuex.Store({
     ROOMS_DEL(state: State, roomId: string) {
       const roomEntries = state.rooms.filter(({ id }) => id != roomId)
       Vue.set(state, 'rooms', roomEntries)
+    },
+    PULL_STATUS(state: State, pullStatus: PullStatus) {
+      Vue.set(state, 'pullStatus', pullStatus)
     },
   },
   actions: {
@@ -110,6 +116,23 @@ export default new Vuex.Store({
       const res = await roomsApi.roomRecreate(roomId)
       commit('ROOMS_DEL', roomId)
       commit('ROOMS_PUT', res.data)
+      return res.data
+    },
+
+    async PULL_START({ commit }: ActionContext<State, State>, nekoImage: string) {
+      const res = await defaultApi.pullStart({
+        // eslint-disable-next-line
+        neko_image: nekoImage,
+      })
+      commit('PULL_STATUS', res.data)
+      return res.data
+    },
+    async PULL_STATUS({ commit }: ActionContext<State, State>) {
+      const res = await defaultApi.pullStatus()
+      commit('PULL_STATUS', res.data)
+    },
+    async PULL_STOP() {
+      const res = await defaultApi.pullStop()
       return res.data
     },
   },

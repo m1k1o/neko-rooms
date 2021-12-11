@@ -58,6 +58,10 @@
     </v-row>
 
     <RoomsList :loading="loading" />
+
+    <div class="mt-5 text-center">
+      <Pull />
+    </div>
   </v-container>
 </template>
 
@@ -66,6 +70,7 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import RoomsList from '@/components/RoomsList.vue'
 import RoomsQuick from '@/components/RoomsQuick.vue'
 import RoomsCreate from '@/components/RoomsCreate.vue'
+import Pull from '@/components/Pull.vue'
 import { RoomEntry } from '@/api/index'
 
 @Component({
@@ -73,6 +78,7 @@ import { RoomEntry } from '@/api/index'
     RoomsList,
     RoomsQuick,
     RoomsCreate,
+    Pull,
   }
 })
 export default class Home extends Vue {

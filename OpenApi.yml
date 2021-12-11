@@ -221,6 +221,51 @@ paths:
         '500':
           description: Internal server error
 
+  /api/pull:
+    get:
+      tags:
+        - default
+      summary: Get pull status
+      operationId: pullStatus
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullStatus'
+        '500':
+          description: Internal server error
+    post:
+      tags:
+        - default
+      summary: Start new pull
+      operationId: pullStart
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PullStart'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullStatus'
+        '500':
+          description: Internal server error
+    delete:
+      tags:
+        - default
+      summary: Stop existing pull in progress
+      operationId: pullStop
+      responses:
+        '204':
+          description: OK
+        '500':
+          description: Internal server error
+
 components:
   schemas:
     RoomsConfig:
@@ -462,3 +507,55 @@ components:
         url:
           type: string
           example: https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi
+
+    PullStart:
+      type: object
+      properties:
+        neko_image:
+          type: string
+          example: m1k1o/neko:latest
+        registry_user:
+          type: string
+        registry_pass:
+          type: string
+
+    PullLayer:
+      type: object
+      properties:
+        status:
+          type: string
+          example: m1k1o/neko:latest
+        progressDetail:
+          type: object
+          properties:
+            current:
+              type: number
+            total:
+              type: number
+        progress:
+          type: string
+        id:
+          type: string
+
+    PullStatus:
+      type: object
+      properties:
+        active:
+          type: boolean
+          example: true
+        started:
+          type: string
+          format: datetime
+          example: "2021-03-07T21:56:34Z"
+        layers:
+          type: object
+          additionalProperties: 
+            $ref: '#/components/schemas/PullLayer'
+        status:
+          type: array
+          items:
+            type: string
+        finished:
+          type: string
+          format: datetime
+          example: "2021-03-07T21:56:34Z"
