@@ -101,6 +101,7 @@
             </td></tr>
             <tr><th> Max connections </th><td>{{ settings.max_connections }}</td></tr>
             <tr><th> Control protection </th><td>{{ settings.control_protection }}</td></tr>
+            <tr><th> Implicit Control </th><td>{{ settings.implicit_control }}</td></tr>
           </tbody>
         </template>
       </v-simple-table>

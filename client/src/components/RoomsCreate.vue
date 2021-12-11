@@ -73,6 +73,13 @@
               class="shrink ml-2 mt-0"
             ></v-checkbox>
             <div style="margin-left: 41px;"><i>Users can gain control only if at least one admin is in the room.</i></div>
+            <v-checkbox
+              v-model="data.implicit_control"
+              label="Enable implicit control"
+              hide-details
+              class="shrink ml-2 mt-0"
+            ></v-checkbox>
+            <div style="margin-left: 41px;"><i>Users do not need to request control prior usage.</i></div>
           </v-col>
         </v-row>
 

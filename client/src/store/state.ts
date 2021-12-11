@@ -40,6 +40,8 @@ export const state = {
     admin_pass: '',
     // eslint-disable-next-line
     control_protection: false,
+    // eslint-disable-next-line
+    implicit_control: false,
   
     screen: '1280x720@30',
     // eslint-disable-next-line
