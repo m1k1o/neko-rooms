@@ -297,6 +297,12 @@ export interface RoomSettings {
     'control_protection'?: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof RoomSettings
+     */
+    'implicit_control'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof RoomSettings
      */
@@ -434,6 +440,12 @@ export interface RoomStats {
      * @memberof RoomStats
      */
     'control_protection'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RoomStats
+     */
+    'implicit_control'?: boolean;
 }
 /**
  * 

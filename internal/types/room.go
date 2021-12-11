@@ -62,10 +62,12 @@ type RoomResources struct {
 }
 
 type RoomSettings struct {
-	Name              string `json:"name"`
-	NekoImage         string `json:"neko_image"`
-	MaxConnections    uint16 `json:"max_connections"`
-	ControlProtection bool   `json:"control_protection"`
+	Name           string `json:"name"`
+	NekoImage      string `json:"neko_image"`
+	MaxConnections uint16 `json:"max_connections"`
+
+	ControlProtection bool `json:"control_protection"`
+	ImplicitControl   bool `json:"implicit_control"`
 
 	UserPass  string `json:"user_pass"`
 	AdminPass string `json:"admin_pass"`
@@ -99,6 +101,10 @@ func (settings *RoomSettings) ToEnv() []string {
 
 	if settings.ControlProtection {
 		env = append(env, "NEKO_CONTROL_PROTECTION=true")
+	}
+
+	if settings.ImplicitControl {
+		env = append(env, "NEKO_IMPLICIT_CONTROL=true")
 	}
 
 	if settings.VideoCodec == "VP8" || settings.VideoCodec == "VP9" || settings.VideoCodec == "H264" {
@@ -154,6 +160,10 @@ func (settings *RoomSettings) FromEnv(envs []string) error {
 		case "NEKO_CONTROL_PROTECTION":
 			if ok, _ := strconv.ParseBool(val); ok {
 				settings.ControlProtection = true
+			}
+		case "NEKO_IMPLICIT_CONTROL":
+			if ok, _ := strconv.ParseBool(val); ok {
+				settings.ImplicitControl = true
 			}
 		case "NEKO_SCREEN":
 			settings.Screen = val
@@ -224,6 +234,7 @@ type RoomStats struct {
 	LastUserLeftAt  *time.Time `json:"last_user_left_at"`
 
 	ControlProtection bool `json:"control_protection"`
+	ImplicitControl   bool `json:"implicit_control"`
 }
 
 type RoomMember struct {
