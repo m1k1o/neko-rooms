@@ -18,6 +18,7 @@ type PullConfig struct {
 	mu     sync.Mutex
 	cancel func()
 	status types.PullStatus
+	layers map[string]int
 }
 
 func (pull *PullConfig) TryInitialize(cancel func()) bool {
@@ -35,9 +36,11 @@ func (pull *PullConfig) TryInitialize(cancel func()) bool {
 	pull.status = types.PullStatus{
 		Active:  true,
 		Started: &now,
-		Layers:  map[string]types.PullLayer{},
+		Layers:  []types.PullLayer{},
 		Status:  []string{},
 	}
+
+	pull.layers = map[string]int{}
 
 	return true
 }
@@ -120,7 +123,13 @@ func (manager *RoomManagerCtx) PullStart(request types.PullStart) error {
 			}
 
 			if layer.ProgressDetail != nil {
-				manager.pull.status.Layers[layer.ID] = layer
+				// map layer id to slice index
+				if index, ok := manager.pull.layers[layer.ID]; ok {
+					manager.pull.status.Layers[index] = layer
+				} else {
+					manager.pull.layers[layer.ID] = len(manager.pull.layers)
+					manager.pull.status.Layers = append(manager.pull.status.Layers, layer)
+				}
 			} else {
 				manager.pull.status.Status = append(
 					manager.pull.status.Status,

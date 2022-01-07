@@ -15,7 +15,7 @@
           Pull neko images
         </v-card-title>
         <v-card-text>
-          <template v-if="status.active && status.layers && Object.keys(status.layers).length > 0">
+          <template v-if="status.active && status.layers && status.layers.length > 0">
             <pre v-for="layer in status.layers" :key="layer.id">{{ layer.id }} {{ layer.status }}{{ layer.progress && ' ' + layer.progress }}</pre>
             <br />
           </template>

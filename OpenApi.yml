@@ -548,8 +548,8 @@ components:
           format: datetime
           example: "2021-03-07T21:56:34Z"
         layers:
-          type: object
-          additionalProperties: 
+          type: array
+          items:
             $ref: '#/components/schemas/PullLayer'
         status:
           type: array

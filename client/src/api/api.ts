@@ -195,10 +195,10 @@ export interface PullStatus {
     'started'?: string;
     /**
      * 
-     * @type {{ [key: string]: PullLayer; }}
+     * @type {Array<PullLayer>}
      * @memberof PullStatus
      */
-    'layers'?: { [key: string]: PullLayer; };
+    'layers'?: Array<PullLayer>;
     /**
      * 
      * @type {Array<string>}

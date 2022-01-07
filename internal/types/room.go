@@ -262,11 +262,11 @@ type PullLayer struct {
 }
 
 type PullStatus struct {
-	Active   bool                 `json:"active"`
-	Started  *time.Time           `json:"started"`
-	Layers   map[string]PullLayer `json:"layers"`
-	Status   []string             `json:"status"`
-	Finished *time.Time           `json:"finished"`
+	Active   bool        `json:"active"`
+	Started  *time.Time  `json:"started"`
+	Layers   []PullLayer `json:"layers"`
+	Status   []string    `json:"status"`
+	Finished *time.Time  `json:"finished"`
 }
 
 type RoomManager interface {
