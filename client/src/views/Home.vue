@@ -99,6 +99,9 @@ export default class Home extends Vue {
   }
 
   async LoadRooms() {
+    // do not load config if document is hidden
+    if (document.hidden) return
+
     this.loading = true
 
     try {
@@ -110,7 +113,7 @@ export default class Home extends Vue {
 
 
   @Watch('autoRefresh', { immediate: true })
-  onautoRefresh() {
+  onAutoRefresh() {
     if (this.interval) {
       clearInterval(this.interval)
     }
