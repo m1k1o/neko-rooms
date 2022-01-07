@@ -1,5 +1,4 @@
 #!/bin/bash
-VERSION="1.0.0"
 
 rm -rf ../client/src/api
 mkdir ../client/src/api
@@ -7,8 +6,9 @@ mkdir ../client/src/api
 docker run --rm \
     --user "$(id -u):$(id -g)" \
     -v "${PWD}/../client/src/api:/local/out" \
+    -v "${PWD}/../OpenApi.yml:/local/in.yaml" \
     openapitools/openapi-generator-cli generate \
-        -i https://api.swaggerhub.com/apis/m1k1o/neko-rooms/${VERSION}/swagger.yaml \
+        -i /local/in.yaml \
         -g typescript-axios \
         -o /local/out \
         --additional-properties=enumPropertyNaming=original,modelPropertyNaming=original
