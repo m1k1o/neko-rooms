@@ -43,8 +43,28 @@ Inside storage path (e.g. `/opt/neko-rooms/data`) there will be available these 
 
 You can mount e.g. browser policies and this way customize browser.
 
-You can always refer to [google-chrome Dockerfile](https://github.com/m1k1o/neko/blob/1800d077d8138bdb23c25028bf4201a0469f91aa/.m1k1o/google-chrome/Dockerfile). In this case, policies are mounted to `/etc/opt/chrome/policies/managed/policies.json`. So you can mount custom file to this location.
+You can always refer to [google-chrome Dockerfile](https://github.com/m1k1o/neko/blob/1800d077d8138bdb23c25028bf4201a0469f91aa/.m1k1o/google-chrome/Dockerfile). In this case, policies are mounted to `/etc/opt/chrome/policies/managed/policies.json` path inside container. So you can mount custom file to this location what overwrites its content.
 
-For this purpose, template path is correct. You can then store your policies file to e.g. `/opt/neko-rooms/data/templates/policies.json` and have it mounted.
+For this purpose, template path type is recommended, as policy file should only be readonly and can be reused along multiple rooms. You can then store your policies file to e.g. `/opt/neko-rooms/data/templates/policies.json` and have it mounted to all rooms.
 
 ![Storage](storage.png)
+
+## Mount path whitelist
+
+If you want to mount any path from your filesystem, you need to whitelist it first.
+
+Add it as environment variables to your docker compose:
+
+```yaml
+NEKO_ROOMS_MOUNTS_WHITELIST: "/media"
+```
+
+Or when using multiple, they can be separated white space:
+
+```yaml
+NEKO_ROOMS_MOUNTS_WHITELIST: "/home /media"
+```
+
+You can mount any path within your whitelisted path. Meaning, if you whitelisted `/home` folder you can selectively mount path e.g. `/home/ubuntu` to a room.
+
+**NOTICE:** You could whitelist all paths on your system with `/`. From security perspective, this solution is *strongly discouraged*.
