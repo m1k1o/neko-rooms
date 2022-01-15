@@ -17,14 +17,32 @@ type ApiManagerCtx struct {
 
 func New(roomManager types.RoomManager, conf *config.API) *ApiManagerCtx {
 	return &ApiManagerCtx{
-		logger: log.With().Str("module", "router").Logger(),
+		logger: log.With().Str("module", "api").Logger(),
 		rooms:  roomManager,
 		conf:   conf,
 	}
 }
 
 func (manager *ApiManagerCtx) Mount(r chi.Router) {
-	r.Get("/config/rooms", manager.roomsConfig)
+	//
+	// config
+	//
+
+	r.Get("/config/rooms", manager.configRooms)
+
+	//
+	// pull
+	//
+
+	r.Route("/pull", func(r chi.Router) {
+		r.Get("/", manager.pullStatus)
+		r.Post("/", manager.pullStart)
+		r.Delete("/", manager.pullStop)
+	})
+
+	//
+	// rooms
+	//
 
 	r.Get("/rooms", manager.roomsList)
 	r.Post("/rooms", manager.roomCreate)
@@ -40,11 +58,5 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 		r.Post("/stop", manager.roomGenericAction(manager.rooms.Stop))
 		r.Post("/restart", manager.roomGenericAction(manager.rooms.Restart))
 		r.Post("/recreate", manager.roomRecreate)
-	})
-
-	r.Route("/pull", func(r chi.Router) {
-		r.Get("/", manager.roomPullStatus)
-		r.Post("/", manager.roomPullStart)
-		r.Delete("/", manager.roomPullStop)
 	})
 }

@@ -9,13 +9,6 @@ import (
 	"m1k1o/neko_rooms/internal/types"
 )
 
-func (manager *ApiManagerCtx) roomsConfig(w http.ResponseWriter, r *http.Request) {
-	response := manager.rooms.Config()
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
 func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) {
 	response, err := manager.rooms.List()
 	if err != nil {
@@ -156,39 +149,4 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) fu
 
 		w.WriteHeader(http.StatusNoContent)
 	}
-}
-
-func (manager *ApiManagerCtx) roomPullStart(w http.ResponseWriter, r *http.Request) {
-	request := types.PullStart{}
-
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	}
-
-	err := manager.rooms.PullStart(request)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	response := manager.rooms.PullStatus()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func (manager *ApiManagerCtx) roomPullStatus(w http.ResponseWriter, r *http.Request) {
-	response := manager.rooms.PullStatus()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func (manager *ApiManagerCtx) roomPullStop(w http.ResponseWriter, r *http.Request) {
-	err := manager.rooms.PullStop()
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
 }
