@@ -1,72 +1,89 @@
 package api
 
 import (
-	"m1k1o/neko_rooms/internal/utils"
 	"net/http"
 	"strings"
 
 	"github.com/go-chi/chi"
+
+	"m1k1o/neko_rooms/internal/utils"
 )
 
 func (manager *ApiManagerCtx) RoomLobby(w http.ResponseWriter, r *http.Request) {
 	if !manager.conf.Lobby {
 		http.NotFound(w, r)
-		return
 	}
 
 	roomName := chi.URLParam(r, "roomName")
 	response, err := manager.rooms.FindByName(roomName)
+
 	if err != nil || response.Name != roomName {
-		utils.Swal2Response(w, `
-			<div class="swal2-header">
-				<div class="swal2-icon swal2-error">
-					<div class="swal2-icon-content">X</div>
-				</div>
-				<h2 class="swal2-title">Room not found!</h2>
-			</div>
-			<div class="swal2-content">
-				<div>The room you are trying to join does not exist.</div>
-			</div>
-		`)
+		manager.roomNotFound(w, r)
 		return
 	}
 
 	if !response.Running {
-		utils.Swal2Response(w, `
-			<div class="swal2-header">
-				<div class="swal2-icon swal2-warning">
-					<div class="swal2-icon-content">!</div>
-				</div>
-				<h2 class="swal2-title">Room is not running!</h2>
-			</div>
-			<div class="swal2-content">
-				<div>The room you are trying to join is not running.</div>
-			</div>
-		`)
+		manager.roomNotRunning(w, r)
 		return
 	}
 
 	if strings.Contains(response.Status, "starting") {
-		utils.Swal2Response(w, `
-			<meta http-equiv="refresh" content="2">
-
-			<div class="swal2-header">
-				<div class="swal2-icon swal2-info">
-					<div class="swal2-icon-content">i</div>
-				</div>
-				<h2 class="swal2-title">Room is not ready, yet!</h2>
-			</div>
-			<div class="swal2-content">
-				<div>Please wait, until this room is ready so you can join. This should happen any second now.</div>
-			</div>
-			<div class="swal2-actions">
-				<div class="swal2-loader"></div>
-				<button type="button" onclick="location = location" class="swal2-confirm swal2-styled" style="margin-top: 1.25em">Reload</button>
-			</div>
-		`)
+		manager.roomNotReady(w, r)
 		return
 	}
 
+	manager.roomReady(w, r)
+}
+
+func (manager *ApiManagerCtx) roomNotFound(w http.ResponseWriter, r *http.Request) {
+	utils.Swal2Response(w, `
+		<div class="swal2-header">
+			<div class="swal2-icon swal2-error">
+				<div class="swal2-icon-content">X</div>
+			</div>
+			<h2 class="swal2-title">Room not found!</h2>
+		</div>
+		<div class="swal2-content">
+			<div>The room you are trying to join does not exist.</div>
+		</div>
+	`)
+}
+
+func (manager *ApiManagerCtx) roomNotRunning(w http.ResponseWriter, r *http.Request) {
+	utils.Swal2Response(w, `
+		<div class="swal2-header">
+			<div class="swal2-icon swal2-warning">
+				<div class="swal2-icon-content">!</div>
+			</div>
+			<h2 class="swal2-title">Room is not running!</h2>
+		</div>
+		<div class="swal2-content">
+			<div>The room you are trying to join is not running.</div>
+		</div>
+	`)
+}
+
+func (manager *ApiManagerCtx) roomNotReady(w http.ResponseWriter, r *http.Request) {
+	utils.Swal2Response(w, `
+		<meta http-equiv="refresh" content="2">
+
+		<div class="swal2-header">
+			<div class="swal2-icon swal2-info">
+				<div class="swal2-icon-content">i</div>
+			</div>
+			<h2 class="swal2-title">Room is not ready, yet!</h2>
+		</div>
+		<div class="swal2-content">
+			<div>Please wait, until this room is ready so you can join. This should happen any second now.</div>
+		</div>
+		<div class="swal2-actions">
+			<div class="swal2-loader"></div>
+			<button type="button" onclick="location = location" class="swal2-confirm swal2-styled" style="margin-top: 1.25em">Reload</button>
+		</div>
+	`)
+}
+
+func (manager *ApiManagerCtx) roomReady(w http.ResponseWriter, r *http.Request) {
 	utils.Swal2Response(w, `
 		<div class="swal2-header">
 			<div class="swal2-icon swal2-success swal2-icon-show" style="display: flex;">
