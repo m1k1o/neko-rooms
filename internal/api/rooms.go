@@ -118,18 +118,6 @@ func (manager *ApiManagerCtx) roomGetEntry(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(response)
 }
 
-func (manager *ApiManagerCtx) roomRemove(w http.ResponseWriter, r *http.Request) {
-	roomId := chi.URLParam(r, "roomId")
-
-	err := manager.rooms.Remove(roomId)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func (manager *ApiManagerCtx) roomGetSettings(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
