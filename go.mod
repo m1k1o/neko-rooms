@@ -1,4 +1,4 @@
-module m1k1o/neko_rooms
+module github.com/m1k1o/neko-rooms
 
 go 1.17
 

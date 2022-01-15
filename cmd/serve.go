@@ -4,8 +4,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	"m1k1o/neko_rooms"
-	"m1k1o/neko_rooms/internal/config"
+	nekoRooms "github.com/m1k1o/neko-rooms"
+	"github.com/m1k1o/neko-rooms/internal/config"
 )
 
 func init() {
@@ -13,20 +13,20 @@ func init() {
 		Use:   "serve",
 		Short: "serve neko_rooms server",
 		Long:  `serve neko_rooms server`,
-		Run:   neko_rooms.Service.ServeCommand,
+		Run:   nekoRooms.Service.ServeCommand,
 	}
 
 	configs := []config.Config{
-		neko_rooms.Service.Configs.Server,
-		neko_rooms.Service.Configs.API,
-		neko_rooms.Service.Configs.Room,
+		nekoRooms.Service.Configs.Server,
+		nekoRooms.Service.Configs.API,
+		nekoRooms.Service.Configs.Room,
 	}
 
 	cobra.OnInitialize(func() {
 		for _, cfg := range configs {
 			cfg.Set()
 		}
-		neko_rooms.Service.Preflight()
+		nekoRooms.Service.Preflight()
 	})
 
 	for _, cfg := range configs {

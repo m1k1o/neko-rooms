@@ -6,14 +6,14 @@ import (
 	"os/signal"
 	"runtime"
 
-	"m1k1o/neko_rooms/internal/api"
-	"m1k1o/neko_rooms/internal/config"
-	"m1k1o/neko_rooms/internal/http"
-	"m1k1o/neko_rooms/internal/room"
-
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+
+	"github.com/m1k1o/neko-rooms/internal/api"
+	"github.com/m1k1o/neko-rooms/internal/config"
+	"github.com/m1k1o/neko-rooms/internal/http"
+	"github.com/m1k1o/neko-rooms/internal/room"
 )
 
 const Header = `&34

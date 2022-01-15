@@ -2,9 +2,10 @@ package policies
 
 import (
 	"errors"
-	"m1k1o/neko_rooms/internal/policies/chromium"
-	"m1k1o/neko_rooms/internal/policies/firefox"
-	"m1k1o/neko_rooms/internal/types"
+
+	"github.com/m1k1o/neko-rooms/internal/policies/chromium"
+	"github.com/m1k1o/neko-rooms/internal/policies/firefox"
+	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 func Generate(policies types.BrowserPolicyContent, policyType types.BrowserPolicyType) (string, error) {

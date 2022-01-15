@@ -11,8 +11,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"m1k1o/neko_rooms/internal/config"
-	"m1k1o/neko_rooms/internal/types"
+	"github.com/m1k1o/neko-rooms/internal/config"
+	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 type HttpManagerCtx struct {

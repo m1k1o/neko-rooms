@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"m1k1o/neko_rooms"
+	nekoRooms "github.com/m1k1o/neko-rooms"
 )
 
 func Execute() error {
@@ -26,7 +26,7 @@ var root = &cobra.Command{
 	Use:     "neko_rooms",
 	Short:   "neko_rooms server",
 	Long:    `neko_rooms server`,
-	Version: neko_rooms.Service.Version.String(),
+	Version: nekoRooms.Service.Version.String(),
 }
 
 func init() {
@@ -118,12 +118,12 @@ func init() {
 			logger.Info().Msg("preflight complete")
 		}
 
-		neko_rooms.Service.Configs.Root.Set()
+		nekoRooms.Service.Configs.Root.Set()
 	})
 
-	if err := neko_rooms.Service.Configs.Root.Init(root); err != nil {
+	if err := nekoRooms.Service.Configs.Root.Init(root); err != nil {
 		log.Panic().Err(err).Msg("unable to run root command")
 	}
 
-	root.SetVersionTemplate(neko_rooms.Service.Version.Details())
+	root.SetVersionTemplate(nekoRooms.Service.Version.Details())
 }
