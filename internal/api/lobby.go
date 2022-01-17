@@ -33,6 +33,16 @@ func (manager *ApiManagerCtx) RoomLobby(w http.ResponseWriter, r *http.Request) 
 	}
 
 	manager.roomReady(w, r)
+
+	/*
+		var proxy http.Handler
+		proxy = httputil.NewSingleHostReverseProxy(&url.URL{
+			Scheme: "http",
+			Host:   "neko-rooms-" + response.Name + ":8080",
+		})
+		proxy = http.StripPrefix("/"+roomName, proxy)
+		proxy.ServeHTTP(w, r)
+	*/
 }
 
 func (manager *ApiManagerCtx) roomNotFound(w http.ResponseWriter, r *http.Request) {

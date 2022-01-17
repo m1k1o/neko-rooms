@@ -29,7 +29,8 @@ func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
 	}
 
 	for _, port := range ports {
-		if (epr.Min >= port.Min && epr.Min <= port.Max) || (epr.Max >= port.Min && epr.Max <= port.Max) {
+		if (epr.Min >= port.Min && epr.Min <= port.Max) ||
+			(epr.Max >= port.Min && epr.Max <= port.Max) {
 			epr.Min = port.Max + 1
 			epr.Max = port.Max + sum
 		}
