@@ -273,7 +273,8 @@
           <v-row align="center" no-gutters v-if="data.mounts.length > 0">
             <p>
               <strong>Private</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/rooms/&lt;room name&gt;/</code>. <br />
-              <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code> and is readonly. <br />
+              <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code>, and will be readonly. <br />
+              <strong>Protected</strong>: Host path must be whitelisted in config and exists on the host, will be readonly. <br />
               <strong>Public</strong>: Host path must be whitelisted in config and exists on the host.
             </p>
           </v-row>
@@ -502,6 +503,10 @@ export default class RoomsCreate extends Vue {
       {
         text: 'Template',
         value: 'template',
+      },
+      {
+        text: 'Protected',
+        value: 'protected',
       },
       {
         text: 'Public',

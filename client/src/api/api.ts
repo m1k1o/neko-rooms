@@ -337,6 +337,7 @@ export interface RoomMount {
 export enum RoomMountTypeEnum {
     private = 'private',
     template = 'template',
+    protected = 'protected',
     public = 'public'
 }
 

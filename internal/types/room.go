@@ -44,9 +44,10 @@ type RoomEntry struct {
 type MountType string
 
 const (
-	MountPrivate  MountType = "private"
-	MountTemplate MountType = "template"
-	MountPublic   MountType = "public"
+	MountPrivate   MountType = "private"
+	MountTemplate  MountType = "template"
+	MountProtected MountType = "protected"
+	MountPublic    MountType = "public"
 )
 
 type RoomMount struct {

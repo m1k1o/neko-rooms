@@ -326,7 +326,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 			// prefix host path
 			hostPath = path.Join(manager.config.StorageExternal, templateStoragePath, hostPath)
-		} else if mount.Type == types.MountPublic {
+		} else if mount.Type == types.MountProtected || mount.Type == types.MountPublic {
+			// readonly if mount type is protected
+			readOnly = mount.Type == types.MountProtected
+
 			// public whitelisted mounts
 			var isAllowed = false
 			for _, path := range manager.config.MountsWhitelist {
