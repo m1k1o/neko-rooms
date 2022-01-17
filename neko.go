@@ -14,6 +14,7 @@ import (
 	"github.com/m1k1o/neko-rooms/internal/api"
 	"github.com/m1k1o/neko-rooms/internal/config"
 	"github.com/m1k1o/neko-rooms/internal/http"
+	"github.com/m1k1o/neko-rooms/internal/pull"
 	"github.com/m1k1o/neko-rooms/internal/room"
 )
 
@@ -109,6 +110,7 @@ type MainCtx struct {
 
 	logger      zerolog.Logger
 	roomManager *room.RoomManagerCtx
+	pullManager *pull.PullManagerCtx
 	apiManager  *api.ApiManagerCtx
 	httpManager *http.HttpManagerCtx
 }
@@ -130,8 +132,14 @@ func (main *MainCtx) Start() {
 		main.Configs.Room,
 	)
 
+	main.pullManager = pull.New(
+		client,
+		main.Configs.Room.NekoImages,
+	)
+
 	main.apiManager = api.New(
 		main.roomManager,
+		main.pullManager,
 		main.Configs.API,
 	)
 

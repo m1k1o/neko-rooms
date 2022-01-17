@@ -12,13 +12,15 @@ import (
 type ApiManagerCtx struct {
 	logger zerolog.Logger
 	rooms  types.RoomManager
+	pull   types.PullManager
 	conf   *config.API
 }
 
-func New(roomManager types.RoomManager, conf *config.API) *ApiManagerCtx {
+func New(rooms types.RoomManager, pull types.PullManager, conf *config.API) *ApiManagerCtx {
 	return &ApiManagerCtx{
 		logger: log.With().Str("module", "api").Logger(),
-		rooms:  roomManager,
+		rooms:  rooms,
+		pull:   pull,
 		conf:   conf,
 	}
 }

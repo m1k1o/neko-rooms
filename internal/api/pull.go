@@ -15,25 +15,25 @@ func (manager *ApiManagerCtx) pullStart(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := manager.rooms.PullStart(request)
+	err := manager.pull.Start(request)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	response := manager.rooms.PullStatus()
+	response := manager.pull.Status()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
 func (manager *ApiManagerCtx) pullStatus(w http.ResponseWriter, r *http.Request) {
-	response := manager.rooms.PullStatus()
+	response := manager.pull.Status()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
 func (manager *ApiManagerCtx) pullStop(w http.ResponseWriter, r *http.Request) {
-	err := manager.rooms.PullStop()
+	err := manager.pull.Stop()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
