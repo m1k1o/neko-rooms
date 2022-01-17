@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"runtime"
 
+	"github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -117,7 +118,15 @@ func (main *MainCtx) Preflight() {
 }
 
 func (main *MainCtx) Start() {
+	client, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		main.logger.Panic().Err(err).Msg("unable to connect to docker client")
+	} else {
+		main.logger.Info().Msg("successfully connected to docker client")
+	}
+
 	main.roomManager = room.New(
+		client,
 		main.Configs.Room,
 	)
 
