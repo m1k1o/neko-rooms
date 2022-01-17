@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -25,13 +26,12 @@ type Room struct {
 	MountsWhitelist []string
 
 	InstanceName string
-	InstanceUrl  string
+	InstanceUrl  *url.URL
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
 	TraefikCertresolver string
 	TraefikNetwork      string
-	TraefikPort         string // deprecated
 }
 
 func (Room) Init(cmd *cobra.Command) error {
@@ -183,20 +183,15 @@ func (s *Room) Set() {
 		log.Panic().Msg("invalid `instance.name`, must match " + dockerNames.RestrictedNameChars)
 	}
 
-	s.InstanceUrl = viper.GetString("instance.url")
+	var err error
+	instanceUrl := viper.GetString("instance.url")
+	s.InstanceUrl, err = url.Parse(instanceUrl)
+	if err != nil {
+		log.Panic().Err(err).Msg("invalid `instance.url`")
+	}
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
 	s.TraefikCertresolver = viper.GetString("traefik.certresolver")
 	s.TraefikNetwork = viper.GetString("traefik.network")
-
-	// deprecated
-	s.TraefikPort = viper.GetString("traefik.port")
-	if s.TraefikPort != "" {
-		if s.InstanceUrl != "" {
-			log.Warn().Msg("deprecated `traefik.port` config item is ignored when `instance.url` is set")
-		} else {
-			log.Warn().Msg("you are using deprecated `traefik.port` config item, you should consider moving to `instance.url`")
-		}
-	}
 }

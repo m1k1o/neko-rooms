@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -86,7 +87,7 @@ func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error)
 
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
-		return "", fmt.Errorf("invalid container name, must match " + dockerNames.RestrictedNameChars)
+		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
 	}
 
 	if !manager.config.StorageEnabled && len(settings.Mounts) > 0 {
@@ -118,7 +119,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	portBindings := nat.PortMap{}
 	exposedPorts := nat.PortSet{
-		nat.Port(fmt.Sprintf("%d/udp", frontendPort)): struct{}{},
+		nat.Port(fmt.Sprintf("%d/tcp", frontendPort)): struct{}{},
 	}
 
 	for port := epr.Min; port <= epr.Max; port++ {
@@ -179,33 +180,31 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	//
 
 	instanceUrl := manager.config.InstanceUrl
-	instanceSuffix := roomName + "/"
-	if instanceUrl == "" {
-		urlProto := "http"
-		if manager.config.TraefikCertresolver != "" {
-			urlProto = "https"
+	if instanceUrl == nil {
+		instanceUrl = &url.URL{
+			Host: "127.0.0.1",
+			Path: roomName + "/",
 		}
 
-		// deprecated
-		port := ""
-		if manager.config.TraefikPort != "" {
-			port = ":" + manager.config.TraefikPort
+		if manager.config.TraefikCertresolver != "" {
+			instanceUrl.Scheme = "https"
+		} else {
+			instanceUrl.Scheme = "http"
 		}
 
 		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
 			// match *.domain.tld as subdomain
 			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
-				instanceUrl = urlProto + "://" + roomName + "." + strings.TrimPrefix(manager.config.TraefikDomain, "*.") + port + "/"
-				instanceSuffix = ""
+				domain := strings.TrimPrefix(manager.config.TraefikDomain, "*.")
+
+				instanceUrl.Host = fmt.Sprintf("%s.%s", roomName, domain)
+				instanceUrl.Path = ""
 			} else {
-				instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port + "/"
+				instanceUrl.Host = manager.config.TraefikDomain
 			}
-		} else {
-			// domain is not known
-			instanceUrl = urlProto + "://127.0.0.1" + port + "/"
 		}
-	} else if !strings.HasSuffix(instanceUrl, "/") {
-		instanceUrl = instanceUrl + "/"
+	} else {
+		instanceUrl.Path = path.Join(instanceUrl.Path, roomName+"/")
 	}
 
 	var browserPolicyLabels *BrowserPolicyLabels
@@ -218,7 +217,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
-		URL:       instanceUrl + instanceSuffix,
+		URL:       instanceUrl.String(),
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 
