@@ -320,7 +320,7 @@ components:
       properties:
         type:
           type: string
-          enum: [ private, template, public ]
+          enum: [ private, template, protected, public ]
           example: private
         host_path:
           type: string
