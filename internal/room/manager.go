@@ -12,6 +12,7 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	dockerMount "github.com/docker/docker/api/types/mount"
 	network "github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
@@ -36,6 +37,41 @@ const (
 )
 
 func New(client *dockerClient.Client, config *config.Room) *RoomManagerCtx {
+	// TODO: Implement client events.
+	go func() {
+		msgs, errs := client.Events(context.Background(), dockerTypes.EventsOptions{
+			Filters: filters.NewArgs(
+				filters.Arg("type", "container"),
+				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", config.InstanceName)),
+				filters.Arg("event", "start"),
+				filters.Arg("event", "stop"),
+			),
+		})
+
+		for {
+			select {
+			case err := <-errs:
+				log.Info().Interface("err", err).Msg("eee")
+			case msg := <-msgs:
+				name := msg.Actor.Attributes["name"]
+
+				switch msg.Action {
+				case "start":
+					log.Info().
+						Str("id", msg.ID).
+						Str("name", name).
+						Msg("container started")
+
+				case "stop":
+					log.Info().
+						Str("id", msg.ID).
+						Str("name", name).
+						Msg("container stopped")
+				}
+			}
+		}
+	}()
+
 	return &RoomManagerCtx{
 		logger: log.With().Str("module", "room").Logger(),
 		config: config,
