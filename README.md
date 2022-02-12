@@ -106,6 +106,10 @@ You might have encountered this error:
 
 If you didn't specify storage yet, you can do it using [this tutorial](./docs/storage.md).
 
+### Docs
+
+For more information visit [docs](./docs).
+
 ### Roadmap:
  - [x] add GUI
  - [x] add HTTPS support
