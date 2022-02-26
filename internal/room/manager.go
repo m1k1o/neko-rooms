@@ -242,11 +242,12 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// add custom instance labels
 	for _, label := range manager.config.InstanceLabels {
 		// replace dynamic values in labels
-		label = strings.Replace(label, "{containerName}", containerName, 1)
-		label = strings.Replace(label, "{roomName}", roomName, 1)
-		label = strings.Replace(label, "{traefikEntrypoint}", manager.config.TraefikEntrypoint, 1)
+		label = strings.Replace(label, "{containerName}", containerName, -1)
+		label = strings.Replace(label, "{roomName}", roomName, -1)
+		label = strings.Replace(label, "{traefikEntrypoint}", manager.config.TraefikEntrypoint, -1)
+		label = strings.Replace(label, "{traefikCertresolver}", manager.config.TraefikCertresolver, -1)
 
-		v := strings.SplitN(label, ":", 2)
+		v := strings.SplitN(label, "=", 2)
 		if len(v) != 2 {
 			manager.logger.Warn().Str("label", label).Msg("invalid instance label")
 			continue
