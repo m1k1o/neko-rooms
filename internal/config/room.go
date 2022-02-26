@@ -24,8 +24,9 @@ type Room struct {
 
 	MountsWhitelist []string
 
-	InstanceName string
-	InstanceUrl  string
+	InstanceName   string
+	InstanceUrl    string
+	InstanceLabels []string
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
@@ -92,6 +93,11 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().String("instance.url", "", "instance url that is prefixing room names (if different from `http(s)://{traefik_domain}/`)")
 	if err := viper.BindPFlag("instance.url", cmd.PersistentFlags().Lookup("instance.url")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().StringSlice("instance.labels", []string{}, "additional instance labels appended to a room")
+	if err := viper.BindPFlag("instance.labels", cmd.PersistentFlags().Lookup("instance.labels")); err != nil {
 		return err
 	}
 
@@ -184,6 +190,7 @@ func (s *Room) Set() {
 	}
 
 	s.InstanceUrl = viper.GetString("instance.url")
+	s.InstanceLabels = viper.GetStringSlice("instance.labels")
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
