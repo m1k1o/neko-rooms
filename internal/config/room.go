@@ -17,6 +17,7 @@ type Room struct {
 
 	NAT1To1IPs []string
 	NekoImages []string
+	PathPrefix string
 	Labels     []string
 
 	StorageEnabled  bool
@@ -59,6 +60,11 @@ func (Room) Init(cmd *cobra.Command) error {
 		"m1k1o/neko:xfce",
 	}, "neko images to be used")
 	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("path_prefix", "", "path prefix that is added to every room path")
+	if err := viper.BindPFlag("path_prefix", cmd.PersistentFlags().Lookup("path_prefix")); err != nil {
 		return err
 	}
 
@@ -158,6 +164,7 @@ func (s *Room) Set() {
 
 	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
+	s.PathPrefix = viper.GetString("path_prefix")
 	s.Labels = viper.GetStringSlice("labels")
 
 	s.StorageEnabled = viper.GetBool("storage.enabled")

@@ -149,9 +149,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	//
 
 	containerName := manager.config.InstanceName + "-" + roomName
+	pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
 
 	// create traefik rule
-	traefikRule := "PathPrefix(`/" + roomName + "`)"
+	traefikRule := "PathPrefix(`" + pathPrefix + "`)"
 	if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
 		// match *.domain.tld as subdomain
 		if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
@@ -172,9 +173,9 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		"traefik.http.services." + containerName + "-frontend.loadbalancer.server.port": fmt.Sprintf("%d", frontendPort),
 		"traefik.http.routers." + containerName + ".entrypoints":                        manager.config.TraefikEntrypoint,
 		"traefik.http.routers." + containerName + ".rule":                               traefikRule,
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        "/" + roomName + "$$",
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + roomName + "/",
-		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + roomName + "/",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        pathPrefix + "$$",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  pathPrefix + "/",
+		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       pathPrefix + "/",
 		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
 		"traefik.http.routers." + containerName + ".service":                            containerName + "-frontend",
 	}
@@ -190,7 +191,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	//
 
 	instanceUrl := manager.config.InstanceUrl
-	instanceSuffix := roomName + "/"
 	if instanceUrl == "" {
 		urlProto := "http"
 		if manager.config.TraefikCertresolver != "" {
@@ -206,18 +206,19 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
 			// match *.domain.tld as subdomain
 			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
-				instanceUrl = urlProto + "://" + roomName + "." + strings.TrimPrefix(manager.config.TraefikDomain, "*.") + port + "/"
-				instanceSuffix = ""
+				instanceUrl = urlProto + "://" + roomName + "." + strings.TrimPrefix(manager.config.TraefikDomain, "*.") + port
+				pathPrefix = ""
 			} else {
-				instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port + "/"
+				instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port
 			}
 		} else {
 			// domain is not known
-			instanceUrl = urlProto + "://127.0.0.1" + port + "/"
+			instanceUrl = urlProto + "://127.0.0.1" + port
 		}
-	} else if !strings.HasSuffix(instanceUrl, "/") {
-		instanceUrl = instanceUrl + "/"
 	}
+
+	// remove last slash
+	instanceUrl = strings.TrimSuffix(instanceUrl, "/")
 
 	var browserPolicyLabels *BrowserPolicyLabels
 	if settings.BrowserPolicy != nil {
@@ -229,7 +230,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
-		URL:       instanceUrl + instanceSuffix,
+		URL:       instanceUrl + pathPrefix + "/",
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 

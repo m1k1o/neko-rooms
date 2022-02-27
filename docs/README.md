@@ -11,3 +11,13 @@ All clients visit `https://neko-rooms/room-name/`. Once they logged in, they get
 ## Connection timeout
 
 Neko room loads but you don't see the screen and it gives you `connection timeout` or `disconnected error`? [Validate](https://neko.m1k1o.net/#/getting-started/troubleshooting?id=validate-udp-ports-reachability) that your UDP ports are reachable.
+
+## path prefix
+
+Room names are by default put to root directory. If you want to have custom path prefix, you can specify it using env variable:
+
+```
+NEKO_ROOMS_PATH_PREFIX=/test/
+```
+
+Now room will be available at `example.org/test/<room-name>` instead of `example.org/<room-name>`.
