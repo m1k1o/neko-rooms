@@ -14,8 +14,10 @@ Neko room loads but you don't see the screen and it gives you `connection timeou
 
 ## path prefix
 
-Room names are by default put to root directory. If you want to have custom path prefix, you can specify it using evn variable:
+Room names are by default put to root directory. If you want to have custom path prefix, you can specify it using env variable:
 
 ```
-NEKO_ROOMS_INSTANCE_PATH_PREFIX=/test/
+NEKO_ROOMS_PATH_PREFIX=/test/
 ```
+
+Now room will be available at `example.org/test/<room-name>` instead of `example.org/<room-name>`.
