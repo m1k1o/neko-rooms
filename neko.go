@@ -128,6 +128,7 @@ func (main *MainCtx) Start() {
 
 	main.httpManager = http.New(
 		main.apiManager,
+		main.Configs.Room.InstancePathPrefix,
 		main.Configs.Server,
 	)
 	main.httpManager.Start()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -22,7 +23,7 @@ type HttpManagerCtx struct {
 	conf   *config.Server
 }
 
-func New(ApiManager types.ApiManager, conf *config.Server) *HttpManagerCtx {
+func New(ApiManager types.ApiManager, pathPrefix string, conf *config.Server) *HttpManagerCtx {
 	logger := log.With().Str("module", "http").Logger()
 
 	router := chi.NewRouter()
@@ -54,8 +55,8 @@ func New(ApiManager types.ApiManager, conf *config.Server) *HttpManagerCtx {
 	}
 
 	// add simple lobby room
-	router.Get("/{roomName}", ApiManager.RoomLobby)
-	router.Get("/{roomName}/", ApiManager.RoomLobby)
+	router.Get(path.Join("/", pathPrefix, "{roomName}"), ApiManager.RoomLobby)
+	router.Get(path.Join("/", pathPrefix, "{roomName}")+"/", ApiManager.RoomLobby)
 
 	router.NotFound(http.HandlerFunc(http.NotFound))
 
