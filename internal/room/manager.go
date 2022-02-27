@@ -176,6 +176,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + roomName + "/",
 		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + roomName + "/",
 		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
+		"traefik.http.routers." + containerName + ".service":                            containerName + "-frontend",
 	}
 
 	// optional HTTPS
