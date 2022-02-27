@@ -314,6 +314,9 @@ components:
           type: string
           format: datetime
           example: "2021-03-07T21:56:34Z"
+        ip:
+          type: string
+          example: "172.0.0.3"
 
     RoomMount:
       type: object
