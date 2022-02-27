@@ -149,7 +149,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	//
 
 	containerName := manager.config.InstanceName + "-" + roomName
-	pathPrefix := path.Join("/", manager.config.InstancePathPrefix, roomName)
+	pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
 
 	// create traefik rule
 	traefikRule := "PathPrefix(`" + pathPrefix + "`)"
