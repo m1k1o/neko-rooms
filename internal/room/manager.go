@@ -177,6 +177,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  pathPrefix + "/",
 		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       pathPrefix + "/",
 		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
+		"traefik.http.routers." + containerName + ".service":                            containerName + "-frontend",
 	}
 
 	// optional HTTPS
@@ -238,6 +239,24 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	for k, v := range traefikLabels {
 		labels[k] = v
+	}
+
+	// add custom labels
+	for _, label := range manager.config.Labels {
+		// replace dynamic values in labels
+		label = strings.Replace(label, "{containerName}", containerName, -1)
+		label = strings.Replace(label, "{roomName}", roomName, -1)
+		label = strings.Replace(label, "{traefikEntrypoint}", manager.config.TraefikEntrypoint, -1)
+		label = strings.Replace(label, "{traefikCertresolver}", manager.config.TraefikCertresolver, -1)
+
+		v := strings.SplitN(label, "=", 2)
+		if len(v) != 2 {
+			manager.logger.Warn().Str("label", label).Msg("invalid custom label")
+			continue
+		}
+
+		key, val := v[0], v[1]
+		labels[key] = val
 	}
 
 	//
