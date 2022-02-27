@@ -17,6 +17,7 @@ type Room struct {
 
 	NAT1To1IPs []string
 	NekoImages []string
+	PathPrefix string
 
 	StorageEnabled  bool
 	StorageInternal string
@@ -24,9 +25,8 @@ type Room struct {
 
 	MountsWhitelist []string
 
-	InstanceName       string
-	InstanceUrl        string
-	InstancePathPrefix string
+	InstanceName string
+	InstanceUrl  string
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
@@ -62,6 +62,11 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	cmd.PersistentFlags().String("path_prefix", "", "path prefix that is added to every room path")
+	if err := viper.BindPFlag("path_prefix", cmd.PersistentFlags().Lookup("path_prefix")); err != nil {
+		return err
+	}
+
 	// Data
 
 	cmd.PersistentFlags().Bool("storage.enabled", true, "whether storage is enabled, where peristent containers data will be stored")
@@ -93,11 +98,6 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().String("instance.url", "", "instance url that is prefixing room names (if different from `http(s)://{traefik_domain}/`)")
 	if err := viper.BindPFlag("instance.url", cmd.PersistentFlags().Lookup("instance.url")); err != nil {
-		return err
-	}
-
-	cmd.PersistentFlags().String("instance.path_prefix", "", "path prefix that is added to a room path")
-	if err := viper.BindPFlag("instance.path_prefix", cmd.PersistentFlags().Lookup("instance.path_prefix")); err != nil {
 		return err
 	}
 
@@ -158,6 +158,7 @@ func (s *Room) Set() {
 
 	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
+	s.PathPrefix = viper.GetString("path_prefix")
 
 	s.StorageEnabled = viper.GetBool("storage.enabled")
 	s.StorageInternal = viper.GetString("storage.internal")
@@ -190,7 +191,6 @@ func (s *Room) Set() {
 	}
 
 	s.InstanceUrl = viper.GetString("instance.url")
-	s.InstancePathPrefix = viper.GetString("instance.path_prefix")
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
