@@ -12,6 +12,17 @@ import (
 	"m1k1o/neko_rooms/internal/types"
 )
 
+func GetIP(container dockerTypes.Container) (ip string) {
+	if container.NetworkSettings != nil {
+		for _, val := range container.NetworkSettings.Networks {
+			if val.IPAddress != "" {
+				return val.IPAddress
+			}
+		}
+	}
+	return ""
+}
+
 func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container) (*types.RoomEntry, error) {
 	labels, err := manager.extractLabels(container.Labels)
 	if err != nil {
@@ -28,6 +39,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		Running:        container.State == "running",
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),
+		Ip:             GetIP(container),
 	}, nil
 }
 

@@ -272,6 +272,12 @@ export interface RoomEntry {
      * @memberof RoomEntry
      */
     'created'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomEntry
+     */
+     'ip'?: string;
 }
 /**
  * 
