@@ -21,11 +21,13 @@ on_exit() {
 docker run --rm -it \
     --name="neko_rooms_traefik" \
     -p "${1:-80}:80" \
+    -p "8080:8080" \
     -v "${PWD}/../:/app" \
 	-e "TZ=${TZ}" \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
     --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
     traefik:2.4 \
+      --api.insecure=true \
       --providers.docker=true \
       --providers.docker.watch=true \
       --providers.docker.exposedbydefault=false \
