@@ -17,6 +17,7 @@ type Room struct {
 
 	NAT1To1IPs []string
 	NekoImages []string
+	NekoPrivilegedImages []string
 	PathPrefix string
 	Labels     []string
 
@@ -164,6 +165,7 @@ func (s *Room) Set() {
 
 	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
+	s.NekoPrivilegedImages = viper.GetStringSlice("neko_privileged_images")
 	s.PathPrefix = viper.GetString("path_prefix")
 	s.Labels = viper.GetStringSlice("labels")
 
