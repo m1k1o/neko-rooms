@@ -17,6 +17,7 @@ type Room struct {
 
 	NAT1To1IPs []string
 	NekoImages []string
+	NekoPrivilegedImages []string
 	PathPrefix string
 	Labels     []string
 
@@ -60,6 +61,11 @@ func (Room) Init(cmd *cobra.Command) error {
 		"m1k1o/neko:xfce",
 	}, "neko images to be used")
 	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().StringSlice("neko_privileged_images", []string{}, "Whitelist of images allowed to be executed with Privileged mode")
+	if err := viper.BindPFlag("neko_privileged_images", cmd.PersistentFlags().Lookup("neko_privileged_images")); err != nil {
 		return err
 	}
 
@@ -164,6 +170,7 @@ func (s *Room) Set() {
 
 	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
+	s.NekoPrivilegedImages = viper.GetStringSlice("neko_privileged_images")
 	s.PathPrefix = viper.GetString("path_prefix")
 	s.Labels = viper.GetStringSlice("labels")
 

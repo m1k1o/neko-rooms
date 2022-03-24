@@ -107,6 +107,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", fmt.Errorf("invalid neko image")
 	}
 
+	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
+
 	// TODO: Check if path name exists.
 	roomName := settings.Name
 	if roomName == "" {
@@ -440,6 +442,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			NanoCPUs:  settings.Resources.NanoCPUs,
 			Memory:    settings.Resources.Memory,
 		},
+		// Privileged
+		Privileged: isPrivilegedImage,
 	}
 
 	networkingConfig := &network.NetworkingConfig{
