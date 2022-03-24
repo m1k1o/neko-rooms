@@ -65,6 +65,9 @@ func (Room) Init(cmd *cobra.Command) error {
 	}
 
 	cmd.PersistentFlags().StringSlice("neko_privileged_images", []string{}, "Whitelist of images allowed to be executed with Privileged mode")
+	if err := viper.BindPFlag("neko_privileged_images", cmd.PersistentFlags().Lookup("neko_privileged_images")); err != nil {
+		return err
+	}
 
 	cmd.PersistentFlags().String("path_prefix", "", "path prefix that is added to every room path")
 	if err := viper.BindPFlag("path_prefix", cmd.PersistentFlags().Lookup("path_prefix")); err != nil {
