@@ -264,7 +264,7 @@ func (s *Room) GetRoomUrl(roomName string) string {
 	if strings.HasPrefix(instanceUrl.Host, "*.") {
 		instanceUrl.Host = roomName + "." + strings.TrimPrefix(instanceUrl.Host, "*.")
 	} else {
-		instanceUrl.Path = path.Join(instanceUrl.Path, s.PathPrefix, roomName, "/")
+		instanceUrl.Path = path.Join(instanceUrl.Path, s.PathPrefix, roomName) + "/"
 	}
 
 	return instanceUrl.String()
