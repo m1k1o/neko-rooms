@@ -1,6 +1,8 @@
 package config
 
 import (
+	"net/url"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -15,11 +17,11 @@ type Room struct {
 	EprMin uint16
 	EprMax uint16
 
-	NAT1To1IPs []string
-	NekoImages []string
+	NAT1To1IPs           []string
+	NekoImages           []string
 	NekoPrivilegedImages []string
-	PathPrefix string
-	Labels     []string
+	PathPrefix           string
+	Labels               []string
 
 	StorageEnabled  bool
 	StorageInternal string
@@ -28,7 +30,7 @@ type Room struct {
 	MountsWhitelist []string
 
 	InstanceName string
-	InstanceUrl  string
+	InstanceUrl  *url.URL
 
 	TraefikDomain       string
 	TraefikEntrypoint   string
@@ -204,7 +206,14 @@ func (s *Room) Set() {
 		log.Panic().Msg("invalid `instance.name`, must match " + dockerNames.RestrictedNameChars)
 	}
 
-	s.InstanceUrl = viper.GetString("instance.url")
+	instanceUrl := viper.GetString("instance.url")
+	if instanceUrl != "" {
+		var err error
+		s.InstanceUrl, err = url.Parse(instanceUrl)
+		if err != nil {
+			log.Panic().Err(err).Msg("invalid `instance.url`")
+		}
+	}
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
@@ -214,10 +223,49 @@ func (s *Room) Set() {
 	// deprecated
 	s.TraefikPort = viper.GetString("traefik.port")
 	if s.TraefikPort != "" {
-		if s.InstanceUrl != "" {
+		if s.InstanceUrl != nil {
 			log.Warn().Msg("deprecated `traefik.port` config item is ignored when `instance.url` is set")
 		} else {
 			log.Warn().Msg("you are using deprecated `traefik.port` config item, you should consider moving to `instance.url`")
 		}
 	}
+}
+
+func (s *Room) GetInstanceUrl() url.URL {
+	if s.InstanceUrl != nil {
+		return *s.InstanceUrl
+	}
+
+	instanceUrl := url.URL{
+		Scheme: "http",
+		Host:   "127.0.0.1",
+		Path:   "/",
+	}
+
+	if s.TraefikCertresolver != "" {
+		instanceUrl.Scheme = "https"
+	}
+
+	if s.TraefikDomain != "" && s.TraefikDomain != "*" {
+		instanceUrl.Host = s.TraefikDomain
+	}
+
+	// deprecated
+	if s.TraefikPort != "" {
+		instanceUrl.Host += ":" + s.TraefikPort
+	}
+
+	return instanceUrl
+}
+
+func (s *Room) GetRoomUrl(roomName string) string {
+	instanceUrl := s.GetInstanceUrl()
+
+	if strings.HasPrefix(instanceUrl.Host, "*.") {
+		instanceUrl.Host = roomName + "." + strings.TrimPrefix(instanceUrl.Host, "*.")
+	} else {
+		instanceUrl.Path = path.Join(instanceUrl.Path, s.PathPrefix, roomName, "/")
+	}
+
+	return instanceUrl.String()
 }

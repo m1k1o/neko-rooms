@@ -184,36 +184,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set internal labels
 	//
 
-	instanceUrl := manager.config.InstanceUrl
-	if instanceUrl == "" {
-		urlProto := "http"
-		if manager.config.TraefikCertresolver != "" {
-			urlProto = "https"
-		}
-
-		// deprecated
-		port := ""
-		if manager.config.TraefikPort != "" {
-			port = ":" + manager.config.TraefikPort
-		}
-
-		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
-			// match *.domain.tld as subdomain
-			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
-				instanceUrl = urlProto + "://" + roomName + "." + strings.TrimPrefix(manager.config.TraefikDomain, "*.") + port
-				pathPrefix = ""
-			} else {
-				instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port
-			}
-		} else {
-			// domain is not known
-			instanceUrl = urlProto + "://127.0.0.1" + port
-		}
-	}
-
-	// remove last slash
-	instanceUrl = strings.TrimSuffix(instanceUrl, "/")
-
 	var browserPolicyLabels *BrowserPolicyLabels
 	if settings.BrowserPolicy != nil {
 		browserPolicyLabels = &BrowserPolicyLabels{
@@ -224,7 +194,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
-		URL:       instanceUrl + pathPrefix + "/",
+		URL:       manager.config.GetRoomUrl(roomName),
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 
