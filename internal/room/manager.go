@@ -34,20 +34,13 @@ const (
 	privateStorageGid   = 1000
 )
 
-func New(config *config.Room) *RoomManagerCtx {
+func New(client *dockerClient.Client, config *config.Room) *RoomManagerCtx {
 	logger := log.With().Str("module", "room").Logger()
-
-	cli, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv)
-	if err != nil {
-		logger.Panic().Err(err).Msg("unable to connect to docker client")
-	} else {
-		logger.Info().Msg("successfully connected to docker client")
-	}
 
 	return &RoomManagerCtx{
 		logger: logger,
 		config: config,
-		client: cli,
+		client: client,
 	}
 }
 
@@ -55,7 +48,6 @@ type RoomManagerCtx struct {
 	logger zerolog.Logger
 	config *config.Room
 	client *dockerClient.Client
-	pull   PullConfig
 }
 
 func (manager *RoomManagerCtx) Config() types.RoomsConfig {
