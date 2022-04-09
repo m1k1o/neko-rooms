@@ -1,4 +1,4 @@
-package room
+package pull
 
 import (
 	"bufio"
@@ -10,76 +10,73 @@ import (
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
+	dockerClient "github.com/docker/docker/client"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
 	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
-type PullConfig struct {
+type PullManagerCtx struct {
+	logger zerolog.Logger
+	client *dockerClient.Client
+	images []string
+
 	mu     sync.Mutex
 	cancel func()
 	status types.PullStatus
 	layers map[string]int
 }
 
-func (pull *PullConfig) TryInitialize(cancel func()) bool {
-	pull.mu.Lock()
-	defer pull.mu.Unlock()
+func New(client *dockerClient.Client, nekoImages []string) *PullManagerCtx {
+	return &PullManagerCtx{
+		logger: log.With().Str("module", "pull").Logger(),
+		client: client,
+		images: nekoImages,
+	}
+}
 
-	if pull.status.Active {
+func (manager *PullManagerCtx) tryInitialize(cancel func()) bool {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	if manager.status.Active {
 		cancel()
 		return false
 	}
 
 	now := time.Now()
-	pull.cancel = cancel
+	manager.cancel = cancel
 
-	pull.status = types.PullStatus{
+	manager.status = types.PullStatus{
 		Active:  true,
 		Started: &now,
 		Layers:  []types.PullLayer{},
 		Status:  []string{},
 	}
 
-	pull.layers = map[string]int{}
+	manager.layers = map[string]int{}
 
 	return true
 }
 
-func (pull *PullConfig) SetDone() {
-	pull.mu.Lock()
-	defer pull.mu.Unlock()
+func (manager *PullManagerCtx) setDone() {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
 
 	now := time.Now()
-	pull.status.Active = false
-	pull.status.Finished = &now
+	manager.status.Active = false
+	manager.status.Finished = &now
 }
 
-func (pull *PullConfig) Stop() bool {
-	pull.mu.Lock()
-	defer pull.mu.Unlock()
-
-	if pull.status.Active {
-		pull.cancel()
-	}
-
-	return pull.status.Active
-}
-
-func (pull *PullConfig) Get() types.PullStatus {
-	pull.mu.Lock()
-	defer pull.mu.Unlock()
-
-	return pull.status
-}
-
-func (manager *RoomManagerCtx) PullStart(request types.PullStart) error {
-	if in, _ := utils.ArrayIn(request.NekoImage, manager.config.NekoImages); !in {
+func (manager *PullManagerCtx) Start(request types.PullStart) error {
+	if in, _ := utils.ArrayIn(request.NekoImage, manager.images); !in {
 		return fmt.Errorf("unknown neko image")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	if !manager.pull.TryInitialize(cancel) {
+	if !manager.tryInitialize(cancel) {
 		return fmt.Errorf("pull is already in progess")
 	}
 
@@ -93,7 +90,7 @@ func (manager *RoomManagerCtx) PullStart(request types.PullStart) error {
 
 		encodedJSON, err := json.Marshal(authConfig)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		opts = dockerTypes.ImagePullOptions{
@@ -104,7 +101,7 @@ func (manager *RoomManagerCtx) PullStart(request types.PullStart) error {
 	reader, err := manager.client.ImagePull(ctx, request.NekoImage, opts)
 
 	if err != nil {
-		manager.pull.SetDone()
+		manager.setDone()
 		return err
 	}
 
@@ -115,52 +112,59 @@ func (manager *RoomManagerCtx) PullStart(request types.PullStart) error {
 
 			layer := types.PullLayer{}
 			if err := json.Unmarshal(data, &layer); err != nil {
-				manager.pull.status.Status = append(
-					manager.pull.status.Status,
+				manager.status.Status = append(
+					manager.status.Status,
 					fmt.Sprintf("Error while parsing pull response: %s", err),
 				)
-
 				continue
 			}
 
 			if layer.ProgressDetail != nil {
 				// map layer id to slice index
-				if index, ok := manager.pull.layers[layer.ID]; ok {
-					manager.pull.status.Layers[index] = layer
+				if index, ok := manager.layers[layer.ID]; ok {
+					manager.status.Layers[index] = layer
 				} else {
-					manager.pull.layers[layer.ID] = len(manager.pull.layers)
-					manager.pull.status.Layers = append(manager.pull.status.Layers, layer)
+					manager.layers[layer.ID] = len(manager.layers)
+					manager.status.Layers = append(manager.status.Layers, layer)
 				}
 			} else {
-				manager.pull.status.Status = append(
-					manager.pull.status.Status,
+				manager.status.Status = append(
+					manager.status.Status,
 					layer.Status,
 				)
 			}
 		}
 
 		if err := scanner.Err(); err != nil {
-			manager.pull.status.Status = append(
-				manager.pull.status.Status,
+			manager.status.Status = append(
+				manager.status.Status,
 				fmt.Sprintf("Error while reading pull response: %s", err),
 			)
 		}
 
 		reader.Close()
-		manager.pull.SetDone()
+		manager.setDone()
 	}()
 
 	return nil
 }
 
-func (manager *RoomManagerCtx) PullStop() error {
-	if !manager.pull.Stop() {
+func (manager *PullManagerCtx) Stop() error {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	if !manager.status.Active {
 		return fmt.Errorf("pull is not in progess")
+
 	}
 
+	manager.cancel()
 	return nil
 }
 
-func (manager *RoomManagerCtx) PullStatus() types.PullStatus {
-	return manager.pull.Get()
+func (manager *PullManagerCtx) Status() types.PullStatus {
+	manager.mu.Lock()
+	defer manager.mu.Unlock()
+
+	return manager.status
 }
