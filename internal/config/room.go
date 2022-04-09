@@ -14,6 +14,7 @@ import (
 )
 
 type Room struct {
+	UseMux bool
 	EprMin uint16
 	EprMax uint16
 
@@ -40,6 +41,11 @@ type Room struct {
 }
 
 func (Room) Init(cmd *cobra.Command) error {
+	cmd.PersistentFlags().StringSlice("usemux", []string{}, "use mux for connection - needs only one UDP and TCP port per room")
+	if err := viper.BindPFlag("usemux", cmd.PersistentFlags().Lookup("usemux")); err != nil {
+		return err
+	}
+
 	cmd.PersistentFlags().String("epr", "59000-59999", "limits the pool of ephemeral ports that ICE UDP connections can allocate from")
 	if err := viper.BindPFlag("epr", cmd.PersistentFlags().Lookup("epr")); err != nil {
 		return err
@@ -146,6 +152,8 @@ func (Room) Init(cmd *cobra.Command) error {
 }
 
 func (s *Room) Set() {
+	s.UseMux = viper.GetBool("usemux")
+
 	min := uint16(59000)
 	max := uint16(59999)
 	epr := viper.GetString("epr")

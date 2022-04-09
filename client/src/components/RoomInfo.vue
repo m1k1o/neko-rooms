@@ -25,10 +25,10 @@
               :rotate="270"
               :size="100"
               :width="15"
-              :value="(stats.connections / settings.max_connections) * 100"
+              :value="usesMux ? 100 : ((stats.connections / settings.max_connections) * 100)"
               color="blue"
             >
-              {{ stats.connections }} / {{ settings.max_connections }}
+              {{ stats.connections }} <template v-if="!usesMux">/ {{ settings.max_connections }}</template>
             </v-progress-circular>
           </div>
         </v-col>
@@ -99,7 +99,7 @@
                 <span>Invite link for admins</span>
               </v-tooltip>
             </td></tr>
-            <tr><th> Max connections </th><td>{{ settings.max_connections }}</td></tr>
+            <tr v-if="!usesMux"><th> Max connections </th><td>{{ settings.max_connections }}</td></tr>
             <tr><th> Control protection </th><td>{{ settings.control_protection }}</td></tr>
             <tr><th> Implicit Control </th><td>{{ settings.implicit_control }}</td></tr>
           </tbody>
@@ -272,6 +272,11 @@ export default class RoomInfo extends Vue {
     } finally {
       this.statsLoading = false
     }
+  }
+
+  get usesMux() {
+    // old rooms might not use mux despite enabled server wide, simple check for that
+    return this.$store.state.roomsConfig.uses_mux && this.settings.max_connections == 1
   }
 
   get allBrowserExtensions() {

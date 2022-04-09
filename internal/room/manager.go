@@ -55,6 +55,7 @@ func (manager *RoomManagerCtx) Config() types.RoomsConfig {
 		Connections:    manager.config.EprMax - manager.config.EprMin + 1,
 		NekoImages:     manager.config.NekoImages,
 		StorageEnabled: manager.config.StorageEnabled,
+		UsesMux:        manager.config.UseMux,
 	}
 }
 
@@ -115,27 +116,42 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Allocate ports
 	//
 
-	epr, err := manager.allocatePorts(settings.MaxConnections)
+	portsNeeded := settings.MaxConnections
+	if manager.config.UseMux {
+		portsNeeded = 1
+	}
+
+	epr, err := manager.allocatePorts(portsNeeded)
 	if err != nil {
 		return "", err
 	}
 
 	portBindings := nat.PortMap{}
-	exposedPorts := nat.PortSet{
-		nat.Port(fmt.Sprintf("%d/tcp", frontendPort)): struct{}{},
-	}
-
 	for port := epr.Min; port <= epr.Max; port++ {
-		portKey := nat.Port(fmt.Sprintf("%d/udp", port))
-
-		portBindings[portKey] = []nat.PortBinding{
+		portBindings[nat.Port(fmt.Sprintf("%d/udp", port))] = []nat.PortBinding{
 			{
 				HostIP:   "0.0.0.0",
 				HostPort: fmt.Sprintf("%d", port),
 			},
 		}
 
-		exposedPorts[portKey] = struct{}{}
+		// expose TCP port as well when using mux
+		if manager.config.UseMux {
+			portBindings[nat.Port(fmt.Sprintf("%d/tcp", port))] = []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: fmt.Sprintf("%d", port),
+				},
+			}
+		}
+	}
+
+	exposedPorts := nat.PortSet{
+		nat.Port(fmt.Sprintf("%d/tcp", frontendPort)): struct{}{},
+	}
+
+	for port := range portBindings {
+		exposedPorts[port] = struct{}{}
 	}
 
 	//
@@ -229,8 +245,18 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	env := []string{
 		fmt.Sprintf("NEKO_BIND=:%d", frontendPort),
-		fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
 		"NEKO_ICELITE=true",
+	}
+
+	if manager.config.UseMux {
+		env = append(env,
+			fmt.Sprintf("NEKO_UDPMUX=%d", epr.Min),
+			fmt.Sprintf("NEKO_TCPMUX=%d", epr.Min),
+		)
+	} else {
+		env = append(env,
+			fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
+		)
 	}
 
 	// optional nat mapping

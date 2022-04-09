@@ -89,29 +89,34 @@ export default class RoomsList extends Vue {
   private roomId = ''
   private roomLoading = [] as Array<string>
 
-  private headers = [
-    {
-      text: 'Deployment',
-      value: 'url',
-      sortable: false,
-    },
-    { text: 'Name', value: 'name' },
-    { text: 'Max connections', value: 'max_connections' },
-    { text: 'Neko image', value: 'neko_image' },
-    { text: 'Status', value: 'status' },
-    { text: 'Created', value: 'created' },
-    {
-      text: 'Actions',
-      value: 'actions',
-      sortable: false,
-    },
-    {
-      text: 'Destroy',
-      value: 'destroy',
-      align: 'end',
-      sortable: false,
-    },
-  ]
+  get headers() {
+    return [
+      {
+        text: 'Deployment',
+        value: 'url',
+        sortable: false,
+      },
+      { text: 'Name', value: 'name' },
+      // when using mux we don't have max connections
+      ...(!this.$store.state.roomsConfig.uses_mux ? [
+        { text: 'Max connections', value: 'max_connections' }
+      ] : []),
+      { text: 'Neko image', value: 'neko_image' },
+      { text: 'Status', value: 'status' },
+      { text: 'Created', value: 'created' },
+      {
+        text: 'Actions',
+        value: 'actions',
+        sortable: false,
+      },
+      {
+        text: 'Destroy',
+        value: 'destroy',
+        align: 'end',
+        sortable: false,
+      },
+    ]
+  }
 
   get rooms() {
     return this.$store.state.rooms
