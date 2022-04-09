@@ -88,7 +88,7 @@ func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error)
 
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
-		return "", fmt.Errorf("invalid container name, must match " + dockerNames.RestrictedNameChars)
+		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
 	}
 
 	if !manager.config.StorageEnabled && len(settings.Mounts) > 0 {
@@ -122,7 +122,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	portBindings := nat.PortMap{}
 	exposedPorts := nat.PortSet{
-		nat.Port(fmt.Sprintf("%d/udp", frontendPort)): struct{}{},
+		nat.Port(fmt.Sprintf("%d/tcp", frontendPort)): struct{}{},
 	}
 
 	for port := epr.Min; port <= epr.Max; port++ {
