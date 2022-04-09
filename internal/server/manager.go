@@ -8,20 +8,21 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/m1k1o/neko-rooms/internal/config"
 )
 
-type Manager struct {
+type ServerManagerCtx struct {
 	logger zerolog.Logger
 	config *config.Server
 	router *chi.Mux
 	server *http.Server
 }
 
-func New(config *config.Server) *Manager {
+func New(config *config.Server) *ServerManagerCtx {
 	logger := log.With().Str("module", "server").Logger()
 
 	router := chi.NewRouter()
@@ -35,6 +36,16 @@ func New(config *config.Server) *Manager {
 	// add http logger
 	router.Use(middleware.RequestLogger(&logformatter{logger}))
 	router.Use(middleware.Recoverer) // Recover from panics without crashing server
+
+	// Basic CORS
+	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 
 	// serve static files
 	if config.Static != "" {
@@ -57,7 +68,7 @@ func New(config *config.Server) *Manager {
 	// we could use custom 404
 	router.NotFound(http.NotFound)
 
-	return &Manager{
+	return &ServerManagerCtx{
 		logger: logger,
 		config: config,
 		router: router,
@@ -68,7 +79,7 @@ func New(config *config.Server) *Manager {
 	}
 }
 
-func (s *Manager) Start() {
+func (s *ServerManagerCtx) Start() {
 	if s.config.SSLCert != "" && s.config.SSLKey != "" {
 		go func() {
 			if err := s.server.ListenAndServeTLS(s.config.SSLCert, s.config.SSLKey); err != http.ErrServerClosed {
@@ -86,17 +97,17 @@ func (s *Manager) Start() {
 	}
 }
 
-func (s *Manager) Shutdown() error {
+func (s *ServerManagerCtx) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	return s.server.Shutdown(ctx)
 }
 
-func (s *Manager) Mount(fn func(r *chi.Mux)) {
+func (s *ServerManagerCtx) Mount(fn func(r *chi.Mux)) {
 	fn(s.router)
 }
 
-func (s *Manager) Handle(pattern string, fn http.Handler) {
+func (s *ServerManagerCtx) Handle(pattern string, fn http.Handler) {
 	s.router.Handle(pattern, fn)
 }

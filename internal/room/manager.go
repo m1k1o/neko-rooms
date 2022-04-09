@@ -36,6 +36,8 @@ const (
 )
 
 func New(client *dockerClient.Client, config *config.Room) *RoomManagerCtx {
+	logger := log.With().Str("module", "room").Logger()
+
 	// TODO: Implement client events.
 	go func() {
 		msgs, errs := client.Events(context.Background(), dockerTypes.EventsOptions{
@@ -72,7 +74,7 @@ func New(client *dockerClient.Client, config *config.Room) *RoomManagerCtx {
 	}()
 
 	return &RoomManagerCtx{
-		logger: log.With().Str("module", "room").Logger(),
+		logger: logger,
 		config: config,
 		client: client,
 	}
