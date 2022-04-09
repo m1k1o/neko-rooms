@@ -23,9 +23,9 @@ func Execute() error {
 }
 
 var root = &cobra.Command{
-	Use:     "neko_rooms",
-	Short:   "neko_rooms server",
-	Long:    `neko_rooms server`,
+	Use:     "neko-rooms",
+	Short:   "neko-rooms server",
+	Long:    `neko-rooms server`,
 	Version: nekoRooms.Service.Version.String(),
 }
 
@@ -49,6 +49,7 @@ func init() {
 
 			logs := filepath.Join(".", "logs")
 			if runtime.GOOS == "linux" {
+				// TODO: Change to neko-rooms.
 				logs = "/var/log/neko_rooms"
 			}
 
@@ -56,9 +57,11 @@ func init() {
 				os.Mkdir(logs, os.ModePerm)
 			}
 
+			// TODO: Change to neko-rooms.
 			latest := filepath.Join(logs, "neko_rooms-latest.log")
 			_, err := os.Stat(latest)
 			if err == nil {
+				// TODO: Change to neko-rooms.
 				err = os.Rename(latest, filepath.Join(logs, "neko_rooms."+time.Now().Format("2006-01-02T15-04-05Z07-00")+".log"))
 				if err != nil {
 					log.Panic().Err(err).Msg("failed to rotate log file")
@@ -85,10 +88,12 @@ func init() {
 			viper.SetConfigFile(config) // Use config file from the flag.
 		} else {
 			if runtime.GOOS == "linux" {
+				// TODO: Change to neko-rooms.
 				viper.AddConfigPath("/etc/neko_rooms/")
 			}
 
 			viper.AddConfigPath(".")
+			// TODO: Change to config.
 			viper.SetConfigName("neko_rooms")
 		}
 

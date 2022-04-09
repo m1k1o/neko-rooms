@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -134,6 +133,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", fmt.Errorf("invalid neko image")
 	}
 
+	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
+
 	// TODO: Check if path name exists.
 	roomName := settings.Name
 	if roomName == "" {
@@ -176,9 +177,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	//
 
 	containerName := manager.config.InstanceName + "-" + roomName
+	pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
 
 	// create traefik rule
-	traefikRule := "PathPrefix(`/" + roomName + "`)"
+	traefikRule := "PathPrefix(`" + pathPrefix + "`)"
 	if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
 		// match *.domain.tld as subdomain
 		if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
@@ -199,10 +201,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		"traefik.http.services." + containerName + "-frontend.loadbalancer.server.port": fmt.Sprintf("%d", frontendPort),
 		"traefik.http.routers." + containerName + ".entrypoints":                        manager.config.TraefikEntrypoint,
 		"traefik.http.routers." + containerName + ".rule":                               traefikRule,
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        "/" + roomName + "$$",
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  "/" + roomName + "/",
-		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       "/" + roomName + "/",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        pathPrefix + "$$",
+		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  pathPrefix + "/",
+		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       pathPrefix + "/",
 		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
+		"traefik.http.routers." + containerName + ".service":                            containerName + "-frontend",
 	}
 
 	// optional HTTPS
@@ -215,34 +218,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set internal labels
 	//
 
-	instanceUrl := manager.config.InstanceUrl
-	if instanceUrl == nil {
-		instanceUrl = &url.URL{
-			Host: "127.0.0.1",
-			Path: roomName + "/",
-		}
-
-		if manager.config.TraefikCertresolver != "" {
-			instanceUrl.Scheme = "https"
-		} else {
-			instanceUrl.Scheme = "http"
-		}
-
-		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
-			// match *.domain.tld as subdomain
-			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
-				domain := strings.TrimPrefix(manager.config.TraefikDomain, "*.")
-
-				instanceUrl.Host = fmt.Sprintf("%s.%s", roomName, domain)
-				instanceUrl.Path = ""
-			} else {
-				instanceUrl.Host = manager.config.TraefikDomain
-			}
-		}
-	} else {
-		instanceUrl.Path = path.Join(instanceUrl.Path, roomName+"/")
-	}
-
 	var browserPolicyLabels *BrowserPolicyLabels
 	if settings.BrowserPolicy != nil {
 		browserPolicyLabels = &BrowserPolicyLabels{
@@ -253,7 +228,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
-		URL:       instanceUrl.String(),
+		URL:       manager.config.GetRoomUrl(roomName),
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 
@@ -262,6 +237,24 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	for k, v := range traefikLabels {
 		labels[k] = v
+	}
+
+	// add custom labels
+	for _, label := range manager.config.Labels {
+		// replace dynamic values in labels
+		label = strings.Replace(label, "{containerName}", containerName, -1)
+		label = strings.Replace(label, "{roomName}", roomName, -1)
+		label = strings.Replace(label, "{traefikEntrypoint}", manager.config.TraefikEntrypoint, -1)
+		label = strings.Replace(label, "{traefikCertresolver}", manager.config.TraefikCertresolver, -1)
+
+		v := strings.SplitN(label, "=", 2)
+		if len(v) != 2 {
+			manager.logger.Warn().Str("label", label).Msg("invalid custom label")
+			continue
+		}
+
+		key, val := v[0], v[1]
+		labels[key] = val
 	}
 
 	//
@@ -445,6 +438,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			NanoCPUs:  settings.Resources.NanoCPUs,
 			Memory:    settings.Resources.Memory,
 		},
+		// Privileged
+		Privileged: isPrivilegedImage,
 	}
 
 	networkingConfig := &network.NetworkingConfig{

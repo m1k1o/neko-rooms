@@ -2,6 +2,7 @@ package config
 
 import (
 	"net/url"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -16,8 +17,11 @@ type Room struct {
 	EprMin uint16
 	EprMax uint16
 
-	NAT1To1IPs []string
-	NekoImages []string
+	NAT1To1IPs           []string
+	NekoImages           []string
+	NekoPrivilegedImages []string
+	PathPrefix           string
+	Labels               []string
 
 	StorageEnabled  bool
 	StorageInternal string
@@ -54,10 +58,25 @@ func (Room) Init(cmd *cobra.Command) error {
 		"m1k1o/neko:brave",
 		"m1k1o/neko:tor-browser",
 		"m1k1o/neko:vlc",
-		"m1k1o/neko:vncviewer",
+		"m1k1o/neko:remmina",
 		"m1k1o/neko:xfce",
 	}, "neko images to be used")
 	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().StringSlice("neko_privileged_images", []string{}, "Whitelist of images allowed to be executed with Privileged mode")
+	if err := viper.BindPFlag("neko_privileged_images", cmd.PersistentFlags().Lookup("neko_privileged_images")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("path_prefix", "", "path prefix that is added to every room path")
+	if err := viper.BindPFlag("path_prefix", cmd.PersistentFlags().Lookup("path_prefix")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().StringSlice("labels", []string{}, "additional labels appended to every room")
+	if err := viper.BindPFlag("labels", cmd.PersistentFlags().Lookup("labels")); err != nil {
 		return err
 	}
 
@@ -152,6 +171,9 @@ func (s *Room) Set() {
 
 	s.NAT1To1IPs = viper.GetStringSlice("nat1to1")
 	s.NekoImages = viper.GetStringSlice("neko_images")
+	s.NekoPrivilegedImages = viper.GetStringSlice("neko_privileged_images")
+	s.PathPrefix = viper.GetString("path_prefix")
+	s.Labels = viper.GetStringSlice("labels")
 
 	s.StorageEnabled = viper.GetBool("storage.enabled")
 	s.StorageInternal = viper.GetString("storage.internal")
@@ -183,15 +205,51 @@ func (s *Room) Set() {
 		log.Panic().Msg("invalid `instance.name`, must match " + dockerNames.RestrictedNameChars)
 	}
 
-	var err error
 	instanceUrl := viper.GetString("instance.url")
-	s.InstanceUrl, err = url.Parse(instanceUrl)
-	if err != nil {
-		log.Panic().Err(err).Msg("invalid `instance.url`")
+	if instanceUrl != "" {
+		var err error
+		s.InstanceUrl, err = url.Parse(instanceUrl)
+		if err != nil {
+			log.Panic().Err(err).Msg("invalid `instance.url`")
+		}
 	}
 
 	s.TraefikDomain = viper.GetString("traefik.domain")
 	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
 	s.TraefikCertresolver = viper.GetString("traefik.certresolver")
 	s.TraefikNetwork = viper.GetString("traefik.network")
+}
+
+func (s *Room) GetInstanceUrl() url.URL {
+	if s.InstanceUrl != nil {
+		return *s.InstanceUrl
+	}
+
+	instanceUrl := url.URL{
+		Scheme: "http",
+		Host:   "127.0.0.1",
+		Path:   "/",
+	}
+
+	if s.TraefikCertresolver != "" {
+		instanceUrl.Scheme = "https"
+	}
+
+	if s.TraefikDomain != "" && s.TraefikDomain != "*" {
+		instanceUrl.Host = s.TraefikDomain
+	}
+
+	return instanceUrl
+}
+
+func (s *Room) GetRoomUrl(roomName string) string {
+	instanceUrl := s.GetInstanceUrl()
+
+	if strings.HasPrefix(instanceUrl.Host, "*.") {
+		instanceUrl.Host = roomName + "." + strings.TrimPrefix(instanceUrl.Host, "*.")
+	} else {
+		instanceUrl.Path = path.Join(instanceUrl.Path, s.PathPrefix, roomName, "/")
+	}
+
+	return instanceUrl.String()
 }

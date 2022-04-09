@@ -11,8 +11,8 @@ import (
 func init() {
 	command := &cobra.Command{
 		Use:   "serve",
-		Short: "serve neko_rooms server",
-		Long:  `serve neko_rooms server`,
+		Short: "serve neko-rooms server",
+		Long:  `serve neko-rooms server`,
 		Run:   nekoRooms.Service.ServeCommand,
 	}
 
