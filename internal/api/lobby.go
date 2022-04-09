@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"m1k1o/neko_rooms/internal/utils"
+	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
 func (manager *ApiManagerCtx) RoomLobby(w http.ResponseWriter, r *http.Request) {

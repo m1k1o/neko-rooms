@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"m1k1o/neko_rooms/internal/types"
+	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 func (manager *ApiManagerCtx) pullStart(w http.ResponseWriter, r *http.Request) {

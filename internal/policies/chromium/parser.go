@@ -4,8 +4,9 @@ package chromium
 
 import (
 	"encoding/json"
-	"m1k1o/neko_rooms/internal/types"
 	"strings"
+
+	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {

@@ -6,7 +6,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"m1k1o/neko_rooms/internal/types"
+
+	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 //go:embed policies.json
