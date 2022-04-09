@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"m1k1o/neko_rooms/internal/utils"
+	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
 var blacklistedEnvs = []string{

@@ -6,12 +6,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"m1k1o/neko_rooms/internal/types"
-	"m1k1o/neko_rooms/internal/utils"
 	"sync"
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
+
+	"github.com/m1k1o/neko-rooms/internal/types"
+	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
 type PullConfig struct {
