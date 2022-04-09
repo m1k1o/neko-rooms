@@ -13,9 +13,9 @@ import (
 
 	"github.com/m1k1o/neko-rooms/internal/api"
 	"github.com/m1k1o/neko-rooms/internal/config"
-	"github.com/m1k1o/neko-rooms/internal/http"
 	"github.com/m1k1o/neko-rooms/internal/pull"
 	"github.com/m1k1o/neko-rooms/internal/room"
+	"github.com/m1k1o/neko-rooms/internal/server"
 )
 
 const Header = `&34
@@ -108,11 +108,11 @@ type MainCtx struct {
 	Version *Version
 	Configs *Configs
 
-	logger      zerolog.Logger
-	roomManager *room.RoomManagerCtx
-	pullManager *pull.PullManagerCtx
-	apiManager  *api.ApiManagerCtx
-	httpManager *http.HttpManagerCtx
+	logger        zerolog.Logger
+	roomManager   *room.RoomManagerCtx
+	pullManager   *pull.PullManagerCtx
+	apiManager    *api.ApiManagerCtx
+	serverManager *server.ServerManagerCtx
 }
 
 func (main *MainCtx) Preflight() {
@@ -143,17 +143,17 @@ func (main *MainCtx) Start() {
 		main.Configs.API,
 	)
 
-	main.httpManager = http.New(
+	main.serverManager = server.New(
 		main.apiManager,
 		main.Configs.Room.PathPrefix,
 		main.Configs.Server,
 	)
-	main.httpManager.Start()
+	main.serverManager.Start()
 }
 
 func (main *MainCtx) Shutdown() {
-	err := main.httpManager.Shutdown()
-	main.logger.Err(err).Msg("http manager shutdown")
+	err := main.serverManager.Shutdown()
+	main.logger.Err(err).Msg("server manager shutdown")
 }
 
 func (main *MainCtx) ServeCommand(cmd *cobra.Command, args []string) {

@@ -10,6 +10,8 @@ type Server struct {
 	Key    string
 	Bind   string
 	Static string
+	Proxy  bool
+	PProf  bool
 }
 
 func (Server) Init(cmd *cobra.Command) error {
@@ -33,6 +35,16 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	cmd.PersistentFlags().Bool("proxy", false, "trust reverse proxy headers")
+	if err := viper.BindPFlag("proxy", cmd.PersistentFlags().Lookup("proxy")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().Bool("pprof", false, "enable pprof endpoint available at /debug/pprof")
+	if err := viper.BindPFlag("pprof", cmd.PersistentFlags().Lookup("pprof")); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -41,4 +53,6 @@ func (s *Server) Set() {
 	s.Key = viper.GetString("key")
 	s.Bind = viper.GetString("bind")
 	s.Static = viper.GetString("static")
+	s.Proxy = viper.GetBool("proxy")
+	s.PProf = viper.GetBool("pprof")
 }
