@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"m1k1o/neko_rooms/internal/types"
+	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 type RoomLabels struct {

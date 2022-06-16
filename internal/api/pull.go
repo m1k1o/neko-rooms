@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"m1k1o/neko_rooms/internal/types"
+	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 func (manager *ApiManagerCtx) pullStart(w http.ResponseWriter, r *http.Request) {
@@ -15,25 +15,25 @@ func (manager *ApiManagerCtx) pullStart(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err := manager.rooms.PullStart(request)
+	err := manager.pull.Start(request)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	response := manager.rooms.PullStatus()
+	response := manager.pull.Status()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
 func (manager *ApiManagerCtx) pullStatus(w http.ResponseWriter, r *http.Request) {
-	response := manager.rooms.PullStatus()
+	response := manager.pull.Status()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
 func (manager *ApiManagerCtx) pullStop(w http.ResponseWriter, r *http.Request) {
-	err := manager.rooms.PullStop()
+	err := manager.pull.Stop()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

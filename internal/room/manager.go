@@ -20,10 +20,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"m1k1o/neko_rooms/internal/config"
-	"m1k1o/neko_rooms/internal/policies"
-	"m1k1o/neko_rooms/internal/types"
-	"m1k1o/neko_rooms/internal/utils"
+	"github.com/m1k1o/neko-rooms/internal/config"
+	"github.com/m1k1o/neko-rooms/internal/policies"
+	"github.com/m1k1o/neko-rooms/internal/types"
+	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
 const (
@@ -34,20 +34,13 @@ const (
 	privateStorageGid   = 1000
 )
 
-func New(config *config.Room) *RoomManagerCtx {
+func New(client *dockerClient.Client, config *config.Room) *RoomManagerCtx {
 	logger := log.With().Str("module", "room").Logger()
-
-	cli, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv)
-	if err != nil {
-		logger.Panic().Err(err).Msg("unable to connect to docker client")
-	} else {
-		logger.Info().Msg("successfully connected to docker client")
-	}
 
 	return &RoomManagerCtx{
 		logger: logger,
 		config: config,
-		client: cli,
+		client: client,
 	}
 }
 
@@ -55,7 +48,6 @@ type RoomManagerCtx struct {
 	logger zerolog.Logger
 	config *config.Room
 	client *dockerClient.Client
-	pull   PullConfig
 }
 
 func (manager *RoomManagerCtx) Config() types.RoomsConfig {
@@ -96,7 +88,7 @@ func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error)
 
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
-		return "", fmt.Errorf("invalid container name, must match " + dockerNames.RestrictedNameChars)
+		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
 	}
 
 	if !manager.config.StorageEnabled && len(settings.Mounts) > 0 {
@@ -106,6 +98,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
 		return "", fmt.Errorf("invalid neko image")
 	}
+
+	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
 
 	// TODO: Check if path name exists.
 	roomName := settings.Name
@@ -128,7 +122,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	portBindings := nat.PortMap{}
 	exposedPorts := nat.PortSet{
-		nat.Port(fmt.Sprintf("%d/udp", frontendPort)): struct{}{},
+		nat.Port(fmt.Sprintf("%d/tcp", frontendPort)): struct{}{},
 	}
 
 	for port := epr.Min; port <= epr.Max; port++ {
@@ -190,36 +184,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set internal labels
 	//
 
-	instanceUrl := manager.config.InstanceUrl
-	if instanceUrl == "" {
-		urlProto := "http"
-		if manager.config.TraefikCertresolver != "" {
-			urlProto = "https"
-		}
-
-		// deprecated
-		port := ""
-		if manager.config.TraefikPort != "" {
-			port = ":" + manager.config.TraefikPort
-		}
-
-		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
-			// match *.domain.tld as subdomain
-			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
-				instanceUrl = urlProto + "://" + roomName + "." + strings.TrimPrefix(manager.config.TraefikDomain, "*.") + port
-				pathPrefix = ""
-			} else {
-				instanceUrl = urlProto + "://" + manager.config.TraefikDomain + port
-			}
-		} else {
-			// domain is not known
-			instanceUrl = urlProto + "://127.0.0.1" + port
-		}
-	}
-
-	// remove last slash
-	instanceUrl = strings.TrimSuffix(instanceUrl, "/")
-
 	var browserPolicyLabels *BrowserPolicyLabels
 	if settings.BrowserPolicy != nil {
 		browserPolicyLabels = &BrowserPolicyLabels{
@@ -230,7 +194,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
-		URL:       instanceUrl + pathPrefix + "/",
+		URL:       manager.config.GetRoomUrl(roomName),
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 
@@ -440,6 +404,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			NanoCPUs:  settings.Resources.NanoCPUs,
 			Memory:    settings.Resources.Memory,
 		},
+		// Privileged
+		Privileged: isPrivilegedImage,
 	}
 
 	networkingConfig := &network.NetworkingConfig{

@@ -6,14 +6,16 @@ import (
 	"os/signal"
 	"runtime"
 
-	"m1k1o/neko_rooms/internal/api"
-	"m1k1o/neko_rooms/internal/config"
-	"m1k1o/neko_rooms/internal/http"
-	"m1k1o/neko_rooms/internal/room"
-
+	"github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+
+	"github.com/m1k1o/neko-rooms/internal/api"
+	"github.com/m1k1o/neko-rooms/internal/config"
+	"github.com/m1k1o/neko-rooms/internal/pull"
+	"github.com/m1k1o/neko-rooms/internal/room"
+	"github.com/m1k1o/neko-rooms/internal/server"
 )
 
 const Header = `&34
@@ -106,10 +108,11 @@ type MainCtx struct {
 	Version *Version
 	Configs *Configs
 
-	logger      zerolog.Logger
-	roomManager *room.RoomManagerCtx
-	apiManager  *api.ApiManagerCtx
-	httpManager *http.HttpManagerCtx
+	logger        zerolog.Logger
+	roomManager   *room.RoomManagerCtx
+	pullManager   *pull.PullManagerCtx
+	apiManager    *api.ApiManagerCtx
+	serverManager *server.ServerManagerCtx
 }
 
 func (main *MainCtx) Preflight() {
@@ -117,29 +120,40 @@ func (main *MainCtx) Preflight() {
 }
 
 func (main *MainCtx) Start() {
+	client, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		main.logger.Panic().Err(err).Msg("unable to connect to docker client")
+	} else {
+		main.logger.Info().Msg("successfully connected to docker client")
+	}
+
 	main.roomManager = room.New(
+		client,
 		main.Configs.Room,
+	)
+
+	main.pullManager = pull.New(
+		client,
+		main.Configs.Room.NekoImages,
 	)
 
 	main.apiManager = api.New(
 		main.roomManager,
+		main.pullManager,
 		main.Configs.API,
 	)
 
-	main.httpManager = http.New(
+	main.serverManager = server.New(
 		main.apiManager,
 		main.Configs.Room.PathPrefix,
 		main.Configs.Server,
 	)
-	main.httpManager.Start()
+	main.serverManager.Start()
 }
 
 func (main *MainCtx) Shutdown() {
-	if err := main.httpManager.Shutdown(); err != nil {
-		main.logger.Err(err).Msg("http manager shutdown with an error")
-	} else {
-		main.logger.Debug().Msg("http manager shutdown")
-	}
+	err := main.serverManager.Shutdown()
+	main.logger.Err(err).Msg("server manager shutdown")
 }
 
 func (main *MainCtx) ServeCommand(cmd *cobra.Command, args []string) {
@@ -151,7 +165,7 @@ func (main *MainCtx) ServeCommand(cmd *cobra.Command, args []string) {
 	signal.Notify(quit, os.Interrupt)
 	sig := <-quit
 
-	main.logger.Warn().Msgf("received %s, attempting graceful shutdown: \n", sig)
+	main.logger.Warn().Msgf("received %s, attempting graceful shutdown.", sig)
 	main.Shutdown()
 	main.logger.Info().Msg("shutdown complete")
 }
