@@ -57,6 +57,7 @@ func (Room) Init(cmd *cobra.Command) error {
 		"m1k1o/neko:ungoogled-chromium",
 		"m1k1o/neko:microsoft-edge",
 		"m1k1o/neko:brave",
+		"m1k1o/neko:vivaldi",
 		"m1k1o/neko:tor-browser",
 		"m1k1o/neko:vlc",
 		"m1k1o/neko:remmina",
