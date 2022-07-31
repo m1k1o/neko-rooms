@@ -53,6 +53,7 @@ docker run --rm -it \
 	-e "NEKO_ROOMS_STORAGE_EXTERNAL=`realpath ${DATA_PATH}`" \
 	-e "NEKO_ROOMS_MOUNTS_WHITELIST=`realpath ${EXTERNAL_PATH}`" \
 	-e "NEKO_ROOMS_PATH_PREFIX=/room/" \
+	-e "NEKO_ROOMS_ADMIN_PATH_PREFIX=/" \
 	-e "NEKO_ROOMS_TRAEFIK_ENABLED=false" \
     -e 'DOCKER_API_VERSION=1.39' \
     -v "/var/run/docker.sock:/var/run/docker.sock" \

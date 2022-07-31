@@ -5,15 +5,20 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Server struct {
-	Cert   string
-	Key    string
-	Bind   string
-	Static string
-	Proxy  bool
-	PProf  bool
+type Admin struct {
+	Static     string
+	Password   string
+	PathPrefix string
+}
 
-	AdminPathPrefix string
+type Server struct {
+	Cert  string
+	Key   string
+	Bind  string
+	Proxy bool
+	PProf bool
+
+	Admin Admin
 }
 
 func (Server) Init(cmd *cobra.Command) error {
@@ -32,11 +37,6 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("static", "./www", "path to neko_rooms client files to serve")
-	if err := viper.BindPFlag("static", cmd.PersistentFlags().Lookup("static")); err != nil {
-		return err
-	}
-
 	cmd.PersistentFlags().Bool("proxy", false, "trust reverse proxy headers")
 	if err := viper.BindPFlag("proxy", cmd.PersistentFlags().Lookup("proxy")); err != nil {
 		return err
@@ -47,8 +47,21 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("admin_path_prefix", "/", "set custom path prefix for admin")
-	if err := viper.BindPFlag("admin_path_prefix", cmd.PersistentFlags().Lookup("admin_path_prefix")); err != nil {
+	// Admin
+
+	cmd.PersistentFlags().String("admin.static", "", "path to neko_rooms admin client files to serve")
+	if err := viper.BindPFlag("admin.static", cmd.PersistentFlags().Lookup("admin.static")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("admin.password", "", "admin password")
+	if err := viper.BindPFlag("admin.password", cmd.PersistentFlags().Lookup("admin.password")); err != nil {
+		return err
+	}
+
+	// TODO: Default in v2 will be '/admin'.
+	cmd.PersistentFlags().String("admin.path_prefix", "", "set custom path prefix for admin")
+	if err := viper.BindPFlag("admin.path_prefix", cmd.PersistentFlags().Lookup("admin.path_prefix")); err != nil {
 		return err
 	}
 
@@ -59,9 +72,10 @@ func (s *Server) Set() {
 	s.Cert = viper.GetString("cert")
 	s.Key = viper.GetString("key")
 	s.Bind = viper.GetString("bind")
-	s.Static = viper.GetString("static")
 	s.Proxy = viper.GetBool("proxy")
 	s.PProf = viper.GetBool("pprof")
 
-	s.AdminPathPrefix = viper.GetString("admin_path_prefix")
+	s.Admin.Static = viper.GetString("admin.static")
+	s.Admin.Password = viper.GetString("admin.password")
+	s.Admin.PathPrefix = viper.GetString("admin.path_prefix")
 }
