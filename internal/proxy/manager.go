@@ -78,52 +78,41 @@ func (p *ProxyManagerCtx) Start() {
 					break
 				}
 
+				p.logger.Info().
+					Str("action", msg.Action).
+					Str("name", name).
+					Str("host", host).
+					Msg("new docker event")
+
+				p.mu.Lock()
 				switch msg.Action {
 				case "create":
-					p.logger.Info().
-						Str("id", msg.ID).
-						Str("name", name).
-						Str("host", host).
-						Msg("container created")
-
+					p.handlers[name] = nil
 				case "start":
-					p.Add(name, host+":"+port)
-
-					p.logger.Info().
-						Str("id", msg.ID).
-						Str("name", name).
-						Str("host", host).
-						Msg("container started")
-
+					p.handlers[name] = httputil.NewSingleHostReverseProxy(&url.URL{
+						Scheme: "http",
+						Host:   host + ":" + port,
+					})
 				case "stop":
-					p.Remove(name)
-
-					p.logger.Info().
-						Str("id", msg.ID).
-						Str("name", name).
-						Str("host", host).
-						Msg("container stopped")
-
+					p.handlers[name] = nil
 				case "destroy":
-					p.logger.Info().
-						Str("id", msg.ID).
-						Str("name", name).
-						Str("host", host).
-						Msg("container destroyed")
+					delete(p.handlers, name)
 				}
+				p.mu.Unlock()
 			}
 		}
 	}()
 }
 
 func (p *ProxyManagerCtx) Shutdown() error {
-	p.Clear()
-
 	p.cancel()
 	return p.ctx.Err()
 }
 
-func (p *ProxyManagerCtx) refresh() error {
+func (p *ProxyManagerCtx) Refresh() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	containers, err := p.client.ContainerList(p.ctx, dockerTypes.ContainerListOptions{
 		All: true,
 		Filters: filters.NewArgs(
@@ -135,13 +124,22 @@ func (p *ProxyManagerCtx) refresh() error {
 		return err
 	}
 
-	p.clear()
+	p.handlers = map[string]http.Handler{}
 
 	for _, cont := range containers {
 		name, port, ok := p.parseLabels(cont.Labels)
-		if ok {
+		if !ok {
+			continue
+		}
+
+		if cont.State == "running" {
 			host := cont.ID[:12]
-			p.add(name, host+":"+port)
+			p.handlers[name] = httputil.NewSingleHostReverseProxy(&url.URL{
+				Scheme: "http",
+				Host:   host + ":" + port,
+			})
+		} else {
+			p.handlers[name] = nil
 		}
 	}
 
@@ -157,53 +155,6 @@ func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (name string, po
 	// TODO: Do not use trafik for this.
 	port, ok = labels["traefik.http.services.neko-rooms-"+name+"-frontend.loadbalancer.server.port"]
 	return
-}
-
-func (p *ProxyManagerCtx) add(name, host string) {
-	p.handlers[name] = httputil.NewSingleHostReverseProxy(&url.URL{
-		Scheme: "http",
-		Host:   host,
-	})
-
-	p.logger.Debug().Str("name", name).Str("host", host).Msg("add handler")
-}
-
-func (p *ProxyManagerCtx) remove(name string) {
-	delete(p.handlers, name)
-	p.logger.Debug().Str("name", name).Msg("remove handler")
-}
-
-func (p *ProxyManagerCtx) clear() {
-	p.handlers = map[string]http.Handler{}
-	p.logger.Debug().Msg("clear handlers")
-}
-
-func (p *ProxyManagerCtx) Refresh() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	return p.refresh()
-}
-
-func (p *ProxyManagerCtx) Add(name, host string) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.add(name, host)
-}
-
-func (p *ProxyManagerCtx) Remove(name string) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.remove(name)
-}
-
-func (p *ProxyManagerCtx) Clear() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.clear()
 }
 
 func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -244,6 +195,11 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if doRedir {
 		r.URL.Path += "/"
 		http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	if proxy == nil {
+		http.Error(w, "room exists but is not running", http.StatusBadGateway)
 		return
 	}
 
