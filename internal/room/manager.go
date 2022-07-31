@@ -180,21 +180,21 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set traefik labels
 	//
 
-	if manager.config.TraefikEnabled {
+	if t := manager.config.Traefik; t.Enabled {
 		pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
 
 		// create traefik rule
 		traefikRule := "PathPrefix(`" + pathPrefix + "`)"
-		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
+		if t.Domain != "" && t.Domain != "*" {
 			// match *.domain.tld as subdomain
-			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
+			if strings.HasPrefix(t.Domain, "*.") {
 				traefikRule = fmt.Sprintf(
 					"Host(`%s.%s`)",
 					roomName,
-					strings.TrimPrefix(manager.config.TraefikDomain, "*."),
+					strings.TrimPrefix(t.Domain, "*."),
 				)
 			} else {
-				traefikRule += " && Host(`" + manager.config.TraefikDomain + "`)"
+				traefikRule += " && Host(`" + t.Domain + "`)"
 			}
 		} else {
 			traefikRule += " && HostRegexp(`{host:.+}`)"
@@ -202,7 +202,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 		labels["traefik.enable"] = "true"
 		labels["traefik.http.services."+containerName+"-frontend.loadbalancer.server.port"] = fmt.Sprintf("%d", frontendPort)
-		labels["traefik.http.routers."+containerName+".entrypoints"] = manager.config.TraefikEntrypoint
+		labels["traefik.http.routers."+containerName+".entrypoints"] = t.Entrypoint
 		labels["traefik.http.routers."+containerName+".rule"] = traefikRule
 		labels["traefik.http.middlewares."+containerName+"-rdr.redirectregex.regex"] = pathPrefix + "$$"
 		labels["traefik.http.middlewares."+containerName+"-rdr.redirectregex.replacement"] = pathPrefix + "/"
@@ -211,9 +211,9 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		labels["traefik.http.routers."+containerName+".service"] = containerName + "-frontend"
 
 		// optional HTTPS
-		if manager.config.TraefikCertresolver != "" {
+		if t.Certresolver != "" {
 			labels["traefik.http.routers."+containerName+".tls"] = "true"
-			labels["traefik.http.routers."+containerName+".tls.certresolver"] = manager.config.TraefikCertresolver
+			labels["traefik.http.routers."+containerName+".tls.certresolver"] = t.Certresolver
 		}
 	} else {
 		labels["m1k1o.neko_rooms.host"] = fmt.Sprintf("%s:%d", containerName, frontendPort)
@@ -224,8 +224,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		// replace dynamic values in labels
 		label = strings.Replace(label, "{containerName}", containerName, -1)
 		label = strings.Replace(label, "{roomName}", roomName, -1)
-		label = strings.Replace(label, "{traefikEntrypoint}", manager.config.TraefikEntrypoint, -1)
-		label = strings.Replace(label, "{traefikCertresolver}", manager.config.TraefikCertresolver, -1)
+
+		if t := manager.config.Traefik; t.Enabled {
+			label = strings.Replace(label, "{traefikEntrypoint}", t.Entrypoint, -1)
+			label = strings.Replace(label, "{traefikCertresolver}", t.Certresolver, -1)
+		}
 
 		v := strings.SplitN(label, "=", 2)
 		if len(v) != 2 {
@@ -434,7 +437,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	networkingConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			manager.config.TraefikNetwork: {},
+			manager.config.Traefik.Network: {}, // TODO: Refactor if not using traefik.
 		},
 	}
 

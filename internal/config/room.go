@@ -13,6 +13,15 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Traefik struct {
+	Enabled      bool
+	Domain       string
+	Entrypoint   string
+	Certresolver string
+	Network      string
+	Port         string // deprecated
+}
+
 type Room struct {
 	Mux    bool
 	EprMin uint16
@@ -33,12 +42,7 @@ type Room struct {
 	InstanceName string
 	InstanceUrl  *url.URL
 
-	TraefikEnabled      bool // TODO: now set from Server config, needed refactor
-	TraefikDomain       string
-	TraefikEntrypoint   string
-	TraefikCertresolver string
-	TraefikNetwork      string
-	TraefikPort         string // deprecated
+	Traefik Traefik
 }
 
 func (Room) Init(cmd *cobra.Command) error {
@@ -124,6 +128,11 @@ func (Room) Init(cmd *cobra.Command) error {
 	}
 
 	// Traefik
+
+	cmd.PersistentFlags().Bool("traefik.enabled", true, "traefik: enabled or disabled")
+	if err := viper.BindPFlag("traefik.enabled", cmd.PersistentFlags().Lookup("traefik.enabled")); err != nil {
+		return err
+	}
 
 	cmd.PersistentFlags().String("traefik.domain", "", "traefik: domain on which will be container hosted (if empty or '*', match all; for neko-rooms as subdomain use '*.domain.tld')")
 	if err := viper.BindPFlag("traefik.domain", cmd.PersistentFlags().Lookup("traefik.domain")); err != nil {
@@ -225,14 +234,15 @@ func (s *Room) Set() {
 		}
 	}
 
-	s.TraefikDomain = viper.GetString("traefik.domain")
-	s.TraefikEntrypoint = viper.GetString("traefik.entrypoint")
-	s.TraefikCertresolver = viper.GetString("traefik.certresolver")
-	s.TraefikNetwork = viper.GetString("traefik.network")
+	s.Traefik.Enabled = viper.GetBool("traefik.enabled")
+	s.Traefik.Domain = viper.GetString("traefik.domain")
+	s.Traefik.Entrypoint = viper.GetString("traefik.entrypoint")
+	s.Traefik.Certresolver = viper.GetString("traefik.certresolver")
+	s.Traefik.Network = viper.GetString("traefik.network")
 
 	// deprecated
-	s.TraefikPort = viper.GetString("traefik.port")
-	if s.TraefikPort != "" {
+	s.Traefik.Port = viper.GetString("traefik.port")
+	if s.Traefik.Port != "" {
 		if s.InstanceUrl != nil {
 			log.Warn().Msg("deprecated `traefik.port` config item is ignored when `instance.url` is set")
 		} else {
@@ -252,17 +262,21 @@ func (s *Room) GetInstanceUrl() url.URL {
 		Path:   "/",
 	}
 
-	if s.TraefikCertresolver != "" {
+	if !s.Traefik.Enabled {
+		return instanceUrl
+	}
+
+	if s.Traefik.Certresolver != "" {
 		instanceUrl.Scheme = "https"
 	}
 
-	if s.TraefikDomain != "" && s.TraefikDomain != "*" {
-		instanceUrl.Host = s.TraefikDomain
+	if s.Traefik.Domain != "" && s.Traefik.Domain != "*" {
+		instanceUrl.Host = s.Traefik.Domain
 	}
 
 	// deprecated
-	if s.TraefikPort != "" {
-		instanceUrl.Host += ":" + s.TraefikPort
+	if s.Traefik.Port != "" {
+		instanceUrl.Host += ":" + s.Traefik.Port
 	}
 
 	return instanceUrl

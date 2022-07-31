@@ -129,9 +129,6 @@ func (main *MainCtx) Start() {
 		main.logger.Info().Msg("successfully connected to docker client")
 	}
 
-	// TODO: Refactor.
-	main.Configs.Room.TraefikEnabled = !main.Configs.Server.InternalProxy
-
 	main.roomManager = room.New(
 		client,
 		main.Configs.Room,
@@ -156,7 +153,7 @@ func (main *MainCtx) Start() {
 
 	main.serverManager = server.New(
 		main.apiManager,
-		main.Configs.Room.PathPrefix,
+		main.Configs.Room,
 		main.Configs.Server,
 		main.proxyManager,
 	)

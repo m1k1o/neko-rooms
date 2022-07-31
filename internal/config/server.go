@@ -13,7 +13,6 @@ type Server struct {
 	Proxy  bool
 	PProf  bool
 
-	InternalProxy   bool
 	AdminPathPrefix string
 }
 
@@ -48,12 +47,6 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	// WIP.
-	cmd.PersistentFlags().Bool("internal_proxy", false, "use internal proxy instead of traefik")
-	if err := viper.BindPFlag("internal_proxy", cmd.PersistentFlags().Lookup("internal_proxy")); err != nil {
-		return err
-	}
-
 	cmd.PersistentFlags().String("admin_path_prefix", "/", "set custom path prefix for admin")
 	if err := viper.BindPFlag("admin_path_prefix", cmd.PersistentFlags().Lookup("admin_path_prefix")); err != nil {
 		return err
@@ -70,6 +63,5 @@ func (s *Server) Set() {
 	s.Proxy = viper.GetBool("proxy")
 	s.PProf = viper.GetBool("pprof")
 
-	s.InternalProxy = viper.GetBool("internal_proxy")
 	s.AdminPathPrefix = viper.GetString("admin_path_prefix")
 }

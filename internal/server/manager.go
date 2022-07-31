@@ -23,7 +23,7 @@ type ServerManagerCtx struct {
 	config *config.Server
 }
 
-func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server, proxyHandler http.Handler) *ServerManagerCtx {
+func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Server, proxyHandler http.Handler) *ServerManagerCtx {
 	logger := log.With().Str("module", "server").Logger()
 
 	router := chi.NewRouter()
@@ -72,8 +72,8 @@ func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server, 
 	})
 
 	// rooms page
-	router.Route(pathPrefix, func(r chi.Router) {
-		if config.InternalProxy {
+	router.Route(roomConfig.PathPrefix, func(r chi.Router) {
+		if !roomConfig.Traefik.Enabled {
 			r.Handle("/*", proxyHandler)
 		} else {
 			// add simple lobby room
