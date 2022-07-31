@@ -112,6 +112,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		}
 	}
 
+	containerName := manager.config.InstanceName + "-" + roomName
+
 	//
 	// Allocate ports
 	//
@@ -155,48 +157,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	//
-	// Set traefik labels
-	//
-
-	containerName := manager.config.InstanceName + "-" + roomName
-	pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
-
-	// create traefik rule
-	traefikRule := "PathPrefix(`" + pathPrefix + "`)"
-	if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
-		// match *.domain.tld as subdomain
-		if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
-			traefikRule = fmt.Sprintf(
-				"Host(`%s.%s`)",
-				roomName,
-				strings.TrimPrefix(manager.config.TraefikDomain, "*."),
-			)
-		} else {
-			traefikRule += " && Host(`" + manager.config.TraefikDomain + "`)"
-		}
-	} else {
-		traefikRule += " && HostRegexp(`{host:.+}`)"
-	}
-
-	traefikLabels := map[string]string{
-		"traefik.enable": "true",
-		"traefik.http.services." + containerName + "-frontend.loadbalancer.server.port": fmt.Sprintf("%d", frontendPort),
-		"traefik.http.routers." + containerName + ".entrypoints":                        manager.config.TraefikEntrypoint,
-		"traefik.http.routers." + containerName + ".rule":                               traefikRule,
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.regex":        pathPrefix + "$$",
-		"traefik.http.middlewares." + containerName + "-rdr.redirectregex.replacement":  pathPrefix + "/",
-		"traefik.http.middlewares." + containerName + "-prf.stripprefix.prefixes":       pathPrefix + "/",
-		"traefik.http.routers." + containerName + ".middlewares":                        containerName + "-rdr," + containerName + "-prf",
-		"traefik.http.routers." + containerName + ".service":                            containerName + "-frontend",
-	}
-
-	// optional HTTPS
-	if manager.config.TraefikCertresolver != "" {
-		traefikLabels["traefik.http.routers."+containerName+".tls"] = "true"
-		traefikLabels["traefik.http.routers."+containerName+".tls.certresolver"] = manager.config.TraefikCertresolver
-	}
-
-	//
 	// Set internal labels
 	//
 
@@ -217,8 +177,47 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		BrowserPolicy: browserPolicyLabels,
 	})
 
-	for k, v := range traefikLabels {
-		labels[k] = v
+	//
+	// Set traefik labels
+	//
+
+	if manager.config.TraefikEnabled {
+		pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
+
+		// create traefik rule
+		traefikRule := "PathPrefix(`" + pathPrefix + "`)"
+		if manager.config.TraefikDomain != "" && manager.config.TraefikDomain != "*" {
+			// match *.domain.tld as subdomain
+			if strings.HasPrefix(manager.config.TraefikDomain, "*.") {
+				traefikRule = fmt.Sprintf(
+					"Host(`%s.%s`)",
+					roomName,
+					strings.TrimPrefix(manager.config.TraefikDomain, "*."),
+				)
+			} else {
+				traefikRule += " && Host(`" + manager.config.TraefikDomain + "`)"
+			}
+		} else {
+			traefikRule += " && HostRegexp(`{host:.+}`)"
+		}
+
+		labels["traefik.enable"] = "true"
+		labels["traefik.http.services."+containerName+"-frontend.loadbalancer.server.port"] = fmt.Sprintf("%d", frontendPort)
+		labels["traefik.http.routers."+containerName+".entrypoints"] = manager.config.TraefikEntrypoint
+		labels["traefik.http.routers."+containerName+".rule"] = traefikRule
+		labels["traefik.http.middlewares."+containerName+"-rdr.redirectregex.regex"] = pathPrefix + "$$"
+		labels["traefik.http.middlewares."+containerName+"-rdr.redirectregex.replacement"] = pathPrefix + "/"
+		labels["traefik.http.middlewares."+containerName+"-prf.stripprefix.prefixes"] = pathPrefix + "/"
+		labels["traefik.http.routers."+containerName+".middlewares"] = containerName + "-rdr," + containerName + "-prf"
+		labels["traefik.http.routers."+containerName+".service"] = containerName + "-frontend"
+
+		// optional HTTPS
+		if manager.config.TraefikCertresolver != "" {
+			labels["traefik.http.routers."+containerName+".tls"] = "true"
+			labels["traefik.http.routers."+containerName+".tls.certresolver"] = manager.config.TraefikCertresolver
+		}
+	} else {
+		labels["m1k1o.neko_rooms.host"] = fmt.Sprintf("%s:%d", containerName, frontendPort)
 	}
 
 	// add custom labels
