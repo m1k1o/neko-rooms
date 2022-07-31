@@ -33,6 +33,7 @@ type Room struct {
 	InstanceName string
 	InstanceUrl  *url.URL
 
+	TraefikEnabled      bool // TODO: now set from Server config, needed refactor
 	TraefikDomain       string
 	TraefikEntrypoint   string
 	TraefikCertresolver string

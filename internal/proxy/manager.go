@@ -73,8 +73,7 @@ func (p *ProxyManagerCtx) Start() {
 			case err := <-errs:
 				p.logger.Info().Interface("err", err).Msg("eee")
 			case msg := <-msgs:
-				host := msg.ID[:12]
-				name, port, ok := p.parseLabels(msg.Actor.Attributes)
+				name, host, ok := p.parseLabels(msg.Actor.Attributes)
 				if !ok {
 					break
 				}
@@ -92,7 +91,7 @@ func (p *ProxyManagerCtx) Start() {
 				case "start":
 					p.handlers[name] = httputil.NewSingleHostReverseProxy(&url.URL{
 						Scheme: "http",
-						Host:   host + ":" + port,
+						Host:   host,
 					})
 				case "stop":
 					p.handlers[name] = nil
@@ -128,16 +127,15 @@ func (p *ProxyManagerCtx) Refresh() error {
 	p.handlers = map[string]*httputil.ReverseProxy{}
 
 	for _, cont := range containers {
-		name, port, ok := p.parseLabels(cont.Labels)
+		name, host, ok := p.parseLabels(cont.Labels)
 		if !ok {
 			continue
 		}
 
 		if cont.State == "running" {
-			host := cont.ID[:12]
 			p.handlers[name] = httputil.NewSingleHostReverseProxy(&url.URL{
 				Scheme: "http",
-				Host:   host + ":" + port,
+				Host:   host,
 			})
 		} else {
 			p.handlers[name] = nil
@@ -147,14 +145,13 @@ func (p *ProxyManagerCtx) Refresh() error {
 	return nil
 }
 
-func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (name string, port string, ok bool) {
+func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (name string, host string, ok bool) {
 	name, ok = labels["m1k1o.neko_rooms.name"]
 	if !ok {
 		return
 	}
 
-	// TODO: Do not use trafik for this.
-	port, ok = labels["traefik.http.services.neko-rooms-"+name+"-frontend.loadbalancer.server.port"]
+	host, ok = labels["m1k1o.neko_rooms.host"]
 	return
 }
 
