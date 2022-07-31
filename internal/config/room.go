@@ -83,7 +83,7 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("path_prefix", "", "path prefix that is added to every room path")
+	cmd.PersistentFlags().String("path_prefix", "/", "path prefix that is added to every room path (starts with /)")
 	if err := viper.BindPFlag("path_prefix", cmd.PersistentFlags().Lookup("path_prefix")); err != nil {
 		return err
 	}
