@@ -1,13 +1,13 @@
 #!/bin/sh
 cd "$(dirname "$0")"
 
-if [ ! -f "../.env" ]
+if [ ! -f ".env" ]
 then
-    echo "../.env file not found!"
+    echo ".env file not found!"
     exit 1
 fi
 
-export $(cat ../.env | sed 's/#.*//g' | xargs)
+export $(cat .env | sed 's/#.*//g' | xargs)
 
 docker network create --attachable "${NEKO_ROOMS_TRAEFIK_NETWORK}";
 
@@ -22,7 +22,7 @@ docker run --rm -it \
     --name="neko_rooms_traefik" \
     -p "${1:-80}:80" \
     -p "8080:8080" \
-    -v "${PWD}/../:/app" \
+    -v "${PWD}/../../:/app" \
 	-e "TZ=${TZ}" \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
     --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
