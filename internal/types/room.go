@@ -19,6 +19,8 @@ var blacklistedEnvs = []string{
 	// ignore bunch of envs managed by neko-rooms
 	"NEKO_BIND",
 	"NEKO_EPR",
+	"NEKO_UDPMUX",
+	"NEKO_TCPMUX",
 	"NEKO_NAT1TO1",
 	"NEKO_ICELITE",
 }
@@ -27,6 +29,7 @@ type RoomsConfig struct {
 	Connections    uint16   `json:"connections"`
 	NekoImages     []string `json:"neko_images"`
 	StorageEnabled bool     `json:"storage_enabled"`
+	UsesMux        bool     `json:"uses_mux"`
 }
 
 type RoomEntry struct {
@@ -35,7 +38,7 @@ type RoomEntry struct {
 	Name           string    `json:"name"`
 	NekoImage      string    `json:"neko_image"`
 	IsOutdated     bool      `json:"is_outdated"`
-	MaxConnections uint16    `json:"max_connections"`
+	MaxConnections uint16    `json:"max_connections"` // ignored when using mux
 	Running        bool      `json:"running"`
 	Status         string    `json:"status"`
 	Created        time.Time `json:"created"`
@@ -66,7 +69,7 @@ type RoomResources struct {
 type RoomSettings struct {
 	Name           string `json:"name"`
 	NekoImage      string `json:"neko_image"`
-	MaxConnections uint16 `json:"max_connections"`
+	MaxConnections uint16 `json:"max_connections"` // ignored when using mux
 
 	ControlProtection bool `json:"control_protection"`
 	ImplicitControl   bool `json:"implicit_control"`

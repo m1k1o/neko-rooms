@@ -21,6 +21,7 @@ docker run --rm -it \
     -v "`realpath ${DATA_PATH}`:/data" \
 	-e "TZ=${TZ}" \
 	-e "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}" \
+	-e "NEKO_ROOMS_MUX=true" \
 	-e "NEKO_ROOMS_NAT1TO1=${NEKO_ROOMS_NAT1TO1}" \
 	-e "NEKO_ROOMS_STORAGE_INTERNAL=/data" \
 	-e "NEKO_ROOMS_STORAGE_EXTERNAL=`realpath ${DATA_PATH}`" \

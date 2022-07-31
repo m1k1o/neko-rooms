@@ -282,6 +282,9 @@ components:
         storage_enabled:
           type: boolean
           example: true
+        uses_mux:
+          type: boolean
+          example: true
 
     RoomEntry:
       type: object
