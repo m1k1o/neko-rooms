@@ -55,7 +55,7 @@ func (manager *RoomManagerCtx) Config() types.RoomsConfig {
 		Connections:    manager.config.EprMax - manager.config.EprMin + 1,
 		NekoImages:     manager.config.NekoImages,
 		StorageEnabled: manager.config.StorageEnabled,
-		UsesMux:        manager.config.UseMux,
+		UsesMux:        manager.config.Mux,
 	}
 }
 
@@ -117,7 +117,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	//
 
 	portsNeeded := settings.MaxConnections
-	if manager.config.UseMux {
+	if manager.config.Mux {
 		portsNeeded = 1
 	}
 
@@ -136,7 +136,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		}
 
 		// expose TCP port as well when using mux
-		if manager.config.UseMux {
+		if manager.config.Mux {
 			portBindings[nat.Port(fmt.Sprintf("%d/tcp", port))] = []nat.PortBinding{
 				{
 					HostIP:   "0.0.0.0",
@@ -248,7 +248,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		"NEKO_ICELITE=true",
 	}
 
-	if manager.config.UseMux {
+	if manager.config.Mux {
 		env = append(env,
 			fmt.Sprintf("NEKO_UDPMUX=%d", epr.Min),
 			fmt.Sprintf("NEKO_TCPMUX=%d", epr.Min),

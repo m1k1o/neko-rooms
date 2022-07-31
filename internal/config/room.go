@@ -14,7 +14,7 @@ import (
 )
 
 type Room struct {
-	UseMux bool
+	Mux    bool
 	EprMin uint16
 	EprMax uint16
 
@@ -152,7 +152,7 @@ func (Room) Init(cmd *cobra.Command) error {
 }
 
 func (s *Room) Set() {
-	s.UseMux = viper.GetBool("usemux")
+	s.Mux = viper.GetBool("mux")
 
 	min := uint16(59000)
 	max := uint16(59999)
