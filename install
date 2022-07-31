@@ -239,7 +239,7 @@ echo "[Y] Downloading traefik config..."
 # Download docker compose file
 #
 
-wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/docker-compose.yml"
+wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/docker-compose.yml"
 
 # Pull neko images
 for NEKO_IMAGE in "${NEKO_IMAGES[@]}"; do
