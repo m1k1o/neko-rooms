@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"path"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -24,7 +23,7 @@ type ServerManagerCtx struct {
 	config *config.Server
 }
 
-func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server, handler http.Handler) *ServerManagerCtx {
+func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server, proxyHandler http.Handler) *ServerManagerCtx {
 	logger := log.With().Str("module", "server").Logger()
 
 	router := chi.NewRouter()
@@ -49,31 +48,39 @@ func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server, 
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	router.Route("/api", ApiManager.Mount)
-
-	// serve static files
-	if config.Static != "" {
-		fs := http.FileServer(http.Dir(config.Static))
-		router.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-			if _, err := os.Stat(config.Static + r.URL.Path); !os.IsNotExist(err) {
-				fs.ServeHTTP(w, r)
-			} else {
-				http.NotFound(w, r)
-			}
-		})
-	}
-
-	// add simple lobby room
-	router.Get(path.Join("/", pathPrefix, "{roomName}"), ApiManager.RoomLobby)
-	router.Get(path.Join("/", pathPrefix, "{roomName}")+"/", ApiManager.RoomLobby)
-
 	// mount pprof endpoint
 	if config.PProf {
 		withPProf(router)
 		logger.Info().Msgf("with pprof endpoint at %s", pprofPath)
 	}
 
-	router.Handle("/*", handler)
+	// admin page
+	router.Route(config.AdminPathPrefix, func(r chi.Router) {
+		r.Route("/api", ApiManager.Mount)
+
+		// serve static files
+		if config.Static != "" {
+			fs := http.FileServer(http.Dir(config.Static))
+			r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+				if _, err := os.Stat(config.Static + r.URL.Path); !os.IsNotExist(err) {
+					fs.ServeHTTP(w, r)
+				} else {
+					http.NotFound(w, r)
+				}
+			})
+		}
+	})
+
+	// rooms page
+	router.Route(pathPrefix, func(r chi.Router) {
+		if config.InternalProxy {
+			r.Handle("/*", proxyHandler)
+		} else {
+			// add simple lobby room
+			r.Get("/{roomName}", ApiManager.RoomLobby)
+			r.Get("/{roomName}/", ApiManager.RoomLobby)
+		}
+	})
 
 	// we could use custom 404
 	router.NotFound(http.NotFound)
