@@ -21,3 +21,11 @@ NEKO_ROOMS_PATH_PREFIX=/test/
 ```
 
 Now room will be available at `example.org/test/<room-name>` instead of `example.org/<room-name>`.
+
+## using mux
+
+When using mux, there will be allocated two ports per room: TCP and UDP port with the same number.
+
+```
+NEKO_ROOMS_MUX=true
+```
