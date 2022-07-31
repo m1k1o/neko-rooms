@@ -21,10 +21,10 @@ services:
       - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
-      - "./traefik/usersfile:/usersfile:ro"
-      - "./traefik/acme.json:/acme.json"
-      - "./traefik/config:/config"
+      - "./traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./usersfile:/usersfile:ro"
+      - "./acme.json:/acme.json"
+      - "./config:/config"
 
   neko-rooms:
     image: "m1k1o/neko-rooms:latest"
