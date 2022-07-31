@@ -1,0 +1,24 @@
+version: "3.5"
+
+networks:
+  default:
+    attachable: true
+    name: "neko-rooms-net"
+
+services:
+  neko-rooms:
+    image: "m1k1o/neko-rooms:latest"
+    restart: "unless-stopped"
+    environment:
+      - "TZ=Europe/Vienna"
+      - "NEKO_ROOMS_MUX=true"
+      - "NEKO_ROOMS_EPR=59000-59049"
+      - "NEKO_ROOMS_NAT1TO1=127.0.0.1" # IP address of your server that is reachable from client
+      - "NEKO_ROOMS_INSTANCE_URL=http://127.0.0.1:8080/" # external URL
+      - "NEKO_ROOMS_INSTANCE_NETWORK=neko-rooms-net"
+      - "NEKO_ROOMS_TRAEFIK_ENABLED=false"
+      - "NEKO_ROOMS_PATH_PREFIX=/room/"
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
