@@ -29,7 +29,7 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 
 	url, ok := labels["m1k1o.neko_rooms.url"]
 	if !ok {
-		return nil, fmt.Errorf("damaged container labels: url not found")
+		url = manager.config.GetRoomUrl(name)
 	}
 
 	nekoImage, ok := labels["m1k1o.neko_rooms.neko_image"]
@@ -90,11 +90,15 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]string {
 	labelsMap := map[string]string{
 		"m1k1o.neko_rooms.name":       labels.Name,
-		"m1k1o.neko_rooms.url":        labels.URL,
 		"m1k1o.neko_rooms.instance":   manager.config.InstanceName,
 		"m1k1o.neko_rooms.epr.min":    fmt.Sprintf("%d", labels.Epr.Min),
 		"m1k1o.neko_rooms.epr.max":    fmt.Sprintf("%d", labels.Epr.Max),
 		"m1k1o.neko_rooms.neko_image": labels.NekoImage,
+	}
+
+	// Only when using traefik is the URL fixed with the room itself and not with neko-rooms.
+	if manager.config.TraefikEnabled {
+		labelsMap["m1k1o.neko_rooms.url"] = manager.config.GetRoomUrl(labels.Name)
 	}
 
 	if labels.BrowserPolicy != nil {
