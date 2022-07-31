@@ -18,7 +18,6 @@ type Traefik struct {
 	Domain       string
 	Entrypoint   string
 	Certresolver string
-	Network      string
 	Port         string // deprecated
 }
 
@@ -39,8 +38,9 @@ type Room struct {
 
 	MountsWhitelist []string
 
-	InstanceName string
-	InstanceUrl  *url.URL
+	InstanceName    string
+	InstanceUrl     *url.URL
+	InstanceNetwork string
 
 	Traefik Traefik
 }
@@ -127,6 +127,11 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	cmd.PersistentFlags().String("instance.network", "", "docker network that will be used for this instance to communicate with rooms")
+	if err := viper.BindPFlag("instance.network", cmd.PersistentFlags().Lookup("instance.network")); err != nil {
+		return err
+	}
+
 	// Traefik
 
 	cmd.PersistentFlags().Bool("traefik.enabled", true, "traefik: enabled or disabled")
@@ -149,7 +154,7 @@ func (Room) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("traefik.network", "traefik", "traefik: docker network name")
+	cmd.PersistentFlags().String("traefik.network", "traefik", "traefik: docker network name (deprecated, use instance.network)")
 	if err := viper.BindPFlag("traefik.network", cmd.PersistentFlags().Lookup("traefik.network")); err != nil {
 		return err
 	}
@@ -234,11 +239,23 @@ func (s *Room) Set() {
 		}
 	}
 
+	s.InstanceNetwork = viper.GetString("instance.network")
+
 	s.Traefik.Enabled = viper.GetBool("traefik.enabled")
 	s.Traefik.Domain = viper.GetString("traefik.domain")
 	s.Traefik.Entrypoint = viper.GetString("traefik.entrypoint")
 	s.Traefik.Certresolver = viper.GetString("traefik.certresolver")
-	s.Traefik.Network = viper.GetString("traefik.network")
+
+	// deprecated
+	traefikNetwork := viper.GetString("traefik.network")
+	if traefikNetwork != "" {
+		if s.InstanceNetwork != "" {
+			log.Warn().Msg("deprecated `traefik.network` config item is ignored when `instance.network` is set")
+		} else {
+			log.Warn().Msg("you are using deprecated `traefik.network` config item, you should consider moving to `instance.network`")
+			s.InstanceNetwork = traefikNetwork
+		}
+	}
 
 	// deprecated
 	s.Traefik.Port = viper.GetString("traefik.port")

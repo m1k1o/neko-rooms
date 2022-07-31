@@ -437,7 +437,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	networkingConfig := &network.NetworkingConfig{
 		EndpointsConfig: map[string]*network.EndpointSettings{
-			manager.config.Traefik.Network: {}, // TODO: Refactor if not using traefik.
+			manager.config.InstanceNetwork: {},
 		},
 	}
 
