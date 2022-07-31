@@ -242,28 +242,30 @@ func (s *Room) Set() {
 	s.InstanceNetwork = viper.GetString("instance.network")
 
 	s.Traefik.Enabled = viper.GetBool("traefik.enabled")
-	s.Traefik.Domain = viper.GetString("traefik.domain")
-	s.Traefik.Entrypoint = viper.GetString("traefik.entrypoint")
-	s.Traefik.Certresolver = viper.GetString("traefik.certresolver")
+	if s.Traefik.Enabled {
+		s.Traefik.Domain = viper.GetString("traefik.domain")
+		s.Traefik.Entrypoint = viper.GetString("traefik.entrypoint")
+		s.Traefik.Certresolver = viper.GetString("traefik.certresolver")
 
-	// deprecated
-	traefikNetwork := viper.GetString("traefik.network")
-	if traefikNetwork != "" {
-		if s.InstanceNetwork != "" {
-			log.Warn().Msg("deprecated `traefik.network` config item is ignored when `instance.network` is set")
-		} else {
-			log.Warn().Msg("you are using deprecated `traefik.network` config item, you should consider moving to `instance.network`")
-			s.InstanceNetwork = traefikNetwork
+		// deprecated
+		traefikNetwork := viper.GetString("traefik.network")
+		if traefikNetwork != "" {
+			if s.InstanceNetwork != "" {
+				log.Warn().Msg("deprecated `traefik.network` config item is ignored when `instance.network` is set")
+			} else {
+				log.Warn().Msg("you are using deprecated `traefik.network` config item, you should consider moving to `instance.network`")
+				s.InstanceNetwork = traefikNetwork
+			}
 		}
-	}
 
-	// deprecated
-	s.Traefik.Port = viper.GetString("traefik.port")
-	if s.Traefik.Port != "" {
-		if s.InstanceUrl != nil {
-			log.Warn().Msg("deprecated `traefik.port` config item is ignored when `instance.url` is set")
-		} else {
-			log.Warn().Msg("you are using deprecated `traefik.port` config item, you should consider moving to `instance.url`")
+		// deprecated
+		s.Traefik.Port = viper.GetString("traefik.port")
+		if s.Traefik.Port != "" {
+			if s.InstanceUrl != nil {
+				log.Warn().Msg("deprecated `traefik.port` config item is ignored when `instance.url` is set")
+			} else {
+				log.Warn().Msg("you are using deprecated `traefik.port` config item, you should consider moving to `instance.url`")
+			}
 		}
 	}
 }
@@ -279,21 +281,19 @@ func (s *Room) GetInstanceUrl() url.URL {
 		Path:   "/",
 	}
 
-	if !s.Traefik.Enabled {
-		return instanceUrl
-	}
+	if s.Traefik.Enabled {
+		if s.Traefik.Certresolver != "" {
+			instanceUrl.Scheme = "https"
+		}
 
-	if s.Traefik.Certresolver != "" {
-		instanceUrl.Scheme = "https"
-	}
+		if s.Traefik.Domain != "" && s.Traefik.Domain != "*" {
+			instanceUrl.Host = s.Traefik.Domain
+		}
 
-	if s.Traefik.Domain != "" && s.Traefik.Domain != "*" {
-		instanceUrl.Host = s.Traefik.Domain
-	}
-
-	// deprecated
-	if s.Traefik.Port != "" {
-		instanceUrl.Host += ":" + s.Traefik.Port
+		// deprecated
+		if s.Traefik.Port != "" {
+			instanceUrl.Host += ":" + s.Traefik.Port
+		}
 	}
 
 	return instanceUrl
