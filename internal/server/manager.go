@@ -24,7 +24,7 @@ type ServerManagerCtx struct {
 	config *config.Server
 }
 
-func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server) *ServerManagerCtx {
+func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server, handler http.Handler) *ServerManagerCtx {
 	logger := log.With().Str("module", "server").Logger()
 
 	router := chi.NewRouter()
@@ -72,6 +72,8 @@ func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server) 
 		withPProf(router)
 		logger.Info().Msgf("with pprof endpoint at %s", pprofPath)
 	}
+
+	router.Handle("/*", handler)
 
 	// we could use custom 404
 	router.NotFound(http.NotFound)

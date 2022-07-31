@@ -13,6 +13,7 @@ import (
 
 	"github.com/m1k1o/neko-rooms/internal/api"
 	"github.com/m1k1o/neko-rooms/internal/config"
+	"github.com/m1k1o/neko-rooms/internal/proxy"
 	"github.com/m1k1o/neko-rooms/internal/pull"
 	"github.com/m1k1o/neko-rooms/internal/room"
 	"github.com/m1k1o/neko-rooms/internal/server"
@@ -112,6 +113,7 @@ type MainCtx struct {
 	roomManager   *room.RoomManagerCtx
 	pullManager   *pull.PullManagerCtx
 	apiManager    *api.ApiManagerCtx
+	proxyManager  *proxy.ProxyManagerCtx
 	serverManager *server.ServerManagerCtx
 }
 
@@ -143,17 +145,29 @@ func (main *MainCtx) Start() {
 		main.Configs.API,
 	)
 
+	main.proxyManager = proxy.New(
+		client,
+		main.Configs.Room,
+	)
+	main.proxyManager.Start()
+
 	main.serverManager = server.New(
 		main.apiManager,
 		main.Configs.Room.PathPrefix,
 		main.Configs.Server,
+		main.proxyManager,
 	)
 	main.serverManager.Start()
 }
 
 func (main *MainCtx) Shutdown() {
-	err := main.serverManager.Shutdown()
+	var err error
+
+	err = main.serverManager.Shutdown()
 	main.logger.Err(err).Msg("server manager shutdown")
+
+	err = main.proxyManager.Shutdown()
+	main.logger.Err(err).Msg("proxy manager shutdown")
 }
 
 func (main *MainCtx) ServeCommand(cmd *cobra.Command, args []string) {
