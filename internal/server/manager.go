@@ -3,7 +3,8 @@ package server
 import (
 	"context"
 	"net/http"
-	"os"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -54,24 +55,10 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 		logger.Info().Msgf("with pprof endpoint at %s", pprofPath)
 	}
 
-	// admin page
-	router.Route(config.AdminPathPrefix, func(r chi.Router) {
-		r.Route("/api", ApiManager.Mount)
-
-		// serve static files
-		if config.Static != "" {
-			fs := http.FileServer(http.Dir(config.Static))
-			r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-				if _, err := os.Stat(config.Static + r.URL.Path); !os.IsNotExist(err) {
-					fs.ServeHTTP(w, r)
-				} else {
-					http.NotFound(w, r)
-				}
-			})
-		}
-	})
-
+	//
 	// rooms page
+	//
+
 	router.Route(roomConfig.PathPrefix, func(r chi.Router) {
 		if !roomConfig.Traefik.Enabled {
 			r.Handle("/*", proxyHandler)
@@ -81,6 +68,48 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 			r.Get("/{roomName}/", ApiManager.RoomLobby)
 		}
 	})
+
+	//
+	// admin page
+	//
+
+	// in v1 default location was at / with traefik overriding
+	// the actual room address. in order to keep this setting
+	// we set new default path prefix only without traefik
+	if !roomConfig.Traefik.Enabled && config.Admin.PathPrefix == "" {
+		config.Admin.PathPrefix = "/admin"
+	}
+
+	router.Group(func(r chi.Router) {
+		// handle authorization
+		if config.Admin.Password != "" {
+			r.Use(middleware.BasicAuth("neko-rooms admin", map[string]string{
+				"admin": config.Admin.Password,
+			}))
+		}
+
+		// bind API
+		apiPath := path.Join("/", config.Admin.PathPrefix, "/api")
+		router.Route(apiPath, ApiManager.Mount)
+
+		// serve static files
+		if config.Admin.Static != "" {
+			prefix := config.Admin.PathPrefix
+			dir := http.Dir(config.Admin.Static)
+
+			fs := http.FileServer(dir)
+			fs = http.StripPrefix(prefix, fs)
+
+			router.Handle(prefix+"/", fs)
+		}
+	})
+
+	// redirect / to admin path prefix
+	if config.Admin.PathPrefix != "/" {
+		router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, strings.TrimPrefix(config.Admin.PathPrefix, "/"), http.StatusTemporaryRedirect)
+		})
+	}
 
 	// we could use custom 404
 	router.NotFound(http.NotFound)
