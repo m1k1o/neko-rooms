@@ -276,7 +276,7 @@ export default class RoomInfo extends Vue {
 
   get usesMux() {
     // old rooms might not use mux despite enabled server wide, simple check for that
-    return this.$store.state.roomsConfig.uses_mux && this.settings.max_connections == 1
+    return this.$store.state.roomsConfig.uses_mux && this.settings?.max_connections == 1
   }
 
   get allBrowserExtensions() {
