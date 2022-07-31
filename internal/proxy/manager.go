@@ -27,7 +27,7 @@ type ProxyManagerCtx struct {
 	prefix   string
 	client   *dockerClient.Client
 	config   *config.Room
-	handlers map[string]http.Handler
+	handlers map[string]*httputil.ReverseProxy
 }
 
 func New(client *dockerClient.Client, config *config.Room) *ProxyManagerCtx {
@@ -43,7 +43,7 @@ func New(client *dockerClient.Client, config *config.Room) *ProxyManagerCtx {
 		prefix:   prefix,
 		client:   client,
 		config:   config,
-		handlers: map[string]http.Handler{},
+		handlers: map[string]*httputil.ReverseProxy{},
 	}
 }
 
@@ -62,6 +62,7 @@ func (p *ProxyManagerCtx) Start() {
 				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.config.InstanceName)),
 				filters.Arg("event", "create"),
 				filters.Arg("event", "start"),
+				//filters.Arg("event", "health_status"),
 				filters.Arg("event", "stop"),
 				filters.Arg("event", "destroy"),
 			),
@@ -124,7 +125,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 		return err
 	}
 
-	p.handlers = map[string]http.Handler{}
+	p.handlers = map[string]*httputil.ReverseProxy{}
 
 	for _, cont := range containers {
 		name, port, ok := p.parseLabels(cont.Labels)
@@ -187,7 +188,7 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// if room not found
 	if !ok {
-		http.NotFound(w, r)
+		RoomNotFound(w, r)
 		return
 	}
 
@@ -198,15 +199,25 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// if room not running
 	if proxy == nil {
-		http.Error(w, "room exists but is not running", http.StatusBadGateway)
+		RoomNotRunning(w, r)
 		return
+	}
+
+	// handle not ready room
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		if r.URL.Path == "/" {
+			RoomNotReady(w, r)
+		}
+
+		p.logger.Err(err).Str("room", roomName).Msg("proxying error")
 	}
 
 	// strip prefix from proxy
 	pathPrefix := path.Join(p.prefix, roomName)
-	proxy = http.StripPrefix(pathPrefix, proxy)
+	handler := http.StripPrefix(pathPrefix, proxy)
 
 	// handle by proxy
-	proxy.ServeHTTP(w, r)
+	handler.ServeHTTP(w, r)
 }
