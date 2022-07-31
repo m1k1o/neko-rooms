@@ -170,7 +170,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
-		URL:       manager.config.GetRoomUrl(roomName),
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 
