@@ -97,7 +97,7 @@ func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]str
 	}
 
 	// Only when using traefik is the URL fixed with the room itself and not with neko-rooms.
-	if manager.config.TraefikEnabled {
+	if manager.config.Traefik.Enabled {
 		labelsMap["m1k1o.neko_rooms.url"] = manager.config.GetRoomUrl(labels.Name)
 	}
 
