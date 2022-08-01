@@ -59,7 +59,7 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 	// rooms page
 	//
 
-	router.Route(roomConfig.PathPrefix, func(r chi.Router) {
+	router.Group(func(r chi.Router) {
 		if !roomConfig.Traefik.Enabled {
 			r.Handle("/*", proxyHandler)
 		} else {

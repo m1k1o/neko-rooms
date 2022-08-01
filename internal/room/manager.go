@@ -181,9 +181,9 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set traefik labels
 	//
 
-	if t := manager.config.Traefik; t.Enabled {
-		pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
+	pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
 
+	if t := manager.config.Traefik; t.Enabled {
 		// create traefik rule
 		traefikRule := "PathPrefix(`" + pathPrefix + "`)"
 		if t.Domain != "" && t.Domain != "*" {
@@ -217,7 +217,9 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			labels["traefik.http.routers."+containerName+".tls.certresolver"] = t.Certresolver
 		}
 	} else {
-		labels["m1k1o.neko_rooms.host"] = fmt.Sprintf("%s:%d", containerName, frontendPort)
+		labels["m1k1o.neko_rooms.proxy"] = "true"
+		labels["m1k1o.neko_rooms.proxy.path"] = pathPrefix
+		labels["m1k1o.neko_rooms.proxy.port"] = fmt.Sprintf("%d", frontendPort)
 	}
 
 	// add custom labels
