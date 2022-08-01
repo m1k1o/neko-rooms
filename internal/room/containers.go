@@ -18,7 +18,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		return nil, err
 	}
 
-	return &types.RoomEntry{
+	entry := &types.RoomEntry{
 		ID:             container.ID,
 		URL:            labels.URL,
 		Name:           labels.Name,
@@ -28,7 +28,13 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		Running:        container.State == "running",
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),
-	}, nil
+	}
+
+	if labels.Mux {
+		entry.MaxConnections = 0
+	}
+
+	return entry, nil
 }
 
 func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error) {

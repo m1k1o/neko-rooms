@@ -33,8 +33,8 @@
         </v-tooltip>
       </template>
       <template v-slot:[`item.max_connections`]="{ item }">
-        <span v-if="item.max_connections">{{ item.max_connections }}</span>
-        <i v-else>--not-specified--</i>
+        <span v-if="item.max_connections > 0">{{ item.max_connections }}</span>
+        <i v-else>uses mux</i>
       </template>
       <template v-slot:[`item.status`]="{ item }">
         <v-chip :color="item.running ? 'green' : 'red'" dark small> {{ item.status }} </v-chip>

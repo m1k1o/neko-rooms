@@ -170,6 +170,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	labels := manager.serializeLabels(RoomLabels{
 		Name:      roomName,
+		Mux:       manager.config.Mux,
 		Epr:       epr,
 		NekoImage: settings.NekoImage,
 
@@ -568,6 +569,10 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		Mounts:         mounts,
 		BrowserPolicy:  browserPolicy,
 		Resources:      roomResources,
+	}
+
+	if labels.Mux {
+		settings.MaxConnections = 0
 	}
 
 	err = settings.FromEnv(container.Config.Env)

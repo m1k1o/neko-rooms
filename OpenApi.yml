@@ -307,6 +307,7 @@ components:
         max_connections:
           type: number
           example: 10
+          description: 0 when using mux
         running:
           type: boolean
           example: true
@@ -361,6 +362,7 @@ components:
         max_connections:
           type: number
           default: 10
+          description: 0 when using mux
         user_pass:
           type: string
           example: neko
