@@ -56,20 +56,6 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 	}
 
 	//
-	// rooms page
-	//
-
-	router.Group(func(r chi.Router) {
-		if !roomConfig.Traefik.Enabled {
-			r.Handle("/*", proxyHandler)
-		} else {
-			// add simple lobby room
-			r.Get("/{roomName}", ApiManager.RoomLobby)
-			r.Get("/{roomName}/", ApiManager.RoomLobby)
-		}
-	})
-
-	//
 	// admin page
 	//
 
@@ -94,25 +80,27 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 
 		// serve static files
 		if config.Admin.Static != "" {
-			prefix := config.Admin.PathPrefix
-			dir := http.Dir(config.Admin.Static)
+			fs := http.FileServer(http.Dir(config.Admin.Static))
+			fs = http.StripPrefix(config.Admin.PathPrefix, fs)
 
-			fs := http.FileServer(dir)
-			fs = http.StripPrefix(prefix, fs)
-
-			router.Handle(prefix+"/", fs)
+			router.Handle(path.Join("/", config.Admin.PathPrefix, "*"), fs)
 		}
 	})
 
-	// redirect / to admin path prefix
 	if config.Admin.PathPrefix != "/" {
+		// redirect / to admin path prefix
 		router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, strings.TrimPrefix(config.Admin.PathPrefix, "/"), http.StatusTemporaryRedirect)
+			http.Redirect(w, r, strings.TrimPrefix(config.Admin.PathPrefix, "/")+"/", http.StatusTemporaryRedirect)
+		})
+
+		// redirect force admin path prefix ending with /
+		router.Get(config.Admin.PathPrefix, func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, strings.TrimPrefix(config.Admin.PathPrefix, "/")+"/", http.StatusTemporaryRedirect)
 		})
 	}
 
-	// we could use custom 404
-	router.NotFound(http.NotFound)
+	// handle all remaining paths with proxy
+	router.Handle("/*", proxyHandler)
 
 	return &ServerManagerCtx{
 		logger: logger,

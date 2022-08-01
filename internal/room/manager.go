@@ -217,7 +217,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			labels["traefik.http.routers."+containerName+".tls.certresolver"] = t.Certresolver
 		}
 	} else {
-		labels["m1k1o.neko_rooms.proxy"] = "true"
+		labels["m1k1o.neko_rooms.proxy.enabled"] = "true"
 		labels["m1k1o.neko_rooms.proxy.path"] = pathPrefix
 		labels["m1k1o.neko_rooms.proxy.port"] = fmt.Sprintf("%d", frontendPort)
 	}
