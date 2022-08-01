@@ -41,6 +41,37 @@ func (p *prefixHandler[T]) Set(prefix string, value T) {
 	}
 }
 
+func (p *prefixHandler[T]) Get(prefix string) (value T, ok bool) {
+	arr := strings.Split(prefix, "/")
+	len := len(arr)
+
+	for i, a := range arr {
+		if a == "" {
+			continue
+		}
+
+		if p.Children == nil {
+			p.Children = map[string]*prefixHandler[T]{}
+		}
+
+		dat, found := p.Children[a]
+		if !found {
+			dat = &prefixHandler[T]{}
+		}
+
+		if i == len-1 {
+			value = dat.Value
+			ok = dat.Children == nil
+			return
+		}
+
+		p.Children[a] = dat
+		p = dat
+	}
+
+	return
+}
+
 func (p *prefixHandler[T]) Remove(prefix string) {
 	arr := strings.Split(prefix, "/")
 	len := len(arr)
@@ -54,8 +85,8 @@ func (p *prefixHandler[T]) Remove(prefix string) {
 			delete(p.Children, a)
 		}
 
-		dat, ok := p.Children[a]
-		if !ok {
+		dat, found := p.Children[a]
+		if !found {
 			break
 		}
 		p = dat

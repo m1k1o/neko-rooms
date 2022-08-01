@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
+	"strings"
 	"sync"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -15,6 +17,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type entry struct {
+	running bool
+	handler *httputil.ReverseProxy
+}
+
 type ProxyManagerCtx struct {
 	logger zerolog.Logger
 	mu     sync.RWMutex
@@ -23,7 +30,7 @@ type ProxyManagerCtx struct {
 
 	client       *dockerClient.Client
 	instanceName string
-	handlers     *prefixHandler[*httputil.ReverseProxy]
+	handlers     *prefixHandler[*entry]
 }
 
 func New(client *dockerClient.Client, instanceName string) *ProxyManagerCtx {
@@ -32,7 +39,7 @@ func New(client *dockerClient.Client, instanceName string) *ProxyManagerCtx {
 
 		client:       client,
 		instanceName: instanceName,
-		handlers:     &prefixHandler[*httputil.ReverseProxy]{},
+		handlers:     &prefixHandler[*entry]{},
 	}
 }
 
@@ -49,7 +56,6 @@ func (p *ProxyManagerCtx) Start() {
 			Filters: filters.NewArgs(
 				filters.Arg("type", "container"),
 				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.instanceName)),
-				filters.Arg("label", "m1k1o.neko_rooms.proxy=true"),
 				filters.Arg("event", "create"),
 				filters.Arg("event", "start"),
 				//filters.Arg("event", "health_status"),
@@ -63,7 +69,7 @@ func (p *ProxyManagerCtx) Start() {
 			case err := <-errs:
 				p.logger.Info().Interface("err", err).Msg("eee")
 			case msg := <-msgs:
-				path, port, ok := p.parseLabels(msg.Actor.Attributes)
+				enabled, path, port, ok := p.parseLabels(msg.Actor.Attributes)
 				if !ok {
 					break
 				}
@@ -79,16 +85,27 @@ func (p *ProxyManagerCtx) Start() {
 				p.mu.Lock()
 				switch msg.Action {
 				case "create":
-					p.handlers.Set(path, nil)
-				case "start":
-					proxy := httputil.NewSingleHostReverseProxy(&url.URL{
-						Scheme: "http",
-						Host:   host,
+					p.handlers.Set(path, &entry{
+						running: false,
 					})
+				case "start":
+					e := &entry{
+						running: true,
+					}
 
-					p.handlers.Set(path, proxy)
+					// if proxying is disabled
+					if enabled {
+						e.handler = httputil.NewSingleHostReverseProxy(&url.URL{
+							Scheme: "http",
+							Host:   host,
+						})
+					}
+
+					p.handlers.Set(path, e)
 				case "stop":
-					p.handlers.Set(path, nil)
+					p.handlers.Set(path, &entry{
+						running: false,
+					})
 				case "destroy":
 					p.handlers.Remove(path)
 				}
@@ -118,31 +135,77 @@ func (p *ProxyManagerCtx) Refresh() error {
 		return err
 	}
 
-	p.handlers = &prefixHandler[*httputil.ReverseProxy]{}
+	p.handlers = &prefixHandler[*entry]{}
 
 	for _, cont := range containers {
-		path, port, ok := p.parseLabels(cont.Labels)
+		enabled, path, port, ok := p.parseLabels(cont.Labels)
 		if !ok {
 			continue
 		}
 
 		host := cont.ID[:12] + ":" + port
 
-		var proxy *httputil.ReverseProxy
+		entry := &entry{}
 		if cont.State == "running" {
-			proxy = httputil.NewSingleHostReverseProxy(&url.URL{
-				Scheme: "http",
-				Host:   host,
-			})
+			entry.running = true
+
+			// if proxying is disabled
+			if enabled {
+				entry.handler = httputil.NewSingleHostReverseProxy(&url.URL{
+					Scheme: "http",
+					Host:   host,
+				})
+			}
 		}
 
-		p.handlers.Set(path, proxy)
+		p.handlers.Set(path, entry)
 	}
 
 	return nil
 }
 
-func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (path string, port string, ok bool) {
+func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, path string, port string, ok bool) {
+	enabledStr, found := labels["m1k1o.neko_rooms.proxy.enabled"]
+	if !found {
+		//
+		// workaround for legacy traefik labels
+		//
+
+		// get room name
+		var roomName string
+		roomName, ok = labels["m1k1o.neko_rooms.name"]
+		if !ok {
+			return
+		}
+
+		// get container name
+		containerName := p.instanceName + "-" + roomName
+
+		// get path
+		path, ok = labels["traefik.http.middlewares."+containerName+"-prf.stripprefix.prefixes"]
+		if !ok {
+			return
+		}
+
+		// remove last /
+		path = strings.TrimSuffix(path, "/")
+
+		// get port
+		port, ok = labels["traefik.http.services."+containerName+"-frontend.loadbalancer.server.port"]
+		if !ok {
+			return
+		}
+
+		//
+		// workaround for legacy traefik labels
+		//
+
+		return
+	}
+
+	enabledBool, err := strconv.ParseBool(enabledStr)
+	enabled = enabledBool && err == nil
+
 	path, ok = labels["m1k1o.neko_rooms.proxy.path"]
 	if !ok {
 		return
@@ -172,13 +235,19 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if room not running
-	if proxy == nil {
+	if !proxy.running {
 		RoomNotRunning(w, r)
 		return
 	}
 
+	// if not proxying
+	if proxy.handler == nil {
+		RoomReady(w, r)
+		return
+	}
+
 	// handle not ready room
-	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+	proxy.handler.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		if r.URL.Path == "/" {
 			RoomNotReady(w, r)
 		}
@@ -187,7 +256,7 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// strip prefix from proxy
-	handler := http.StripPrefix(prefix, proxy)
+	handler := http.StripPrefix(prefix, proxy.handler)
 
 	// handle by proxy
 	handler.ServeHTTP(w, r)
