@@ -6,7 +6,7 @@ Vue.use(VueRouter)
 
 const routes: Array<RouteConfig> = [
   {
-    path: '/',
+    path: '*', // TODO: Get proper base URL.
     name: 'Home',
     component: Home
   },
