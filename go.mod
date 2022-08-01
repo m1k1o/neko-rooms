@@ -1,6 +1,6 @@
 module github.com/m1k1o/neko-rooms
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
