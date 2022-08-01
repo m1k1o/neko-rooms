@@ -23,7 +23,7 @@ type ProxyManagerCtx struct {
 
 	client       *dockerClient.Client
 	instanceName string
-	handlers     *prefixHandler
+	handlers     *prefixHandler[*httputil.ReverseProxy]
 }
 
 func New(client *dockerClient.Client, instanceName string) *ProxyManagerCtx {
@@ -32,7 +32,7 @@ func New(client *dockerClient.Client, instanceName string) *ProxyManagerCtx {
 
 		client:       client,
 		instanceName: instanceName,
-		handlers:     &prefixHandler{},
+		handlers:     &prefixHandler[*httputil.ReverseProxy]{},
 	}
 }
 
@@ -118,7 +118,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 		return err
 	}
 
-	p.handlers = &prefixHandler{}
+	p.handlers = &prefixHandler[*httputil.ReverseProxy]{}
 
 	for _, cont := range containers {
 		path, port, ok := p.parseLabels(cont.Labels)

@@ -1,16 +1,19 @@
 package proxy
 
 import (
-	"net/http/httputil"
 	"strings"
 )
 
-type prefixHandler struct {
-	Value    *httputil.ReverseProxy
-	Children map[string]*prefixHandler
+type prefixHandler[T any] struct {
+	Value    T
+	Children map[string]*prefixHandler[T]
 }
 
-func (p *prefixHandler) Set(prefix string, value *httputil.ReverseProxy) {
+func NewPrefixHandler[T any]() *prefixHandler[T] {
+	return &prefixHandler[T]{}
+}
+
+func (p *prefixHandler[T]) Set(prefix string, value T) {
 	arr := strings.Split(prefix, "/")
 	len := len(arr)
 
@@ -20,12 +23,12 @@ func (p *prefixHandler) Set(prefix string, value *httputil.ReverseProxy) {
 		}
 
 		if p.Children == nil {
-			p.Children = map[string]*prefixHandler{}
+			p.Children = map[string]*prefixHandler[T]{}
 		}
 
 		dat, ok := p.Children[a]
 		if !ok {
-			dat = &prefixHandler{}
+			dat = &prefixHandler[T]{}
 		}
 
 		if i == len-1 {
@@ -38,7 +41,7 @@ func (p *prefixHandler) Set(prefix string, value *httputil.ReverseProxy) {
 	}
 }
 
-func (p *prefixHandler) Remove(prefix string) {
+func (p *prefixHandler[T]) Remove(prefix string) {
 	arr := strings.Split(prefix, "/")
 	len := len(arr)
 
@@ -61,7 +64,7 @@ func (p *prefixHandler) Remove(prefix string) {
 	// TODO: Remove all empty references.
 }
 
-func (p *prefixHandler) Match(path string) (*httputil.ReverseProxy, string, bool) {
+func (p *prefixHandler[T]) Match(path string) (value T, prefix string, ok bool) {
 	arr := strings.Split(path, "/")
 	prefixArr := []string{}
 
@@ -70,9 +73,9 @@ func (p *prefixHandler) Match(path string) (*httputil.ReverseProxy, string, bool
 			continue
 		}
 
-		pointer, ok := p.Children[a]
-		if !ok {
-			return nil, "", false
+		pointer, found := p.Children[a]
+		if !found {
+			return
 		}
 
 		p = pointer
@@ -86,9 +89,11 @@ func (p *prefixHandler) Match(path string) (*httputil.ReverseProxy, string, bool
 
 	// if not leaf node
 	if p.Children != nil {
-		return nil, "", false
+		return
 	}
 
-	prefix := "/" + strings.Join(prefixArr, "/")
-	return p.Value, prefix, true
+	value = p.Value
+	prefix = "/" + strings.Join(prefixArr, "/")
+	ok = true
+	return
 }
