@@ -1,6 +1,8 @@
 package config
 
 import (
+	"path"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -77,5 +79,5 @@ func (s *Server) Set() {
 
 	s.Admin.Static = viper.GetString("admin.static")
 	s.Admin.Password = viper.GetString("admin.password")
-	s.Admin.PathPrefix = viper.GetString("admin.path_prefix")
+	s.Admin.PathPrefix = path.Join("/", path.Clean(viper.GetString("admin.path_prefix")))
 }
