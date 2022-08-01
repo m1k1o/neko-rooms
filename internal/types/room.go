@@ -38,7 +38,7 @@ type RoomEntry struct {
 	Name           string    `json:"name"`
 	NekoImage      string    `json:"neko_image"`
 	IsOutdated     bool      `json:"is_outdated"`
-	MaxConnections uint16    `json:"max_connections"` // ignored when using mux
+	MaxConnections uint16    `json:"max_connections"` // 0 when using mux
 	Running        bool      `json:"running"`
 	Status         string    `json:"status"`
 	Created        time.Time `json:"created"`
@@ -69,7 +69,7 @@ type RoomResources struct {
 type RoomSettings struct {
 	Name           string `json:"name"`
 	NekoImage      string `json:"neko_image"`
-	MaxConnections uint16 `json:"max_connections"` // ignored when using mux
+	MaxConnections uint16 `json:"max_connections"` // 0 when using mux
 
 	ControlProtection bool `json:"control_protection"`
 	ImplicitControl   bool `json:"implicit_control"`

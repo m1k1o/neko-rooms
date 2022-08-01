@@ -604,7 +604,7 @@ export default class RoomsCreate extends Vue {
         // eslint-disable-next-line
         admin_pass: this.data.admin_pass || randomPassword(),
         // eslint-disable-next-line
-        max_connections: Number(this.data.max_connections), // not needed when uses mux
+        max_connections: Number(this.data.max_connections), // ignored when uses mux
         // eslint-disable-next-line
         control_protection: Boolean(this.data.control_protection),
         // eslint-disable-next-line
