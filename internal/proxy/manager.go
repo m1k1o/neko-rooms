@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"path"
-	"strings"
 	"sync"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -15,35 +13,26 @@ import (
 	dockerClient "github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	"github.com/m1k1o/neko-rooms/internal/config"
 )
 
 type ProxyManagerCtx struct {
-	logger   zerolog.Logger
-	mu       sync.RWMutex
-	ctx      context.Context
-	cancel   func()
-	prefix   string
-	client   *dockerClient.Client
-	config   *config.Room
-	handlers map[string]*httputil.ReverseProxy
+	logger zerolog.Logger
+	mu     sync.RWMutex
+	ctx    context.Context
+	cancel func()
+
+	client       *dockerClient.Client
+	instanceName string
+	handlers     *prefixHandler
 }
 
-func New(client *dockerClient.Client, config *config.Room) *ProxyManagerCtx {
-	logger := log.With().Str("module", "proxy").Logger()
-
-	prefix := config.PathPrefix
-	if !strings.HasSuffix(prefix, "/") {
-		prefix += "/"
-	}
-
+func New(client *dockerClient.Client, instanceName string) *ProxyManagerCtx {
 	return &ProxyManagerCtx{
-		logger:   logger,
-		prefix:   prefix,
-		client:   client,
-		config:   config,
-		handlers: map[string]*httputil.ReverseProxy{},
+		logger: log.With().Str("module", "proxy").Logger(),
+
+		client:       client,
+		instanceName: instanceName,
+		handlers:     &prefixHandler{},
 	}
 }
 
@@ -59,7 +48,8 @@ func (p *ProxyManagerCtx) Start() {
 		msgs, errs := p.client.Events(p.ctx, dockerTypes.EventsOptions{
 			Filters: filters.NewArgs(
 				filters.Arg("type", "container"),
-				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.config.InstanceName)),
+				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.instanceName)),
+				filters.Arg("label", "m1k1o.neko_rooms.proxy=true"),
 				filters.Arg("event", "create"),
 				filters.Arg("event", "start"),
 				//filters.Arg("event", "health_status"),
@@ -73,30 +63,32 @@ func (p *ProxyManagerCtx) Start() {
 			case err := <-errs:
 				p.logger.Info().Interface("err", err).Msg("eee")
 			case msg := <-msgs:
-				name, host, ok := p.parseLabels(msg.Actor.Attributes)
+				path, port, ok := p.parseLabels(msg.Actor.Attributes)
 				if !ok {
 					break
 				}
 
 				p.logger.Info().
 					Str("action", msg.Action).
-					Str("name", name).
-					Str("host", host).
+					Str("path", path).
+					Str("port", port).
 					Msg("new docker event")
 
 				p.mu.Lock()
 				switch msg.Action {
 				case "create":
-					p.handlers[name] = nil
+					p.handlers.Set(path, nil)
 				case "start":
-					p.handlers[name] = httputil.NewSingleHostReverseProxy(&url.URL{
+					proxy := httputil.NewSingleHostReverseProxy(&url.URL{
 						Scheme: "http",
-						Host:   host,
+						Host:   msg.ID[:12] + ":" + port,
 					})
+
+					p.handlers.Set(path, proxy)
 				case "stop":
-					p.handlers[name] = nil
+					p.handlers.Set(path, nil)
 				case "destroy":
-					delete(p.handlers, name)
+					p.handlers.Remove(path)
 				}
 				p.mu.Unlock()
 			}
@@ -116,7 +108,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 	containers, err := p.client.ContainerList(p.ctx, dockerTypes.ContainerListOptions{
 		All: true,
 		Filters: filters.NewArgs(
-			filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.config.InstanceName)),
+			filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.instanceName)),
 		),
 	})
 
@@ -124,63 +116,42 @@ func (p *ProxyManagerCtx) Refresh() error {
 		return err
 	}
 
-	p.handlers = map[string]*httputil.ReverseProxy{}
+	p.handlers = &prefixHandler{}
 
 	for _, cont := range containers {
-		name, host, ok := p.parseLabels(cont.Labels)
+		path, port, ok := p.parseLabels(cont.Labels)
 		if !ok {
 			continue
 		}
 
+		var proxy *httputil.ReverseProxy
 		if cont.State == "running" {
-			p.handlers[name] = httputil.NewSingleHostReverseProxy(&url.URL{
+			proxy = httputil.NewSingleHostReverseProxy(&url.URL{
 				Scheme: "http",
-				Host:   host,
+				Host:   cont.ID[:12] + ":" + port,
 			})
-		} else {
-			p.handlers[name] = nil
 		}
+
+		p.handlers.Set(path, proxy)
 	}
 
 	return nil
 }
 
-func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (name string, host string, ok bool) {
-	name, ok = labels["m1k1o.neko_rooms.name"]
+func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (path string, port string, ok bool) {
+	path, ok = labels["m1k1o.neko_rooms.proxy.path"]
 	if !ok {
 		return
 	}
 
-	host, ok = labels["m1k1o.neko_rooms.host"]
+	port, ok = labels["m1k1o.neko_rooms.proxy.port"]
 	return
 }
 
 func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// only if has prefix
-	if !strings.HasPrefix(r.URL.Path, p.prefix) {
-		http.NotFound(w, r)
-		return
-	}
-
-	// remove prefix and leading /
-	roomPath := strings.TrimPrefix(r.URL.Path, p.prefix)
-	roomPath = strings.TrimLeft(roomPath, "/")
-	if roomPath == "" {
-		http.NotFound(w, r)
-		return
-	}
-
-	// get room name
-	roomName, doRedir := roomPath, false
-	if i := strings.Index(roomPath, "/"); i != -1 {
-		roomName = roomPath[:i]
-	} else {
-		doRedir = true
-	}
-
 	// get proxy by room name
 	p.mu.RLock()
-	proxy, ok := p.handlers[roomName]
+	proxy, prefix, ok := p.handlers.Match(r.URL.Path)
 	p.mu.RUnlock()
 
 	// if room not found
@@ -190,7 +161,7 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// redirect to room ending with /
-	if doRedir {
+	if r.URL.Path == prefix {
 		r.URL.Path += "/"
 		http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
 		return
@@ -208,12 +179,11 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			RoomNotReady(w, r)
 		}
 
-		p.logger.Err(err).Str("room", roomName).Msg("proxying error")
+		p.logger.Err(err).Str("prefix", prefix).Msg("proxying error")
 	}
 
 	// strip prefix from proxy
-	pathPrefix := path.Join(p.prefix, roomName)
-	handler := http.StripPrefix(pathPrefix, proxy)
+	handler := http.StripPrefix(prefix, proxy)
 
 	// handle by proxy
 	handler.ServeHTTP(w, r)

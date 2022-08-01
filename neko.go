@@ -147,7 +147,7 @@ func (main *MainCtx) Start() {
 
 	main.proxyManager = proxy.New(
 		client,
-		main.Configs.Room,
+		main.Configs.Room.InstanceName,
 	)
 	main.proxyManager.Start()
 
