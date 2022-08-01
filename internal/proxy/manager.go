@@ -68,11 +68,13 @@ func (p *ProxyManagerCtx) Start() {
 					break
 				}
 
+				host := msg.ID[:12] + ":" + port
+
 				p.logger.Info().
 					Str("action", msg.Action).
 					Str("path", path).
-					Str("port", port).
-					Msg("new docker event")
+					Str("host", host).
+					Msg("got docker event")
 
 				p.mu.Lock()
 				switch msg.Action {
@@ -81,7 +83,7 @@ func (p *ProxyManagerCtx) Start() {
 				case "start":
 					proxy := httputil.NewSingleHostReverseProxy(&url.URL{
 						Scheme: "http",
-						Host:   msg.ID[:12] + ":" + port,
+						Host:   host,
 					})
 
 					p.handlers.Set(path, proxy)
@@ -124,11 +126,13 @@ func (p *ProxyManagerCtx) Refresh() error {
 			continue
 		}
 
+		host := cont.ID[:12] + ":" + port
+
 		var proxy *httputil.ReverseProxy
 		if cont.State == "running" {
 			proxy = httputil.NewSingleHostReverseProxy(&url.URL{
 				Scheme: "http",
-				Host:   cont.ID[:12] + ":" + port,
+				Host:   host,
 			})
 		}
 
