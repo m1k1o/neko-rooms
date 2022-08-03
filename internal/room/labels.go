@@ -30,7 +30,7 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 
 	url, ok := labels["m1k1o.neko_rooms.url"]
 	if !ok {
-		// It should be always available.
+		// TODO: It should be always available.
 		url = manager.config.GetRoomUrl(name)
 		//return nil, fmt.Errorf("damaged container labels: url not found")
 	}
