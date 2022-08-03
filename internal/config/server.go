@@ -6,9 +6,10 @@ import (
 )
 
 type Admin struct {
-	Static   string
-	Username string
-	Password string
+	Static    string
+	ProxyAuth string
+	Username  string
+	Password  string
 }
 
 type Server struct {
@@ -54,6 +55,11 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	cmd.PersistentFlags().String("admin.proxy_auth", "", "require auth: proxy authentication URL, only allow if it returns 200")
+	if err := viper.BindPFlag("admin.proxy_auth", cmd.PersistentFlags().Lookup("admin.proxy_auth")); err != nil {
+		return err
+	}
+
 	cmd.PersistentFlags().String("admin.username", "admin", "require auth: admin username")
 	if err := viper.BindPFlag("admin.username", cmd.PersistentFlags().Lookup("admin.username")); err != nil {
 		return err
@@ -75,6 +81,7 @@ func (s *Server) Set() {
 	s.PProf = viper.GetBool("pprof")
 
 	s.Admin.Static = viper.GetString("admin.static")
+	s.Admin.ProxyAuth = viper.GetString("admin.proxy_auth")
 	s.Admin.Username = viper.GetString("admin.username")
 	s.Admin.Password = viper.GetString("admin.password")
 }
