@@ -6,6 +6,7 @@ import (
 
 type prefixHandler[T any] struct {
 	Value    T
+	IsLeaf   bool
 	Children map[string]*prefixHandler[T]
 }
 
@@ -33,6 +34,7 @@ func (p *prefixHandler[T]) Set(prefix string, value T) {
 
 		if i == len-1 {
 			dat.Value = value
+			dat.IsLeaf = true
 			dat.Children = nil
 		}
 
@@ -61,7 +63,7 @@ func (p *prefixHandler[T]) Get(prefix string) (value T, ok bool) {
 
 		if i == len-1 {
 			value = dat.Value
-			ok = dat.Children == nil
+			ok = dat.IsLeaf
 			return
 		}
 
@@ -112,19 +114,13 @@ func (p *prefixHandler[T]) Match(path string) (value T, prefix string, ok bool) 
 		p = pointer
 		prefixArr = append(prefixArr, a)
 
-		// if leaf node
-		if p.Children == nil {
+		if p.IsLeaf {
 			break
 		}
 	}
 
-	// if not leaf node
-	if p.Children != nil {
-		return
-	}
-
 	value = p.Value
 	prefix = "/" + strings.Join(prefixArr, "/")
-	ok = true
+	ok = p.IsLeaf
 	return
 }
