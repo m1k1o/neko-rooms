@@ -18,7 +18,6 @@ func init() {
 
 	configs := []config.Config{
 		nekoRooms.Service.Configs.Server,
-		nekoRooms.Service.Configs.API,
 		nekoRooms.Service.Configs.Room,
 	}
 
