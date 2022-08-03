@@ -3,8 +3,9 @@ package server
 import (
 	"context"
 	"net/http"
+	"os"
 	"path"
-	"strings"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -59,45 +60,62 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 	// admin page
 	//
 
-	// in v1 default location was at / with traefik overriding
-	// the actual room address. in order to keep this setting
-	// we set new default path prefix only without traefik
-	if !roomConfig.Traefik.Enabled && config.Admin.PathPrefix == "" {
-		config.Admin.PathPrefix = "/admin"
+	protected := func(next http.Handler) http.Handler {
+		// if auth is disabled
+		if config.Admin.Username == "" || config.Admin.Password == "" {
+			return next
+		}
+
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			user, pass, ok := r.BasicAuth()
+			if !ok || user != config.Admin.Username || pass != config.Admin.Password {
+				w.Header().Add("WWW-Authenticate", `Basic realm="neko-rooms admin"`)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
 	}
 
-	router.Group(func(r chi.Router) {
-		// handle authorization
-		if config.Admin.Password != "" {
-			r.Use(middleware.BasicAuth("neko-rooms admin", map[string]string{
-				"admin": config.Admin.Password,
-			}))
+	// cache static file paths
+	staticFiles := map[string]struct{}{}
+	if config.Admin.Static != "" {
+		filepath.Walk(config.Admin.Static,
+			func(p string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				staticFiles[path.Clean(p)] = struct{}{}
+				return nil
+			})
+	}
+
+	// serve static files
+	router.Use(func(next http.Handler) http.Handler {
+		// if static files are disabled
+		if config.Admin.Static == "" {
+			return next
 		}
 
-		// bind API
-		apiPath := path.Join("/", config.Admin.PathPrefix, "/api")
-		router.Route(apiPath, ApiManager.Mount)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			filePath := path.Join(config.Admin.Static, r.URL.Path)
 
-		// serve static files
-		if config.Admin.Static != "" {
-			fs := http.FileServer(http.Dir(config.Admin.Static))
-			fs = http.StripPrefix(config.Admin.PathPrefix, fs)
+			// check if file exists to serve it
+			if _, ok := staticFiles[filePath]; ok {
+				// serve protected assets
+				protected(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.ServeFile(w, r, filePath)
+				})).ServeHTTP(w, r)
+				return
+			}
 
-			router.Handle(path.Join("/", config.Admin.PathPrefix, "*"), fs)
-		}
+			next.ServeHTTP(w, r)
+		})
 	})
 
-	if config.Admin.PathPrefix != "/" {
-		// redirect / to admin path prefix
-		router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, strings.TrimPrefix(config.Admin.PathPrefix, "/")+"/", http.StatusTemporaryRedirect)
-		})
-
-		// redirect force admin path prefix ending with /
-		router.Get(config.Admin.PathPrefix, func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, strings.TrimPrefix(config.Admin.PathPrefix, "/")+"/", http.StatusTemporaryRedirect)
-		})
-	}
+	// serve protected API
+	router.With(protected).Route("/api", ApiManager.Mount)
 
 	// handle all remaining paths with proxy
 	router.Handle("/*", proxyHandler)
