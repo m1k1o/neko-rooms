@@ -79,7 +79,7 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 
 				for k, vv := range r.Header {
 					for _, v := range vv {
-						r.Header.Add(k, v)
+						req.Header.Add(k, v)
 					}
 				}
 
@@ -88,31 +88,31 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 				//
 
 				if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-					r.Header.Add("X-Forwarded-For", clientIP)
+					req.Header.Add("X-Forwarded-For", clientIP)
 				}
 
 				if r.Method != "" {
-					r.Header.Add("X-Forwarded-Method", r.Method)
+					req.Header.Add("X-Forwarded-Method", r.Method)
 				} else {
-					r.Header.Del("X-Forwarded-Method")
+					req.Header.Del("X-Forwarded-Method")
 				}
 
 				if r.TLS != nil {
-					r.Header.Add("X-Forwarded-Proto", "https")
+					req.Header.Add("X-Forwarded-Proto", "https")
 				} else {
-					r.Header.Add("X-Forwarded-Proto", "http")
+					req.Header.Add("X-Forwarded-Proto", "http")
 				}
 
 				if r.Host != "" {
-					r.Header.Add("X-Forwarded-Host", r.Host)
+					req.Header.Add("X-Forwarded-Host", r.Host)
 				} else {
-					r.Header.Del("X-Forwarded-Host")
+					req.Header.Del("X-Forwarded-Host")
 				}
 
 				if r.URL.RequestURI() != "" {
-					r.Header.Add("X-Forwarded-Uri", r.URL.RequestURI())
+					req.Header.Add("X-Forwarded-Uri", r.URL.RequestURI())
 				} else {
-					r.Header.Del("X-Forwarded-Uri")
+					req.Header.Del("X-Forwarded-Uri")
 				}
 
 				client := &http.Client{
