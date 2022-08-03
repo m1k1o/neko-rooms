@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -61,21 +62,78 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 	//
 
 	protected := func(next http.Handler) http.Handler {
-		// if auth is disabled
-		if config.Admin.Username == "" || config.Admin.Password == "" {
-			return next
+		// if proxy auth is enabled
+		if config.Admin.ProxyAuth != "" {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				req, err := http.NewRequest("GET", config.Admin.ProxyAuth, nil)
+				if err != nil {
+					logger.Err(err).Msg("proxy auth request `http.NewRequest` err")
+					http.Error(w, "proxy auth failed", http.StatusForbidden)
+					return
+				}
+
+				// copy headers
+				for k, vv := range r.Header {
+					for _, v := range vv {
+						r.Header.Add(k, v)
+					}
+				}
+
+				client := &http.Client{
+					CheckRedirect: func(req *http.Request, via []*http.Request) error {
+						return http.ErrUseLastResponse
+					},
+				}
+
+				res, err := client.Do(req)
+				if err != nil {
+					logger.Err(err).Msg("proxy auth request `client.Do` err")
+					http.Error(w, "proxy auth failed", http.StatusForbidden)
+					return
+				}
+				defer res.Body.Close()
+
+				// read whole body
+				body, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					logger.Err(err).Msg("proxy auth request `ioutil.ReadAll` err")
+					http.Error(w, "proxy auth failed", http.StatusForbidden)
+					return
+				}
+
+				if res.StatusCode < 200 || res.StatusCode >= 300 {
+					// copy headers
+					for k, vv := range res.Header {
+						for _, v := range vv {
+							w.Header().Add(k, v)
+						}
+					}
+
+					// copy status & body
+					w.WriteHeader(res.StatusCode)
+					w.Write(body)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			})
 		}
 
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user, pass, ok := r.BasicAuth()
-			if !ok || user != config.Admin.Username || pass != config.Admin.Password {
-				w.Header().Add("WWW-Authenticate", `Basic realm="neko-rooms admin"`)
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
+		// if basic auth is enabled
+		if config.Admin.Username != "" && config.Admin.Password != "" {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				user, pass, ok := r.BasicAuth()
+				if !ok || user != config.Admin.Username || pass != config.Admin.Password {
+					w.Header().Add("WWW-Authenticate", `Basic realm="neko-rooms admin"`)
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
 
-			next.ServeHTTP(w, r)
-		})
+				next.ServeHTTP(w, r)
+			})
+		}
+
+		return next
 	}
 
 	// cache static file paths
