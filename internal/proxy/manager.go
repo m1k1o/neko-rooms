@@ -18,6 +18,7 @@ import (
 )
 
 type entry struct {
+	id      string
 	running bool
 	handler *httputil.ReverseProxy
 }
@@ -67,7 +68,7 @@ func (p *ProxyManagerCtx) Start() {
 		for {
 			select {
 			case err := <-errs:
-				p.logger.Info().Interface("err", err).Msg("eee")
+				p.logger.Err(err).Msg("got docker event")
 			case msg := <-msgs:
 				enabled, path, port, ok := p.parseLabels(msg.Actor.Attributes)
 				if !ok {
@@ -86,10 +87,12 @@ func (p *ProxyManagerCtx) Start() {
 				switch msg.Action {
 				case "create":
 					p.handlers.Set(path, &entry{
+						id:      msg.ID,
 						running: false,
 					})
 				case "start":
 					e := &entry{
+						id:      msg.ID,
 						running: true,
 					}
 
@@ -104,6 +107,7 @@ func (p *ProxyManagerCtx) Start() {
 					p.handlers.Set(path, e)
 				case "stop":
 					p.handlers.Set(path, &entry{
+						id:      msg.ID,
 						running: false,
 					})
 				case "destroy":
@@ -145,7 +149,10 @@ func (p *ProxyManagerCtx) Refresh() error {
 
 		host := cont.ID[:12] + ":" + port
 
-		entry := &entry{}
+		entry := &entry{
+			id: cont.ID,
+		}
+
 		if cont.State == "running" {
 			entry.running = true
 
@@ -240,9 +247,29 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if not proxying
+	// if not proxying, check for container readiness status
 	if proxy.handler == nil {
-		RoomReady(w, r)
+		containers, err := p.client.ContainerList(p.ctx, dockerTypes.ContainerListOptions{
+			All: true,
+			Filters: filters.NewArgs(
+				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.instanceName)),
+				filters.Arg("id", proxy.id),
+			),
+		})
+
+		if err != nil || len(containers) != 1 {
+			p.logger.Err(err).Msg("error while getting container ready status")
+			RoomNotReady(w, r)
+			return
+		}
+
+		container := containers[0]
+		if strings.Contains(container.Status, "starting") {
+			RoomNotReady(w, r)
+		} else {
+			RoomReady(w, r)
+		}
+
 		return
 	}
 
