@@ -63,7 +63,6 @@ func init() {
 		Configs: &Configs{
 			Root:   &config.Root{},
 			Server: &config.Server{},
-			API:    &config.API{},
 			Room:   &config.Room{},
 		},
 	}
@@ -101,7 +100,6 @@ func (i *Version) Details() string {
 type Configs struct {
 	Root   *config.Root
 	Server *config.Server
-	API    *config.API
 	Room   *config.Room
 }
 
@@ -142,7 +140,6 @@ func (main *MainCtx) Start() {
 	main.apiManager = api.New(
 		main.roomManager,
 		main.pullManager,
-		main.Configs.API,
 	)
 
 	main.proxyManager = proxy.New(
