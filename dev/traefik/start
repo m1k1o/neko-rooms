@@ -37,6 +37,11 @@ docker run --rm -it \
     -l "traefik.enable=true" \
     -l "traefik.http.services.neko-rooms-server-fe.loadbalancer.server.port=8080" \
     -l "traefik.http.routers.neko-rooms-server.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
-    -l "traefik.http.routers.neko-rooms-server.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`) && (PathPrefix(\`/api\`) || PathPrefix(\`/room\`))" \
+    -l "traefik.http.routers.neko-rooms-server.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`) && PathPrefix(\`/room\`)" \
+    -l "traefik.http.routers.neko-rooms-server.priority=2" \
+    -l "traefik.http.routers.neko-rooms-server.service=neko-rooms-server-fe" \
+    -l "traefik.http.routers.neko-rooms-server-api.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
+    -l "traefik.http.routers.neko-rooms-server-api.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`) && PathPrefix(\`/api\`)" \
+    -l "traefik.http.routers.neko-rooms-server-api.service=neko-rooms-server-fe" \
     --entrypoint="/app/bin/neko_rooms" \
     neko_rooms_img serve --bind :8080;

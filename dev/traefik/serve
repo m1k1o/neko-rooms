@@ -18,6 +18,7 @@ docker run --rm -it \
     -l "traefik.http.services.neko-rooms-client-fe.loadbalancer.server.port=8080" \
     -l "traefik.http.routers.neko-rooms-client.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
     -l "traefik.http.routers.neko-rooms-client.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`)" \
+    -l "traefik.http.routers.neko-rooms-client.priority=1" \
     --user="$(id -u):$(id -g)" \
     --workdir="/app" \
     --entrypoint="npm" \
