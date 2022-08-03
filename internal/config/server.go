@@ -1,16 +1,14 @@
 package config
 
 import (
-	"path"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 type Admin struct {
-	Static     string
-	Password   string
-	PathPrefix string
+	Static   string
+	Username string
+	Password string
 }
 
 type Server struct {
@@ -56,14 +54,13 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("admin.password", "", "admin password")
-	if err := viper.BindPFlag("admin.password", cmd.PersistentFlags().Lookup("admin.password")); err != nil {
+	cmd.PersistentFlags().String("admin.username", "admin", "require auth: admin username")
+	if err := viper.BindPFlag("admin.username", cmd.PersistentFlags().Lookup("admin.username")); err != nil {
 		return err
 	}
 
-	// TODO: Default in v2 will be '/admin'.
-	cmd.PersistentFlags().String("admin.path_prefix", "", "set custom path prefix for admin")
-	if err := viper.BindPFlag("admin.path_prefix", cmd.PersistentFlags().Lookup("admin.path_prefix")); err != nil {
+	cmd.PersistentFlags().String("admin.password", "", "require auth: admin password")
+	if err := viper.BindPFlag("admin.password", cmd.PersistentFlags().Lookup("admin.password")); err != nil {
 		return err
 	}
 
@@ -78,6 +75,6 @@ func (s *Server) Set() {
 	s.PProf = viper.GetBool("pprof")
 
 	s.Admin.Static = viper.GetString("admin.static")
+	s.Admin.Username = viper.GetString("admin.username")
 	s.Admin.Password = viper.GetString("admin.password")
-	s.Admin.PathPrefix = path.Join("/", path.Clean(viper.GetString("admin.path_prefix")))
 }
