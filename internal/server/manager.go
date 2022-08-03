@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -78,6 +79,13 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 						r.Header.Add(k, v)
 					}
 				}
+
+				// add x-forwarded headers
+				r.Header.Add("X-Forwarded-Method", r.Method)
+				r.Header.Add("X-Forwarded-Proto", strings.TrimRight(r.URL.Scheme, ":"))
+				r.Header.Add("X-Forwarded-Host", r.URL.Host)
+				r.Header.Add("X-Forwarded-Uri", r.URL.Path)
+				r.Header.Add("X-Forwarded-For", r.RemoteAddr)
 
 				client := &http.Client{
 					CheckRedirect: func(req *http.Request, via []*http.Request) error {
