@@ -3,11 +3,11 @@ package server
 import (
 	"context"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -73,19 +73,47 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 					return
 				}
 
+				//
 				// copy headers
+				//
+
 				for k, vv := range r.Header {
 					for _, v := range vv {
 						r.Header.Add(k, v)
 					}
 				}
 
+				//
 				// add x-forwarded headers
-				r.Header.Add("X-Forwarded-Method", r.Method)
-				r.Header.Add("X-Forwarded-Proto", strings.TrimRight(r.URL.Scheme, ":"))
-				r.Header.Add("X-Forwarded-Host", r.URL.Host)
-				r.Header.Add("X-Forwarded-Uri", r.URL.Path)
-				r.Header.Add("X-Forwarded-For", r.RemoteAddr)
+				//
+
+				if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+					r.Header.Add("X-Forwarded-For", clientIP)
+				}
+
+				if r.Method != "" {
+					r.Header.Add("X-Forwarded-Method", r.Method)
+				} else {
+					r.Header.Del("X-Forwarded-Method")
+				}
+
+				if r.TLS != nil {
+					r.Header.Add("X-Forwarded-Proto", "https")
+				} else {
+					r.Header.Add("X-Forwarded-Proto", "http")
+				}
+
+				if r.Host != "" {
+					r.Header.Add("X-Forwarded-Host", r.Host)
+				} else {
+					r.Header.Del("X-Forwarded-Host")
+				}
+
+				if r.URL.RequestURI() != "" {
+					r.Header.Add("X-Forwarded-Uri", r.URL.RequestURI())
+				} else {
+					r.Header.Del("X-Forwarded-Uri")
+				}
 
 				client := &http.Client{
 					CheckRedirect: func(req *http.Request, via []*http.Request) error {
