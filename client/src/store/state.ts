@@ -210,6 +210,42 @@ export const state = {
         } as BrowserPolicyExtension,
       },
     },
+    {
+      text: 'Surfshark VPN Extension',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '{732216ec-0dab-43bb-ac85-4b5e1977599d}',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/surfshark-vpn-proxy/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'ailoabdmgclmfmhdagmlohpjlbpffblp',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'SoundFixer',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'soundfixer@unrelenting.technology',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/soundfixer/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'mbhbddecpoendcifccfckjkigbinefkg',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Native MPEG-Dash + HLS Playback',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'native-dash-hls@cavar.net',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/native-mpeg-dash-hls-playback/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'cjfbmleiaobegagekpmlhmaadepdeedn',
+        } as BrowserPolicyExtension,
+      },
+    },
   ],
   defaultBrowserPolicyContent: {
     extensions: [],
