@@ -37,7 +37,7 @@
         <i v-else>uses mux</i>
       </template>
       <template v-slot:[`item.status`]="{ item }">
-        <v-chip :color="item.running ? 'green' : 'red'" dark small> {{ item.status }} </v-chip>
+        <v-chip :color="item.running ? (item.status.includes('unhealthy') ? 'warning' : 'green') : 'red'" dark small> {{ item.status }} </v-chip>
       </template>
       <template v-slot:[`item.created`]="{ item }">
         {{ item.created | timeago }}
