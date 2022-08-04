@@ -201,6 +201,15 @@ export const state = {
         } as BrowserPolicyExtension,
       },
     },
+    {
+      text: 'Google Input Tools',
+      value: {
+        // not available for firefox
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'mclkkofklkfljcocdinagocijmpgbhab',
+        } as BrowserPolicyExtension,
+      },
+    },
   ],
   defaultBrowserPolicyContent: {
     extensions: [],
