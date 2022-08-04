@@ -83,7 +83,7 @@
               <RoomLink :roomId="roomId" :password="settings.user_pass" label="invite link for users" />
             </td></tr>
             <tr><th> Admin password </th><td>
-              <RoomLink :roomId="roomId" :password="settings.admin_pass" label="invite link for users" />
+              <RoomLink :roomId="roomId" :password="settings.admin_pass" label="invite link for admins" />
             </td></tr>
             <tr v-if="!usesMux"><th> Max connections </th><td>
               <template v-if="settings.max_connections > 0">{{ settings.max_connections }}</template>
