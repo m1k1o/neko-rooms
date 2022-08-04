@@ -69,6 +69,25 @@
           </v-simple-table>
         </v-col>
       </v-row>
+      <template v-if="statsErr">
+        <v-alert
+          border="left"
+          type="info"
+          v-if="room.status.includes('starting')"
+        >
+          <p><strong>Room stats are not available.</strong></p>
+          <p class="mb-0">Because room is currently starting. They will be availalbe soon.</p>
+        </v-alert>
+        <v-alert
+          border="left"
+          type="warning"
+          v-else
+        >
+          <p><strong>Room stats are not available.</strong></p>
+          <p class="mb-0">{{ statsErr }}</p>
+        </v-alert>
+      </template>
+      
       <div class="text-center mt-3">
         <v-btn @click="LoadStats" :loading="statsLoading">Reload</v-btn>
       </div>
@@ -203,6 +222,7 @@ export default class RoomInfo extends Vue {
   @Prop(String) readonly roomId: string | undefined
 
   private statsLoading = false
+  private statsErr = ""
   private stats: RoomStats | null = null
 
   private settingsLoading = false
@@ -215,6 +235,7 @@ export default class RoomInfo extends Vue {
   @Watch('roomId', { immediate: true })
   async SetRoomId(roomId: string) {
     this.stats = null
+    this.statsErr = ""
     this.settings = null
     this.settingsLoading = true
   
@@ -240,6 +261,7 @@ export default class RoomInfo extends Vue {
     }
   }
 
+  @Watch('room.status')
   async LoadStats() {
     this.statsLoading = true
   
@@ -260,6 +282,9 @@ export default class RoomInfo extends Vue {
         return 0
       })
       this.stats = stats
+      this.statsErr = ""
+    } catch (e: any) {
+      this.statsErr = e
     } finally {
       this.statsLoading = false
     }
