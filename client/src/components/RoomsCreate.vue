@@ -551,14 +551,13 @@ export default class RoomsCreate extends Vue {
     const config = this.browserPolicyConfig
     if (!config) return []
   
-    return this.$store.state.browserPolicyExtensions.map(({ text, value }: {
+    return this.$store.state.browserPolicyExtensions.map(({ text, value: values }: {
       text: string;
       value: Record<BrowserPolicyTypeEnum, BrowserPolicyExtension>;
     }) => {
-      return {
-        text,
-        value: value[config.type as BrowserPolicyTypeEnum],
-      }
+      const value = values[config.type as BrowserPolicyTypeEnum]
+      if (!value) return undefined
+      return { text, value }
     })
   }
 
