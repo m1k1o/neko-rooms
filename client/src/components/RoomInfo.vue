@@ -80,24 +80,10 @@
             <tr><th style="width:50%;"> Name </th><td>{{ settings.name }}</td></tr>
             <tr><th> Neko image </th><td>{{ settings.neko_image }}</td></tr>
             <tr><th> User password </th><td>
-              <v-btn @click="showUserPass = !showUserPass" icon small><v-icon small>{{ showUserPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
-              <span class="mx-2">{{ showUserPass ? settings.user_pass : '****' }}</span>
-              <v-tooltip top v-if="room">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn v-bind="attrs" v-on="on" :disabled="!room.running" :href="room.url + '?pwd=' + encodeURIComponent(settings.user_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
-                </template>
-                <span>Invite link for users</span>
-              </v-tooltip>
+              <RoomLink :roomId="roomId" :password="settings.user_pass" label="invite link for users" />
             </td></tr>
             <tr><th> Admin password </th><td>
-              <v-btn @click="showAdminPass = !showAdminPass" icon small><v-icon small>{{ showAdminPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
-              <span class="mx-2">{{ showAdminPass ? settings.admin_pass : '****' }}</span>
-              <v-tooltip bottom v-if="room">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn  v-bind="attrs" v-on="on" :disabled="!room.running" :href="room.url + '?pwd=' + encodeURIComponent(settings.admin_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
-                </template>
-                <span>Invite link for admins</span>
-              </v-tooltip>
+              <RoomLink :roomId="roomId" :password="settings.admin_pass" label="invite link for users" />
             </td></tr>
             <tr v-if="!usesMux"><th> Max connections </th><td>
               <template v-if="settings.max_connections > 0">{{ settings.max_connections }}</template>
@@ -199,6 +185,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import RoomLink from './RoomLink.vue'
 
 import {
   RoomStats,
@@ -207,7 +194,11 @@ import {
   RoomEntry,
 } from '@/api/index'
 
-@Component
+@Component({
+  components: {
+    RoomLink,
+  }
+})
 export default class RoomInfo extends Vue {
   @Prop(String) readonly roomId: string | undefined
 
@@ -216,9 +207,6 @@ export default class RoomInfo extends Vue {
 
   private settingsLoading = false
   private settings: RoomSettings | null = null
-
-  private showUserPass = false
-  private showAdminPass = false
 
   get room(): RoomEntry {
     return this.$store.state.rooms.find(({ id }: RoomEntry) => id == this.roomId)
