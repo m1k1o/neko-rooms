@@ -219,7 +219,7 @@ import {
   }
 })
 export default class RoomInfo extends Vue {
-  @Prop(String) readonly roomId: string | undefined
+  @Prop(String) readonly roomId!: string
 
   private statsLoading = false
   private statsErr = ""
