@@ -389,6 +389,35 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	//
+	// Set container devices
+	//
+
+	var devices []container.DeviceMapping
+	for _, device := range settings.Resources.Devices {
+		// FIXME should use docker/cli parseDevice, unfortunately private
+		src, dst, per := "", "", "rwm"
+		arr := strings.Split(device, ":")
+		switch len(arr) {
+		case 3:
+			per = arr[2]
+			fallthrough
+		case 2:
+			dst = arr[1]
+			fallthrough
+		case 1:
+			src = arr[0]
+		}
+		if dst == "" {
+			dst = src
+		}
+		devices = append(devices, container.DeviceMapping{
+			PathOnHost:        src,
+			PathInContainer:   dst,
+			CgroupPermissions: per,
+		})
+	}
+
+	//
 	// Set container configs
 	//
 
@@ -433,6 +462,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			CPUShares: settings.Resources.CPUShares,
 			NanoCPUs:  settings.Resources.NanoCPUs,
 			Memory:    settings.Resources.Memory,
+			Devices:   devices,
 		},
 		// Privileged
 		Privileged: isPrivilegedImage,

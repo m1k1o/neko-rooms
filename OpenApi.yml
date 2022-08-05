@@ -349,6 +349,11 @@ components:
         memory:
           type: number
           description: in bytes
+        devices:
+          type: array
+          items:
+            type: string
+            example: /dev/dri/renderD128:/dev/dri/renderD128:rwm
 
     RoomSettings:
       type: object
