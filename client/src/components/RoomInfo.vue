@@ -69,7 +69,7 @@
           </v-simple-table>
         </v-col>
       </v-row>
-      <template v-if="statsErr">
+      <template v-if="statsErr && room.running">
         <v-alert
           border="left"
           type="info"
@@ -89,7 +89,7 @@
       </template>
       
       <div class="text-center mt-3">
-        <v-btn @click="LoadStats" :loading="statsLoading">Reload</v-btn>
+        <v-btn @click="LoadStats" :loading="statsLoading" :disabled="!room.running">Reload</v-btn>
       </div>
 
       <div class="my-3 headline">Main settings</div>
@@ -241,7 +241,9 @@ export default class RoomInfo extends Vue {
   
     try {
       this.settings = await this.$store.dispatch('ROOMS_SETTINGS', roomId)
-      this.LoadStats()
+      if (this.room.running) {
+        this.LoadStats()
+      }
     } catch(e) {
       if (e.response) {
         this.$swal({
