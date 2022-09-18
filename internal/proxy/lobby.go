@@ -40,7 +40,7 @@ func roomWait(w http.ResponseWriter, r *http.Request) {
 	</script>`))
 }
 
-func RoomNotFound(w http.ResponseWriter, r *http.Request) {
+func RoomNotFound(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 	utils.Swal2Response(w, `
 		<div class="swal2-header">
 			<div class="swal2-icon swal2-error">
@@ -57,10 +57,12 @@ func RoomNotFound(w http.ResponseWriter, r *http.Request) {
 		</div>
 	`)
 
-	roomWait(w, r)
+	if waitEnabled {
+		roomWait(w, r)
+	}
 }
 
-func RoomNotRunning(w http.ResponseWriter, r *http.Request) {
+func RoomNotRunning(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 	utils.Swal2Response(w, `
 		<div class="swal2-header">
 			<div class="swal2-icon swal2-warning">
@@ -77,7 +79,9 @@ func RoomNotRunning(w http.ResponseWriter, r *http.Request) {
 		</div>
 	`)
 
-	roomWait(w, r)
+	if waitEnabled {
+		roomWait(w, r)
+	}
 }
 
 func RoomNotReady(w http.ResponseWriter, r *http.Request) {

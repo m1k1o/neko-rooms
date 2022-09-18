@@ -31,6 +31,7 @@ type Room struct {
 	NekoPrivilegedImages []string
 	PathPrefix           string
 	Labels               []string
+	WaitEnabled          bool
 
 	StorageEnabled  bool
 	StorageInternal string
@@ -90,6 +91,11 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().StringSlice("labels", []string{}, "additional labels appended to every room")
 	if err := viper.BindPFlag("labels", cmd.PersistentFlags().Lookup("labels")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().Bool("wait_enabled", true, "enable active waiting for the room")
+	if err := viper.BindPFlag("wait_enabled", cmd.PersistentFlags().Lookup("wait_enabled")); err != nil {
 		return err
 	}
 
@@ -199,6 +205,7 @@ func (s *Room) Set() {
 	s.NekoPrivilegedImages = viper.GetStringSlice("neko_privileged_images")
 	s.PathPrefix = path.Join("/", path.Clean(viper.GetString("path_prefix")))
 	s.Labels = viper.GetStringSlice("labels")
+	s.WaitEnabled = viper.GetBool("wait_enabled")
 
 	s.StorageEnabled = viper.GetBool("storage.enabled")
 	s.StorageInternal = viper.GetString("storage.internal")
