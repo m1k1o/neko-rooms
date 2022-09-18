@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
 )
@@ -116,7 +118,7 @@ func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.Contain
 	return &container, nil
 }
 
-func (manager *RoomManagerCtx) containerExec(id string, cmd []string) (string, error) {
+func (manager *RoomManagerCtx) containerExec(id string, cmd []string) ([]byte, error) {
 	exec, err := manager.client.ContainerExecCreate(context.Background(), id, dockerTypes.ExecConfig{
 		AttachStderr: true,
 		AttachStdin:  true,
@@ -126,7 +128,7 @@ func (manager *RoomManagerCtx) containerExec(id string, cmd []string) (string, e
 		Detach:       false,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	conn, err := manager.client.ContainerExecAttach(context.Background(), exec.ID, dockerTypes.ExecStartCheck{
@@ -134,10 +136,59 @@ func (manager *RoomManagerCtx) containerExec(id string, cmd []string) (string, e
 		Tty:    true,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer conn.Close()
 
-	data, err := io.ReadAll(conn.Reader)
-	return string(data), err
+	return io.ReadAll(conn.Reader)
+}
+
+func (manager *RoomManagerCtx) containerExecDialer(id string) func(ctx context.Context, network, addr string) (net.Conn, error) {
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		fmt.Println("dialer", network, addr)
+
+		// split addr
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
+		}
+
+		exec, err := manager.client.ContainerExecCreate(ctx, id, dockerTypes.ExecConfig{
+			AttachStdin:  true,
+			AttachStdout: true,
+			AttachStderr: true,
+			Cmd:          []string{"wget", "-O-", "http://" + host + ":" + port + ""},
+			Tty:          false,
+			Detach:       false,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		c, err := manager.client.ContainerExecAttach(ctx, exec.ID, dockerTypes.ExecStartCheck{
+			Detach: false,
+			Tty:    false,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// Read all
+		// io.ReadAll(c.Reader)
+		dat, err := io.ReadAll(c.Reader)
+		if err != nil {
+			return nil, err
+		}
+
+		fmt.Println("dialer", string(dat))
+
+		// new pipe
+		stderr := stdcopy.NewStdWriter(c.Conn, stdcopy.Stderr)
+		stdout := stdcopy.NewStdWriter(c.Conn, stdcopy.Stdout)
+
+		return &cmdDialer{
+			stdin:  c.Conn,
+			stdout: c.Conn,
+		}, nil
+	}
 }

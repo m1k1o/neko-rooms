@@ -52,6 +52,7 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 
 		r.Get("/settings", manager.roomGetSettings)
 		r.Get("/stats", manager.roomGetStats)
+		r.Get("/screenshot", manager.roomGetScreenshot)
 
 		r.Post("/start", manager.roomGenericAction(manager.rooms.Start))
 		r.Post("/stop", manager.roomGenericAction(manager.rooms.Stop))

@@ -137,6 +137,21 @@ func (manager *ApiManagerCtx) roomGetStats(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(response)
 }
 
+func (manager *ApiManagerCtx) roomGetScreenshot(w http.ResponseWriter, r *http.Request) {
+	roomId := chi.URLParam(r, "roomId")
+
+	response, err := manager.rooms.GetScreenshot(roomId)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+
+	w.Write(response)
+}
+
 func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		roomId := chi.URLParam(r, "roomId")

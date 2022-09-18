@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -593,19 +596,57 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 		return nil, err
 	}
 
-	output, err := manager.containerExec(id, []string{
-		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + settings.AdminPass,
-	})
+	transport := http.Transport{
+		DialContext:         manager.containerExecDialer(id),
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
+	client := http.Client{
+		Transport: &transport,
+		Timeout:   4 * time.Second,
+	}
+
+	// http request to get the stats
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8080/stats?pwd="+settings.AdminPass, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	output, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	var stats types.RoomStats
-	if err := json.Unmarshal([]byte(output), &stats); err != nil {
+	if err := json.Unmarshal(output, &stats); err != nil {
 		return nil, err
 	}
 
 	return &stats, nil
+}
+
+func (manager *RoomManagerCtx) GetScreenshot(id string) ([]byte, error) {
+	container, err := manager.inspectContainer(id)
+	if err != nil {
+		return nil, err
+	}
+
+	settings := types.RoomSettings{}
+	err = settings.FromEnv(container.Config.Env)
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.containerExec(id, []string{
+		"wget", "-q", "-O-", "http://127.0.0.1:8080/screenshot.jpg?pwd=" + settings.AdminPass,
+	})
 }
 
 func (manager *RoomManagerCtx) Start(id string) error {

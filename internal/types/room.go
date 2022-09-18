@@ -258,6 +258,7 @@ type RoomManager interface {
 	GetEntry(id string) (*RoomEntry, error)
 	GetSettings(id string) (*RoomSettings, error)
 	GetStats(id string) (*RoomStats, error)
+	GetScreenshot(id string) ([]byte, error)
 	Remove(id string) error
 
 	Start(id string) error
