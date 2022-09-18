@@ -35,21 +35,23 @@ type ProxyManagerCtx struct {
 	ctx    context.Context
 	cancel func()
 
-	waitMu    sync.RWMutex
-	waitChans map[string]*wait
+	waitMu      sync.RWMutex
+	waitChans   map[string]*wait
+	waitEnabled bool
 
 	client       *dockerClient.Client
 	instanceName string
 	handlers     *prefixHandler[*entry]
 }
 
-func New(client *dockerClient.Client, instanceName string) *ProxyManagerCtx {
+func New(client *dockerClient.Client, instanceName string, waitEnabled bool) *ProxyManagerCtx {
 	return &ProxyManagerCtx{
 		logger:    log.With().Str("module", "proxy").Logger(),
 		waitChans: map[string]*wait{},
 
 		client:       client,
 		instanceName: instanceName,
+		waitEnabled:  waitEnabled,
 		handlers:     &prefixHandler[*entry]{},
 	}
 }
@@ -94,13 +96,15 @@ func (p *ProxyManagerCtx) Start() {
 					Msg("got docker event")
 
 				// terminate waiting for any events
-				p.waitMu.Lock()
-				ch, ok := p.waitChans[path]
-				if ok {
-					close(ch.signal)
-					delete(p.waitChans, path)
+				if p.waitEnabled {
+					p.waitMu.Lock()
+					ch, ok := p.waitChans[path]
+					if ok {
+						close(ch.signal)
+						delete(p.waitChans, path)
+					}
+					p.waitMu.Unlock()
 				}
-				p.waitMu.Unlock()
 
 				p.mu.Lock()
 				switch msg.Action {
@@ -286,12 +290,12 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// if room not found
 	if !ok {
 		// blocking until room is created
-		if r.URL.Query().Has("wait") {
+		if r.URL.Query().Has("wait") && p.waitEnabled {
 			p.waitForPath(w, r, cleanPath)
 			return
 		}
 
-		RoomNotFound(w, r)
+		RoomNotFound(w, r, p.waitEnabled)
 		return
 	}
 
@@ -305,12 +309,12 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// if room not running
 	if !proxy.running {
 		// blocking until room is running
-		if r.URL.Query().Has("wait") {
+		if r.URL.Query().Has("wait") && p.waitEnabled {
 			p.waitForPath(w, r, cleanPath)
 			return
 		}
 
-		RoomNotRunning(w, r)
+		RoomNotRunning(w, r, p.waitEnabled)
 		return
 	}
 
