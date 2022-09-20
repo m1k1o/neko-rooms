@@ -9,9 +9,9 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
+	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
 func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container) (*types.RoomEntry, error) {
@@ -145,8 +145,6 @@ func (manager *RoomManagerCtx) containerExec(id string, cmd []string) ([]byte, e
 
 func (manager *RoomManagerCtx) containerExecDialer(id string) func(ctx context.Context, network, addr string) (net.Conn, error) {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
-		fmt.Println("dialer", network, addr)
-
 		// split addr
 		host, port, err := net.SplitHostPort(addr)
 		if err != nil {
@@ -156,16 +154,17 @@ func (manager *RoomManagerCtx) containerExecDialer(id string) func(ctx context.C
 		exec, err := manager.client.ContainerExecCreate(ctx, id, dockerTypes.ExecConfig{
 			AttachStdin:  true,
 			AttachStdout: true,
-			AttachStderr: true,
-			Cmd:          []string{"wget", "-O-", "http://" + host + ":" + port + ""},
+			AttachStderr: false,
+			Cmd:          []string{"nc", host, port},
 			Tty:          false,
 			Detach:       false,
 		})
+
 		if err != nil {
 			return nil, err
 		}
 
-		c, err := manager.client.ContainerExecAttach(ctx, exec.ID, dockerTypes.ExecStartCheck{
+		res, err := manager.client.ContainerExecAttach(ctx, exec.ID, dockerTypes.ExecStartCheck{
 			Detach: false,
 			Tty:    false,
 		})
@@ -173,22 +172,6 @@ func (manager *RoomManagerCtx) containerExecDialer(id string) func(ctx context.C
 			return nil, err
 		}
 
-		// Read all
-		// io.ReadAll(c.Reader)
-		dat, err := io.ReadAll(c.Reader)
-		if err != nil {
-			return nil, err
-		}
-
-		fmt.Println("dialer", string(dat))
-
-		// new pipe
-		stderr := stdcopy.NewStdWriter(c.Conn, stdcopy.Stderr)
-		stdout := stdcopy.NewStdWriter(c.Conn, stdcopy.Stdout)
-
-		return &cmdDialer{
-			stdin:  c.Conn,
-			stdout: c.Conn,
-		}, nil
+		return utils.StdCopyDialer(res), nil
 	}
 }
