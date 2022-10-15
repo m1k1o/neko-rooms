@@ -5,13 +5,21 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Admin struct {
+	Static    string
+	ProxyAuth string
+	Username  string
+	Password  string
+}
+
 type Server struct {
-	Cert   string
-	Key    string
-	Bind   string
-	Static string
-	Proxy  bool
-	PProf  bool
+	Cert  string
+	Key   string
+	Bind  string
+	Proxy bool
+	PProf bool
+
+	Admin Admin
 }
 
 func (Server) Init(cmd *cobra.Command) error {
@@ -30,11 +38,6 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
-	cmd.PersistentFlags().String("static", "./www", "path to neko_rooms client files to serve")
-	if err := viper.BindPFlag("static", cmd.PersistentFlags().Lookup("static")); err != nil {
-		return err
-	}
-
 	cmd.PersistentFlags().Bool("proxy", false, "trust reverse proxy headers")
 	if err := viper.BindPFlag("proxy", cmd.PersistentFlags().Lookup("proxy")); err != nil {
 		return err
@@ -45,6 +48,28 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	// Admin
+
+	cmd.PersistentFlags().String("admin.static", "", "path to neko_rooms admin client files to serve")
+	if err := viper.BindPFlag("admin.static", cmd.PersistentFlags().Lookup("admin.static")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("admin.proxy_auth", "", "require auth: proxy authentication URL, only allow if it returns 200")
+	if err := viper.BindPFlag("admin.proxy_auth", cmd.PersistentFlags().Lookup("admin.proxy_auth")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("admin.username", "admin", "require auth: admin username")
+	if err := viper.BindPFlag("admin.username", cmd.PersistentFlags().Lookup("admin.username")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().String("admin.password", "", "require auth: admin password")
+	if err := viper.BindPFlag("admin.password", cmd.PersistentFlags().Lookup("admin.password")); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -52,7 +77,11 @@ func (s *Server) Set() {
 	s.Cert = viper.GetString("cert")
 	s.Key = viper.GetString("key")
 	s.Bind = viper.GetString("bind")
-	s.Static = viper.GetString("static")
 	s.Proxy = viper.GetBool("proxy")
 	s.PProf = viper.GetBool("pprof")
+
+	s.Admin.Static = viper.GetString("admin.static")
+	s.Admin.ProxyAuth = viper.GetString("admin.proxy_auth")
+	s.Admin.Username = viper.GetString("admin.username")
+	s.Admin.Password = viper.GetString("admin.password")
 }

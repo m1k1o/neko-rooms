@@ -1,13 +1,36 @@
 #!/bin/sh
 cd "$(dirname "$0")"
 
-if [ ! -f "../.env" ]
-then
-    echo "../.env file not found!"
-    exit 1
+if [ -z $NEKO_ROOMS_PORT ]; then
+    NEKO_ROOMS_PORT="8080"
 fi
 
-export $(cat ../.env | sed 's/#.*//g' | xargs)
+if [ -z $NEKO_ROOMS_EPR ]; then
+    NEKO_ROOMS_EPR="52090-52099"
+fi
+
+if [ -z $NEKO_ROOMS_NAT1TO1 ]; then
+    for i in $(ifconfig -l 2>/dev/null); do
+        NEKO_ROOMS_NAT1TO1=$(ipconfig getifaddr $i)
+        if [ ! -z $NEKO_ROOMS_NAT1TO1 ]; then
+            break
+        fi
+    done
+
+    if [ -z $NEKO_ROOMS_NAT1TO1 ]; then
+        NEKO_ROOMS_NAT1TO1=$(hostname -i 2>/dev/null)
+    fi
+fi
+
+NEKO_ROOMS_INSTANCE_NETWORK="neko-rooms-net"
+docker network create --attachable "${NEKO_ROOMS_INSTANCE_NETWORK}";
+
+trap on_exit EXIT
+
+on_exit() {
+    echo "Removing neko-rooms network"
+    docker network rm "${NEKO_ROOMS_INSTANCE_NETWORK}";
+}
 
 DATA_PATH="./data"
 mkdir -p "${DATA_PATH}"
@@ -17,23 +40,22 @@ mkdir -p "${EXTERNAL_PATH}"
 
 docker run --rm -it \
     --name="neko_rooms_server" \
+    -p "${NEKO_ROOMS_PORT}:8080" \
     -v "`realpath ..`:/app" \
     -v "`realpath ${DATA_PATH}`:/data" \
 	-e "TZ=${TZ}" \
+	-e "NEKO_ROOMS_MUX=true" \
 	-e "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}" \
 	-e "NEKO_ROOMS_NAT1TO1=${NEKO_ROOMS_NAT1TO1}" \
+	-e "NEKO_ROOMS_INSTANCE_URL=http://${NEKO_ROOMS_NAT1TO1}:${NEKO_ROOMS_PORT}/" \
+	-e "NEKO_ROOMS_INSTANCE_NETWORK=${NEKO_ROOMS_INSTANCE_NETWORK}" \
 	-e "NEKO_ROOMS_STORAGE_INTERNAL=/data" \
 	-e "NEKO_ROOMS_STORAGE_EXTERNAL=`realpath ${DATA_PATH}`" \
 	-e "NEKO_ROOMS_MOUNTS_WHITELIST=`realpath ${EXTERNAL_PATH}`" \
-	-e "NEKO_ROOMS_TRAEFIK_DOMAIN=${NEKO_ROOMS_TRAEFIK_DOMAIN}" \
-	-e "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
-	-e "NEKO_ROOMS_TRAEFIK_NETWORK=${NEKO_ROOMS_TRAEFIK_NETWORK}" \
+	-e "NEKO_ROOMS_PATH_PREFIX=/room/" \
+	-e "NEKO_ROOMS_TRAEFIK_ENABLED=false" \
     -e 'DOCKER_API_VERSION=1.39' \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
-    --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
-    -l "traefik.enable=true" \
-    -l "traefik.http.services.neko-rooms-server-fe.loadbalancer.server.port=8080" \
-    -l "traefik.http.routers.neko-rooms-server.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
-    -l "traefik.http.routers.neko-rooms-server.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`) && PathPrefix(\`/api\`)" \
+    --net="${NEKO_ROOMS_INSTANCE_NETWORK}" \
     --entrypoint="/app/bin/neko_rooms" \
     neko_rooms_img serve --bind :8080;

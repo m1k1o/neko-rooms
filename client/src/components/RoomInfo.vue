@@ -25,10 +25,10 @@
               :rotate="270"
               :size="100"
               :width="15"
-              :value="(stats.connections / settings.max_connections) * 100"
+              :value="settings.max_connections == 0 ? 100 : ((stats.connections / settings.max_connections) * 100)"
               color="blue"
             >
-              {{ stats.connections }} / {{ settings.max_connections }}
+              {{ stats.connections }} <template v-if="settings.max_connections > 0">/ {{ settings.max_connections }}</template>
             </v-progress-circular>
           </div>
         </v-col>
@@ -69,8 +69,27 @@
           </v-simple-table>
         </v-col>
       </v-row>
+      <template v-if="statsErr && room.running">
+        <v-alert
+          border="left"
+          type="info"
+          v-if="room.status.includes('starting')"
+        >
+          <p><strong>Room stats are not available.</strong></p>
+          <p class="mb-0">Because room is currently starting. They will be availalbe soon.</p>
+        </v-alert>
+        <v-alert
+          border="left"
+          type="warning"
+          v-else
+        >
+          <p><strong>Room stats are not available.</strong></p>
+          <p class="mb-0">{{ statsErr }}</p>
+        </v-alert>
+      </template>
+      
       <div class="text-center mt-3">
-        <v-btn @click="LoadStats" :loading="statsLoading">Reload</v-btn>
+        <v-btn @click="LoadStats" :loading="statsLoading" :disabled="!room.running">Reload</v-btn>
       </div>
 
       <div class="my-3 headline">Main settings</div>
@@ -80,26 +99,15 @@
             <tr><th style="width:50%;"> Name </th><td>{{ settings.name }}</td></tr>
             <tr><th> Neko image </th><td>{{ settings.neko_image }}</td></tr>
             <tr><th> User password </th><td>
-              <v-btn @click="showUserPass = !showUserPass" icon small><v-icon small>{{ showUserPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
-              <span class="mx-2">{{ showUserPass ? settings.user_pass : '****' }}</span>
-              <v-tooltip top v-if="room">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn v-bind="attrs" v-on="on" :disabled="!room.running" :href="room.url + '?pwd=' + encodeURIComponent(settings.user_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
-                </template>
-                <span>Invite link for users</span>
-              </v-tooltip>
+              <RoomLink :roomId="roomId" :password="settings.user_pass" label="invite link for users" />
             </td></tr>
             <tr><th> Admin password </th><td>
-              <v-btn @click="showAdminPass = !showAdminPass" icon small><v-icon small>{{ showAdminPass ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon></v-btn>
-              <span class="mx-2">{{ showAdminPass ? settings.admin_pass : '****' }}</span>
-              <v-tooltip bottom v-if="room">
-                <template v-slot:activator="{ on, attrs }">
-                  <v-btn  v-bind="attrs" v-on="on" :disabled="!room.running" :href="room.url + '?pwd=' + encodeURIComponent(settings.admin_pass)" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
-                </template>
-                <span>Invite link for admins</span>
-              </v-tooltip>
+              <RoomLink :roomId="roomId" :password="settings.admin_pass" label="invite link for admins" />
             </td></tr>
-            <tr><th> Max connections </th><td>{{ settings.max_connections }}</td></tr>
+            <tr v-if="!usesMux"><th> Max connections </th><td>
+              <template v-if="settings.max_connections > 0">{{ settings.max_connections }}</template>
+              <i v-else>not limited because uses mux</i>
+            </td></tr>
             <tr><th> Control protection </th><td>{{ settings.control_protection }}</td></tr>
             <tr><th> Implicit Control </th><td>{{ settings.implicit_control }}</td></tr>
           </tbody>
@@ -196,6 +204,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import RoomLink from './RoomLink.vue'
 
 import {
   RoomStats,
@@ -204,18 +213,20 @@ import {
   RoomEntry,
 } from '@/api/index'
 
-@Component
+@Component({
+  components: {
+    RoomLink,
+  }
+})
 export default class RoomInfo extends Vue {
-  @Prop(String) readonly roomId: string | undefined
+  @Prop(String) readonly roomId!: string
 
   private statsLoading = false
+  private statsErr = ""
   private stats: RoomStats | null = null
 
   private settingsLoading = false
   private settings: RoomSettings | null = null
-
-  private showUserPass = false
-  private showAdminPass = false
 
   get room(): RoomEntry {
     return this.$store.state.rooms.find(({ id }: RoomEntry) => id == this.roomId)
@@ -224,12 +235,15 @@ export default class RoomInfo extends Vue {
   @Watch('roomId', { immediate: true })
   async SetRoomId(roomId: string) {
     this.stats = null
+    this.statsErr = ""
     this.settings = null
     this.settingsLoading = true
   
     try {
       this.settings = await this.$store.dispatch('ROOMS_SETTINGS', roomId)
-      this.LoadStats()
+      if (this.room.running) {
+        this.LoadStats()
+      }
     } catch(e) {
       if (e.response) {
         this.$swal({
@@ -249,6 +263,7 @@ export default class RoomInfo extends Vue {
     }
   }
 
+  @Watch('room.status')
   async LoadStats() {
     this.statsLoading = true
   
@@ -269,9 +284,16 @@ export default class RoomInfo extends Vue {
         return 0
       })
       this.stats = stats
+      this.statsErr = ""
+    } catch (e: any) {
+      this.statsErr = e
     } finally {
       this.statsLoading = false
     }
+  }
+
+  get usesMux() {
+    return this.$store.state.roomsConfig.uses_mux
   }
 
   get allBrowserExtensions() {

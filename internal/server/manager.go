@@ -2,9 +2,12 @@ package server
 
 import (
 	"context"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -24,7 +27,7 @@ type ServerManagerCtx struct {
 	config *config.Server
 }
 
-func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server) *ServerManagerCtx {
+func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Server, proxyHandler http.Handler) *ServerManagerCtx {
 	logger := log.With().Str("module", "server").Logger()
 
 	router := chi.NewRouter()
@@ -49,32 +52,167 @@ func New(ApiManager types.ApiManager, pathPrefix string, config *config.Server) 
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
-	router.Route("/api", ApiManager.Mount)
-
-	// serve static files
-	if config.Static != "" {
-		fs := http.FileServer(http.Dir(config.Static))
-		router.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-			if _, err := os.Stat(config.Static + r.URL.Path); !os.IsNotExist(err) {
-				fs.ServeHTTP(w, r)
-			} else {
-				http.NotFound(w, r)
-			}
-		})
-	}
-
-	// add simple lobby room
-	router.Get(path.Join("/", pathPrefix, "{roomName}"), ApiManager.RoomLobby)
-	router.Get(path.Join("/", pathPrefix, "{roomName}")+"/", ApiManager.RoomLobby)
-
 	// mount pprof endpoint
 	if config.PProf {
 		withPProf(router)
 		logger.Info().Msgf("with pprof endpoint at %s", pprofPath)
 	}
 
-	// we could use custom 404
-	router.NotFound(http.NotFound)
+	//
+	// admin page
+	//
+
+	protected := func(next http.Handler) http.Handler {
+		// if proxy auth is enabled
+		if config.Admin.ProxyAuth != "" {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				req, err := http.NewRequest("GET", config.Admin.ProxyAuth, nil)
+				if err != nil {
+					logger.Err(err).Msg("proxy auth request `http.NewRequest` err")
+					http.Error(w, "proxy auth failed", http.StatusForbidden)
+					return
+				}
+
+				//
+				// copy headers
+				//
+
+				for k, vv := range r.Header {
+					for _, v := range vv {
+						req.Header.Add(k, v)
+					}
+				}
+
+				//
+				// add x-forwarded headers
+				//
+
+				if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+					req.Header.Add("X-Forwarded-For", clientIP)
+				}
+
+				if r.Method != "" {
+					req.Header.Add("X-Forwarded-Method", r.Method)
+				} else {
+					req.Header.Del("X-Forwarded-Method")
+				}
+
+				if r.TLS != nil {
+					req.Header.Add("X-Forwarded-Proto", "https")
+				} else {
+					req.Header.Add("X-Forwarded-Proto", "http")
+				}
+
+				if r.Host != "" {
+					req.Header.Add("X-Forwarded-Host", r.Host)
+				} else {
+					req.Header.Del("X-Forwarded-Host")
+				}
+
+				if r.URL.RequestURI() != "" {
+					req.Header.Add("X-Forwarded-Uri", r.URL.RequestURI())
+				} else {
+					req.Header.Del("X-Forwarded-Uri")
+				}
+
+				client := &http.Client{
+					CheckRedirect: func(req *http.Request, via []*http.Request) error {
+						return http.ErrUseLastResponse
+					},
+				}
+
+				res, err := client.Do(req)
+				if err != nil {
+					logger.Err(err).Msg("proxy auth request `client.Do` err")
+					http.Error(w, "proxy auth failed", http.StatusForbidden)
+					return
+				}
+				defer res.Body.Close()
+
+				// read whole body
+				body, err := ioutil.ReadAll(res.Body)
+				if err != nil {
+					logger.Err(err).Msg("proxy auth request `ioutil.ReadAll` err")
+					http.Error(w, "proxy auth failed", http.StatusForbidden)
+					return
+				}
+
+				if res.StatusCode < 200 || res.StatusCode >= 300 {
+					// copy headers
+					for k, vv := range res.Header {
+						for _, v := range vv {
+							w.Header().Add(k, v)
+						}
+					}
+
+					// copy status & body
+					w.WriteHeader(res.StatusCode)
+					w.Write(body)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			})
+		}
+
+		// if basic auth is enabled
+		if config.Admin.Username != "" && config.Admin.Password != "" {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				user, pass, ok := r.BasicAuth()
+				if !ok || user != config.Admin.Username || pass != config.Admin.Password {
+					w.Header().Add("WWW-Authenticate", `Basic realm="neko-rooms admin"`)
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			})
+		}
+
+		return next
+	}
+
+	// cache static file paths
+	staticFiles := map[string]struct{}{}
+	if config.Admin.Static != "" {
+		filepath.Walk(config.Admin.Static,
+			func(p string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				staticFiles[path.Clean(p)] = struct{}{}
+				return nil
+			})
+	}
+
+	// serve static files
+	router.Use(func(next http.Handler) http.Handler {
+		// if static files are disabled
+		if config.Admin.Static == "" {
+			return next
+		}
+
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			filePath := path.Join(config.Admin.Static, r.URL.Path)
+
+			// check if file exists to serve it
+			if _, ok := staticFiles[filePath]; ok {
+				// serve protected assets
+				protected(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.ServeFile(w, r, filePath)
+				})).ServeHTTP(w, r)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	// serve protected API
+	router.With(protected).Route("/api", ApiManager.Mount)
+
+	// handle all remaining paths with proxy
+	router.Handle("/*", proxyHandler)
 
 	return &ServerManagerCtx{
 		logger: logger,

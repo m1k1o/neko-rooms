@@ -12,9 +12,9 @@ import { Vue, Component, Prop } from 'vue-property-decorator'
 
 @Component
 export default class RoomActionBtn extends Vue {
-  @Prop(String) readonly action: string | undefined
-  @Prop(String) readonly roomId: string | undefined
-  @Prop(Boolean) readonly disabled: boolean | undefined
+  @Prop(String) readonly action!: string
+  @Prop(String) readonly roomId!: string
+  @Prop(Boolean) readonly disabled!: boolean
 
   private loading = false
 

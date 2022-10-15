@@ -5,7 +5,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/m1k1o/neko-rooms/internal/config"
 	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
@@ -13,15 +12,13 @@ type ApiManagerCtx struct {
 	logger zerolog.Logger
 	rooms  types.RoomManager
 	pull   types.PullManager
-	conf   *config.API
 }
 
-func New(rooms types.RoomManager, pull types.PullManager, conf *config.API) *ApiManagerCtx {
+func New(rooms types.RoomManager, pull types.PullManager) *ApiManagerCtx {
 	return &ApiManagerCtx{
 		logger: log.With().Str("module", "api").Logger(),
 		rooms:  rooms,
 		pull:   pull,
-		conf:   conf,
 	}
 }
 

@@ -1,43 +1,24 @@
 version: "3.5"
 
-#
-# This docker compose needs .env file.
-# Copy .env.example to .env and modify.
-#
-
 networks:
   default:
-    attachable: "true"
-    name: "${NEKO_ROOMS_TRAEFIK_NETWORK}"
+    attachable: true
+    name: "neko-rooms-net"
 
 services:
-  traefik:
-    image: "traefik:2.4"
-    restart: "unless-stopped"
-    environment:
-      - "TZ"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
-      - "./traefik/usersfile:/usersfile:ro"
-      - "./traefik/acme.json:/acme.json"
-      - "./traefik/config:/config"
-
   neko-rooms:
     image: "m1k1o/neko-rooms:latest"
     restart: "unless-stopped"
-    env_file:
-      - ".env"
+    environment:
+      - "TZ=Europe/Vienna"
+      - "NEKO_ROOMS_MUX=true"
+      - "NEKO_ROOMS_EPR=59000-59049"
+      - "NEKO_ROOMS_NAT1TO1=127.0.0.1" # IP address of your server that is reachable from client
+      - "NEKO_ROOMS_INSTANCE_URL=http://127.0.0.1:8080/" # external URL
+      - "NEKO_ROOMS_INSTANCE_NETWORK=neko-rooms-net"
+      - "NEKO_ROOMS_TRAEFIK_ENABLED=false"
+      - "NEKO_ROOMS_PATH_PREFIX=/room/"
+    ports:
+      - "8080:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.neko-rooms-frontend.loadbalancer.server.port=8080"
-      - "traefik.http.routers.neko-rooms.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}"
-      - "traefik.http.routers.neko-rooms.rule=Host(`${NEKO_ROOMS_TRAEFIK_DOMAIN}`)"
-      - "traefik.http.routers.neko-rooms.tls=true"
-      - "traefik.http.routers.neko-rooms.tls.certresolver=${NEKO_ROOMS_TRAEFIK_CERTRESOLVER}"
-      - "traefik.http.routers.neko-rooms.middlewares=basicauth@file"

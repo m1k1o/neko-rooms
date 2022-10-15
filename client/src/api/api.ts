@@ -590,6 +590,12 @@ export interface RoomsConfig {
      * @memberof RoomsConfig
      */
     'storage_enabled'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RoomsConfig
+     */
+    'uses_mux'?: boolean;
 }
 /**
  * 

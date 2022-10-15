@@ -101,7 +101,7 @@ export default class Home extends Vue {
 
   get usedConnections() {
     // eslint-disable-next-line
-    return this.$store.state.rooms.reduce((sum: number, { max_connections }: RoomEntry) => sum + (max_connections || 0), 0)
+    return this.$store.state.rooms.reduce((sum: number, { max_connections }: RoomEntry) => sum + (max_connections || 1/* 0 when using mux */), 0)
   }
 
   async LoadRooms() {

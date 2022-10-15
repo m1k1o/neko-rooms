@@ -1,0 +1,25 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+if [ ! -f ".env" ]
+then
+    echo ".env file not found!"
+    exit 1
+fi
+
+export $(cat .env | sed 's/#.*//g' | xargs)
+
+docker run --rm -it \
+    --name="neko_rooms_client" \
+    -v "${PWD}/../../client:/app" \
+	-e "TZ=${TZ}" \
+    --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
+    -l "traefik.enable=true" \
+    -l "traefik.http.services.neko-rooms-client-fe.loadbalancer.server.port=8080" \
+    -l "traefik.http.routers.neko-rooms-client.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
+    -l "traefik.http.routers.neko-rooms-client.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`)" \
+    -l "traefik.http.routers.neko-rooms-client.priority=1" \
+    --user="$(id -u):$(id -g)" \
+    --workdir="/app" \
+    --entrypoint="npm" \
+    node:14 run serve;

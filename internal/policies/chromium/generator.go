@@ -36,17 +36,17 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 		)
 	}
 
-	ExtensionInstallWhitelist := []interface{}{}
+	ExtensionInstallAllowlist := []interface{}{}
 	for _, e := range policies.Extensions {
-		ExtensionInstallWhitelist = append(
-			ExtensionInstallWhitelist,
+		ExtensionInstallAllowlist = append(
+			ExtensionInstallAllowlist,
 			e.ID,
 		)
 	}
 
 	policiesTmpl["ExtensionInstallForcelist"] = ExtensionInstallForcelist
-	policiesTmpl["ExtensionInstallWhitelist"] = ExtensionInstallWhitelist
-	policiesTmpl["ExtensionInstallBlacklist"] = []interface{}{"*"}
+	policiesTmpl["ExtensionInstallAllowlist"] = ExtensionInstallAllowlist
+	policiesTmpl["ExtensionInstallBlocklist"] = []interface{}{"*"}
 
 	//
 	// Developer Tools

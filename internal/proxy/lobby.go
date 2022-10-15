@@ -1,41 +1,46 @@
-package api
+package proxy
 
 import (
 	"net/http"
-	"strings"
-
-	"github.com/go-chi/chi"
 
 	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
-func (manager *ApiManagerCtx) RoomLobby(w http.ResponseWriter, r *http.Request) {
-	if !manager.conf.Lobby {
-		http.NotFound(w, r)
-	}
+func roomWait(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(`<script>
+	(async function() {
+		document.querySelector(".swal2-loader").style.display = 'block'
+		document.querySelector(".swal2-loader").style.visibility = 'hidden'
 
-	roomName := chi.URLParam(r, "roomName")
-	response, err := manager.rooms.FindByName(roomName)
+		let lastAttempt = (new Date()).getTime()
+		while(true) {
+			try {
+				lastAttempt = (new Date()).getTime()
+				document.querySelector(".swal2-loader").style.visibility = 'visible'
 
-	if err != nil || response.Name != roomName {
-		manager.roomNotFound(w, r)
-		return
-	}
+				await fetch("?wait")
+				location.href = location.href
+			} catch {
+				let now = (new Date()).getTime()
+				let diff = now - lastAttempt
 
-	if !response.Running {
-		manager.roomNotRunning(w, r)
-		return
-	}
+				// if the gap between last attempt and now
+				// is gt 20s, do reconnect immediatly
+				if ((now - lastAttempt) > 20*1000) {
+					continue
+				}
 
-	if strings.Contains(response.Status, "starting") {
-		manager.roomNotReady(w, r)
-		return
-	}
-
-	manager.roomReady(w, r)
+				// wait for 10 sec
+				await new Promise(res => setTimeout(res, 2500))
+				document.querySelector(".swal2-loader").style.visibility = 'hidden'
+				await new Promise(res => setTimeout(res, 7500))
+			}
+		}
+	}())
+	</script>`))
 }
 
-func (manager *ApiManagerCtx) roomNotFound(w http.ResponseWriter, r *http.Request) {
+func RoomNotFound(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 	utils.Swal2Response(w, `
 		<div class="swal2-header">
 			<div class="swal2-icon swal2-error">
@@ -45,11 +50,19 @@ func (manager *ApiManagerCtx) roomNotFound(w http.ResponseWriter, r *http.Reques
 		</div>
 		<div class="swal2-content">
 			<div>The room you are trying to join does not exist.</div>
+			<div>You can wait on this page until it will be created.</div>
+		</div>
+		<div class="swal2-actions">
+			<div class="swal2-loader" style="display:none;"></div>
 		</div>
 	`)
+
+	if waitEnabled {
+		roomWait(w, r)
+	}
 }
 
-func (manager *ApiManagerCtx) roomNotRunning(w http.ResponseWriter, r *http.Request) {
+func RoomNotRunning(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 	utils.Swal2Response(w, `
 		<div class="swal2-header">
 			<div class="swal2-icon swal2-warning">
@@ -59,11 +72,19 @@ func (manager *ApiManagerCtx) roomNotRunning(w http.ResponseWriter, r *http.Requ
 		</div>
 		<div class="swal2-content">
 			<div>The room you are trying to join is not running.</div>
+			<div>You can wait on this page until it will be started.</div>
+		</div>
+		<div class="swal2-actions">
+			<div class="swal2-loader" style="display:none;"></div>
 		</div>
 	`)
+
+	if waitEnabled {
+		roomWait(w, r)
+	}
 }
 
-func (manager *ApiManagerCtx) roomNotReady(w http.ResponseWriter, r *http.Request) {
+func RoomNotReady(w http.ResponseWriter, r *http.Request) {
 	utils.Swal2Response(w, `
 		<meta http-equiv="refresh" content="2">
 
@@ -83,7 +104,7 @@ func (manager *ApiManagerCtx) roomNotReady(w http.ResponseWriter, r *http.Reques
 	`)
 }
 
-func (manager *ApiManagerCtx) roomReady(w http.ResponseWriter, r *http.Request) {
+func RoomReady(w http.ResponseWriter, r *http.Request) {
 	utils.Swal2Response(w, `
 		<div class="swal2-header">
 			<div class="swal2-icon swal2-success swal2-icon-show" style="display: flex;">
