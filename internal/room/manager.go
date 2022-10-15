@@ -8,8 +8,10 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
+	containerTypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/container"
 	dockerMount "github.com/docker/docker/api/types/mount"
 	network "github.com/docker/docker/api/types/network"
@@ -86,6 +88,21 @@ func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error)
 	return manager.containerToEntry(*container)
 }
 
+func (manager *RoomManagerCtx) IsValidImage(imageName string, imageList []string) bool {
+	for _, _nekoImage := range imageList {
+		if _nekoImage == imageName {
+			return true
+		}
+		if strings.Contains(_nekoImage, "*") {
+			pattern := strings.Replace(_nekoImage, "*", "", -1)
+			if strings.Contains(imageName, pattern) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
 		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
@@ -95,11 +112,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", fmt.Errorf("mounts cannot be specified, because storage is disabled or unavailable")
 	}
 
-	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
-		return "", fmt.Errorf("invalid neko image")
+	if !manager.IsValidImage(settings.NekoImage, manager.config.NekoImages) {
+		return "", fmt.Errorf("invalid neko image: %q. valid are: %q", settings.NekoImage, manager.config.NekoImages)
 	}
 
-	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
+	isPrivilegedImage	:= manager.IsValidImage(settings.NekoImage, manager.config.NekoPrivilegedImages)
 
 	// TODO: Check if path name exists.
 	roomName := settings.Name
@@ -602,4 +619,43 @@ func (manager *RoomManagerCtx) Restart(id string) error {
 
 	// Restart the actual container
 	return manager.client.ContainerRestart(context.Background(), id, nil)
+}
+
+func (manager *RoomManagerCtx) Snapshot(id string) (*types.RoomSnapshot, error) {
+	container, err := manager.inspectContainer(id)
+	if err != nil {
+		return nil, err
+	}
+
+	imageListOps := dockerTypes.ImageListOptions{
+		All: true,
+	}
+	images, _ := manager.client.ImageList(context.Background(), imageListOps)
+	var containerImage string
+	for _, image := range images {
+		if image.ID == container.Image {
+			containerImage = image.RepoTags[0]
+			break
+		}
+	}
+
+	conatinerImage := strings.Split(containerImage, ":")[0]
+	tag := conatinerImage + ":" + time.Now().Format("20060102150405")
+	ops := dockerTypes.ContainerCommitOptions{
+		Pause: true,
+		Config: &containerTypes.Config{
+			Image: tag,
+		},
+	}
+
+	// Restart the actual container
+	_, err = manager.client.ContainerCommit(context.Background(), container.ID, ops)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.RoomSnapshot{
+		RoomId: id,
+		Name: tag,
+	}, nil
 }

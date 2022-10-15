@@ -93,6 +93,11 @@ type RoomSettings struct {
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 
+type RoomSnapshot struct {
+	RoomId      string `json:"roomId"`
+	Name        string `json:"name"`
+}
+
 func (settings *RoomSettings) ToEnv() []string {
 	env := []string{
 		fmt.Sprintf("NEKO_PASSWORD=%s", settings.UserPass),
@@ -260,4 +265,5 @@ type RoomManager interface {
 	Start(id string) error
 	Stop(id string) error
 	Restart(id string) error
+	Snapshot(id string) (*RoomSnapshot, error)
 }

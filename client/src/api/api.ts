@@ -591,6 +591,30 @@ export interface RoomsConfig {
      */
     'storage_enabled'?: boolean;
 }
+/**
+ * 
+ * @export
+ * @interface RoomSnapshot
+ */
+ export interface RoomSnapshot {
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomSnapshot
+     */
+    'id'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomSnapshot
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof RoomSnapshot
+     */
+}
 
 /**
  * ConfigApi - axios parameter creator
@@ -1257,6 +1281,40 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Stop room
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+         roomSnapshot: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'roomId' is not null or undefined
+            assertParamExists('roomSnapshot', 'roomId', roomId)
+            assertParamExists('roomSnapshot', 'name', name)
+
+            const localVarPath = `/api/rooms/{roomId}/snapshot/{name}`
+                .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -1376,6 +1434,17 @@ export const RoomsApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomsList(options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
+        /**
+         * 
+         * @summary Creates a room snapshot
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+         async roomSnapshot(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.roomSnapshot(roomId, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
     }
 };
 
@@ -1484,6 +1553,16 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          */
         roomsList(options?: any): AxiosPromise<Array<RoomEntry>> {
             return localVarFp.roomsList(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Creates a room snapshot
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+         roomSnapshot(roomId: string, options?: any): AxiosPromise<RoomEntry> {
+            return localVarFp.roomSnapshot(roomId, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1612,6 +1691,18 @@ export class RoomsApi extends BaseAPI {
      */
     public roomsList(options?: AxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomsList(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Creates a room snapshot
+     * @param {string} roomId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RoomsApi
+     */
+     public roomSnapshot(roomId: string, options?: AxiosRequestConfig) {
+        return RoomsApiFp(this.configuration).roomSnapshot(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

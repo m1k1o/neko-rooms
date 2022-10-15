@@ -220,7 +220,27 @@ paths:
                 $ref: '#/components/schemas/RoomEntry'
         '500':
           description: Internal server error
-
+  /api/rooms/{roomId}/snapshot:
+    post:
+      tags:
+        - rooms
+      summary: Creates a room snapshot
+      operationId: roomSnapshot
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomSnapshot'
+        '500':
+          description: Internal server error
   /api/pull:
     get:
       tags:
@@ -471,6 +491,16 @@ components:
         muted:
           type: boolean
           example: false
+
+  RoomSnapshot:
+      type: object
+      properties:
+        id:
+          type: string
+          example: bc04dace10
+        snapshot:
+          type: string
+          example: image/tag:20220201102022
 
     BrowserPolicy:
       type: object

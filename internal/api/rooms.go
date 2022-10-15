@@ -150,3 +150,15 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) fu
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
+
+func (manager *ApiManagerCtx) roomSnapshot(w http.ResponseWriter, r *http.Request) {
+	roomId := chi.URLParam(r, "roomId")
+	response, err := manager.rooms.Snapshot(roomId)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
