@@ -1297,9 +1297,8 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          roomSnapshot: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomSnapshot', 'roomId', roomId)
-            assertParamExists('roomSnapshot', 'name', name)
 
-            const localVarPath = `/api/rooms/{roomId}/snapshot/{name}`
+            const localVarPath = `/api/rooms/{roomId}/snapshot`
                 .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
