@@ -79,9 +79,19 @@ func (p *ProxyManagerCtx) Start() {
 
 		for {
 			select {
-			case err := <-errs:
-				p.logger.Err(err).Msg("got docker event")
-			case msg := <-msgs:
+			case err, ok := <-errs:
+				if !ok {
+					p.logger.Fatal().Msg("docker event error channel closed")
+					return
+				}
+
+				p.logger.Err(err).Msg("got docker event error")
+			case msg, ok := <-msgs:
+				if !ok {
+					p.logger.Fatal().Msg("docker event channel closed")
+					return
+				}
+
 				enabled, path, port, ok := p.parseLabels(msg.Actor.Attributes)
 				if !ok {
 					break
