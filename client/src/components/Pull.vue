@@ -54,9 +54,7 @@
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
 
-@Component({
-  components: {}
-})
+@Component
 export default class Pull extends Vue {
   private dialog = false
   private loading = false

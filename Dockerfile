@@ -17,7 +17,7 @@ RUN npm run build
 #
 # STAGE 2: build executable binary
 #
-FROM golang:1.17-buster as builder
+FROM golang:1.18-buster as builder
 WORKDIR /app
 
 COPY . .
@@ -33,7 +33,7 @@ COPY --from=frontend /src/dist/ /var/www
 
 ENV DOCKER_API_VERSION=1.39
 ENV NEKO_ROOMS_BIND=:8080
-ENV NEKO_ROOMS_STATIC=/var/www
+ENV NEKO_ROOMS_ADMIN_STATIC=/var/www
 
 EXPOSE 8080
 

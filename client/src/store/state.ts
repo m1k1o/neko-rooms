@@ -178,6 +178,92 @@ export const state = {
       },
     },
     {
+      text: 'SponsorBlock for YouTube',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'sponsorBlocker@ajay.app',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'mnjggcdmjocbbbhaepdhchncahnbgone',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'SoundFixer',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'soundfixer@unrelenting.technology',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/soundfixer/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'mbhbddecpoendcifccfckjkigbinefkg',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Native MPEG-Dash + HLS Playback',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'native-dash-hls@cavar.net',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/native-mpeg-dash-hls-playback/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'cjfbmleiaobegagekpmlhmaadepdeedn',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Google Input Tools',
+      value: {
+        // not available for firefox
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'mclkkofklkfljcocdinagocijmpgbhab',
+        } as BrowserPolicyExtension,
+      },
+    },
+
+    //
+    // VPN
+    //
+
+    {
+      text: 'Windscribe - Free Proxy and Ad Blocker',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '@windscribeff',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/windscribe/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'hnmpcagpplmpfojmgmnngilcnanddlhb',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Private Internet Access',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '{3e4d2037-d300-4e95-859d-3cba866f46d3}',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/private-internet-access-ext/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'jplnlifepflhkbkgonidnobkakhmpnmh',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'SetupVPN - Lifetime Free VPN',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '@setupvpncom',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/setupvpn/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'oofgbpoabipfcfjapgnbbjjaenockbdp',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
       text: 'NordVPN',
       value: {
         [BrowserPolicyTypeEnum.firefox]: {
@@ -190,14 +276,22 @@ export const state = {
       },
     },
     {
-      text: 'SponsorBlock for YouTube',
+      text: 'Surfshark VPN Extension',
       value: {
         [BrowserPolicyTypeEnum.firefox]: {
-          id: 'sponsorBlocker@ajay.app',
-          url: 'https://addons.mozilla.org/firefox/downloads/latest/sponsorblock/latest.xpi',
+          id: '{732216ec-0dab-43bb-ac85-4b5e1977599d}',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/surfshark-vpn-proxy/latest.xpi',
         } as BrowserPolicyExtension,
         [BrowserPolicyTypeEnum.chromium]: {
-          id: 'mnjggcdmjocbbbhaepdhchncahnbgone',
+          id: 'ailoabdmgclmfmhdagmlohpjlbpffblp',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Hola VPN - The Website Unblocker',
+      value: {
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'gkojfkhlekighikafcpjkiklfbnlmeio',
         } as BrowserPolicyExtension,
       },
     },

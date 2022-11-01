@@ -10,6 +10,7 @@ import (
 type RoomLabels struct {
 	Name      string
 	URL       string
+	Mux       bool
 	Epr       EprPorts
 	NekoImage string
 
@@ -29,7 +30,9 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 
 	url, ok := labels["m1k1o.neko_rooms.url"]
 	if !ok {
-		return nil, fmt.Errorf("damaged container labels: url not found")
+		// TODO: It should be always available.
+		url = manager.config.GetRoomUrl(name)
+		//return nil, fmt.Errorf("damaged container labels: url not found")
 	}
 
 	nekoImage, ok := labels["m1k1o.neko_rooms.neko_image"]
@@ -37,24 +40,47 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 		return nil, fmt.Errorf("damaged container labels: neko_image not found")
 	}
 
-	eprMinStr, ok := labels["m1k1o.neko_rooms.epr.min"]
-	if !ok {
-		return nil, fmt.Errorf("damaged container labels: epr.min not found")
-	}
+	var mux bool
+	var epr EprPorts
 
-	eprMin, err := strconv.ParseUint(eprMinStr, 10, 16)
-	if err != nil {
-		return nil, err
-	}
+	muxStr, ok := labels["m1k1o.neko_rooms.mux"]
+	if ok {
+		muxPort, err := strconv.ParseUint(muxStr, 10, 16)
+		if err != nil {
+			return nil, err
+		}
 
-	eprMaxStr, ok := labels["m1k1o.neko_rooms.epr.max"]
-	if !ok {
-		return nil, fmt.Errorf("damaged container labels: epr.max not found")
-	}
+		mux = true
+		epr = EprPorts{
+			Min: uint16(muxPort),
+			Max: uint16(muxPort),
+		}
+	} else {
+		eprMinStr, ok := labels["m1k1o.neko_rooms.epr.min"]
+		if !ok {
+			return nil, fmt.Errorf("damaged container labels: epr.min not found")
+		}
 
-	eprMax, err := strconv.ParseUint(eprMaxStr, 10, 16)
-	if err != nil {
-		return nil, err
+		eprMin, err := strconv.ParseUint(eprMinStr, 10, 16)
+		if err != nil {
+			return nil, err
+		}
+
+		eprMaxStr, ok := labels["m1k1o.neko_rooms.epr.max"]
+		if !ok {
+			return nil, fmt.Errorf("damaged container labels: epr.max not found")
+		}
+
+		eprMax, err := strconv.ParseUint(eprMaxStr, 10, 16)
+		if err != nil {
+			return nil, err
+		}
+
+		mux = false
+		epr = EprPorts{
+			Min: uint16(eprMin),
+			Max: uint16(eprMax),
+		}
 	}
 
 	var browserPolicy *BrowserPolicyLabels
@@ -79,10 +105,9 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 		Name:      name,
 		URL:       url,
 		NekoImage: nekoImage,
-		Epr: EprPorts{
-			Min: uint16(eprMin),
-			Max: uint16(eprMax),
-		},
+		Mux:       mux,
+		Epr:       epr,
+
 		BrowserPolicy: browserPolicy,
 	}, nil
 }
@@ -90,11 +115,16 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]string {
 	labelsMap := map[string]string{
 		"m1k1o.neko_rooms.name":       labels.Name,
-		"m1k1o.neko_rooms.url":        labels.URL,
+		"m1k1o.neko_rooms.url":        manager.config.GetRoomUrl(labels.Name),
 		"m1k1o.neko_rooms.instance":   manager.config.InstanceName,
-		"m1k1o.neko_rooms.epr.min":    fmt.Sprintf("%d", labels.Epr.Min),
-		"m1k1o.neko_rooms.epr.max":    fmt.Sprintf("%d", labels.Epr.Max),
 		"m1k1o.neko_rooms.neko_image": labels.NekoImage,
+	}
+
+	if labels.Mux && labels.Epr.Min == labels.Epr.Max {
+		labelsMap["m1k1o.neko_rooms.mux"] = fmt.Sprintf("%d", labels.Epr.Min)
+	} else {
+		labelsMap["m1k1o.neko_rooms.epr.min"] = fmt.Sprintf("%d", labels.Epr.Min)
+		labelsMap["m1k1o.neko_rooms.epr.max"] = fmt.Sprintf("%d", labels.Epr.Max)
 	}
 
 	if labels.BrowserPolicy != nil {

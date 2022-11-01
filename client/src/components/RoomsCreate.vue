@@ -56,7 +56,28 @@
           </v-col>
         </v-row>
 
-        <v-row align="center">
+        <!-- if uses mux vs. old logic -->
+        <v-row align="center" v-if="usesMux">
+          <v-col class="pt-0">
+            <v-checkbox
+              v-model="data.control_protection"
+              label="Enable control protection"
+              hide-details
+              class="shrink ml-2 mt-0"
+            ></v-checkbox>
+            <div style="margin-left: 41px;"><i>Users can gain control only if at least one admin is in the room.</i></div>
+          </v-col>
+          <v-col class="pt-0">
+            <v-checkbox
+              v-model="data.implicit_control"
+              label="Enable implicit control"
+              hide-details
+              class="shrink ml-2 mt-0"
+            ></v-checkbox>
+            <div style="margin-left: 41px;"><i>Users do not need to request control prior usage.</i></div>
+          </v-col>
+        </v-row>
+        <v-row align="center" v-else>
           <v-col class="pt-0">
             <v-text-field
               label="Max connections"
@@ -482,6 +503,10 @@ export default class RoomsCreate extends Vue {
     return this.$store.state.roomsConfig.storage_enabled
   }
 
+  get usesMux() {
+    return this.$store.state.roomsConfig.uses_mux
+  }
+
   get videoCodecs() {
     return this.$store.state.videoCodecs
   }
@@ -526,14 +551,13 @@ export default class RoomsCreate extends Vue {
     const config = this.browserPolicyConfig
     if (!config) return []
   
-    return this.$store.state.browserPolicyExtensions.map(({ text, value }: {
+    return this.$store.state.browserPolicyExtensions.map(({ text, value: values }: {
       text: string;
       value: Record<BrowserPolicyTypeEnum, BrowserPolicyExtension>;
     }) => {
-      return {
-        text,
-        value: value[config.type as BrowserPolicyTypeEnum],
-      }
+      const value = values[config.type as BrowserPolicyTypeEnum]
+      if (!value) return undefined
+      return { text, value }
     })
   }
 
@@ -579,7 +603,7 @@ export default class RoomsCreate extends Vue {
         // eslint-disable-next-line
         admin_pass: this.data.admin_pass || randomPassword(),
         // eslint-disable-next-line
-        max_connections: Number(this.data.max_connections),
+        max_connections: Number(this.data.max_connections), // ignored when uses mux
         // eslint-disable-next-line
         control_protection: Boolean(this.data.control_protection),
         // eslint-disable-next-line

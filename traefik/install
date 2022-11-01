@@ -166,8 +166,7 @@ while true; do
   break
 done
 
-mkdir -p "./traefik"
-touch "./traefik/usersfile"
+touch "./usersfile"
 
 # Users
 while true; do
@@ -185,7 +184,7 @@ while true; do
     USR_PASS="admin"
   fi
 
-  htpasswd -nb "${USR_NAME}" "${USR_PASS}" >> traefik/usersfile
+  htpasswd -nb "${USR_NAME}" "${USR_PASS}" >> usersfile
 
   echo
   read -rp "Do you want to add another user? [y/N] " yn
@@ -221,17 +220,17 @@ echo "[Y] Creating env..."
 # Download traefik config
 #
 
-mkdir -p "./traefik/config"
+mkdir -p "./config"
 
-wget -O "./traefik/traefik.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/traefik.yml"
-sed -i "s/yourname@example.com/${TRAEFIK_EMAIL}/g" "./traefik/traefik.yml"
+wget -O "./traefik.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/traefik.yml"
+sed -i "s/yourname@example.com/${TRAEFIK_EMAIL}/g" "./traefik.yml"
 
-wget -O "./traefik/config/middlewares.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/middlewares.yml"
-wget -O "./traefik/config/routers.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/routers.yml"
-wget -O "./traefik/config/tls.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/tls.yml"
+wget -O "./config/middlewares.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/middlewares.yml"
+wget -O "./config/routers.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/routers.yml"
+wget -O "./config/tls.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/config/tls.yml"
 
-touch "./traefik/acme.json"
-chmod 600 "./traefik/acme.json"
+touch "./acme.json"
+chmod 600 "./acme.json"
 
 echo "[Y] Downloading traefik config..."
 
@@ -239,7 +238,7 @@ echo "[Y] Downloading traefik config..."
 # Download docker compose file
 #
 
-wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/docker-compose.yml"
+wget -O "./docker-compose.yml" "https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/docker-compose.yml"
 
 # Pull neko images
 for NEKO_IMAGE in "${NEKO_IMAGES[@]}"; do

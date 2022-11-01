@@ -1,0 +1,47 @@
+#!/bin/sh
+cd "$(dirname "$0")"
+
+if [ ! -f ".env" ]
+then
+    echo ".env file not found!"
+    exit 1
+fi
+
+export $(cat .env | sed 's/#.*//g' | xargs)
+
+DATA_PATH="../data"
+mkdir -p "${DATA_PATH}"
+
+EXTERNAL_PATH="../ext"
+mkdir -p "${EXTERNAL_PATH}"
+
+docker run --rm -it \
+    --name="neko_rooms_server" \
+    -v "`realpath ../../`:/app" \
+    -v "`realpath ${DATA_PATH}`:/data" \
+	-e "TZ=${TZ}" \
+	-e "NEKO_ROOMS_EPR=${NEKO_ROOMS_EPR}" \
+	-e "NEKO_ROOMS_MUX=true" \
+	-e "NEKO_ROOMS_NAT1TO1=${NEKO_ROOMS_NAT1TO1}" \
+	-e "NEKO_ROOMS_PATH_PREFIX=/room/" \
+	-e "NEKO_ROOMS_STORAGE_INTERNAL=/data" \
+	-e "NEKO_ROOMS_STORAGE_EXTERNAL=`realpath ${DATA_PATH}`" \
+	-e "NEKO_ROOMS_MOUNTS_WHITELIST=`realpath ${EXTERNAL_PATH}`" \
+	-e "NEKO_ROOMS_TRAEFIK_ENABLED=true" \
+	-e "NEKO_ROOMS_TRAEFIK_DOMAIN=${NEKO_ROOMS_TRAEFIK_DOMAIN}" \
+	-e "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
+	-e "NEKO_ROOMS_TRAEFIK_NETWORK=${NEKO_ROOMS_TRAEFIK_NETWORK}" \
+    -e 'DOCKER_API_VERSION=1.39' \
+    -v "/var/run/docker.sock:/var/run/docker.sock" \
+    --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
+    -l "traefik.enable=true" \
+    -l "traefik.http.services.neko-rooms-server-fe.loadbalancer.server.port=8080" \
+    -l "traefik.http.routers.neko-rooms-server.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
+    -l "traefik.http.routers.neko-rooms-server.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`) && PathPrefix(\`/room\`)" \
+    -l "traefik.http.routers.neko-rooms-server.priority=2" \
+    -l "traefik.http.routers.neko-rooms-server.service=neko-rooms-server-fe" \
+    -l "traefik.http.routers.neko-rooms-server-api.entrypoints=${NEKO_ROOMS_TRAEFIK_ENTRYPOINT}" \
+    -l "traefik.http.routers.neko-rooms-server-api.rule=Host(\`${NEKO_ROOMS_TRAEFIK_DOMAIN}\`) && PathPrefix(\`/api\`)" \
+    -l "traefik.http.routers.neko-rooms-server-api.service=neko-rooms-server-fe" \
+    --entrypoint="/app/bin/neko_rooms" \
+    neko_rooms_img serve --bind :8080;
