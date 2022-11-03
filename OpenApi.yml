@@ -224,21 +224,20 @@ paths:
     post:
       tags:
         - rooms
-      summary: Creates a room snapshot
-      operationId: roomSnapshot
-      parameters:
-        - in: path
-          name: roomId
-          required: true
-          schema:
-            type: string
+      summary: Creates a new room snapshot
+      operationId: Snapshot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnapshotRequest'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoomSnapshot'
+                $ref: '#/components/schemas/SnapshotResponse'
         '500':
           description: Internal server error
   /api/pull:
@@ -497,16 +496,6 @@ components:
           type: boolean
           example: false
 
-  RoomSnapshot:
-      type: object
-      properties:
-        id:
-          type: string
-          example: bc04dace10
-        snapshot:
-          type: string
-          example: image/tag:20220201102022
-
     BrowserPolicy:
       type: object
       properties:
@@ -542,6 +531,27 @@ components:
         url:
           type: string
           example: https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi
+
+    SnapshotRequest:
+      type: object
+      properties:
+        room_id:
+          type: string
+          example: bc04dace10
+        neko_image:
+          type: string
+          example: [registry/]username/image_name:tag
+        registry_user:
+          type: string
+        registry_pass:
+          type: string
+
+    SnapshotResponse:
+      type: object
+      properties:
+        neko_image:
+          type: string
+          example: [registry/]username/image_name:tag
 
     PullStart:
       type: object

@@ -71,7 +71,8 @@ func (manager *PullManagerCtx) setDone() {
 }
 
 func (manager *PullManagerCtx) Start(request types.PullStart) error {
-	if in, _ := utils.ArrayIn(request.NekoImage, manager.images); !in {
+	
+	if !utils.IsValidImage(request.NekoImage, manager.images) {
 		return fmt.Errorf("unknown neko image")
 	}
 

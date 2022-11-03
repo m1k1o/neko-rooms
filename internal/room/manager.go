@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -89,21 +90,6 @@ func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error)
 	return manager.containerToEntry(*container)
 }
 
-func (manager *RoomManagerCtx) IsValidImage(imageName string, imageList []string) bool {
-	for _, _nekoImage := range imageList {
-		if _nekoImage == imageName {
-			return true
-		}
-		if strings.Contains(_nekoImage, "*") {
-			pattern := strings.Replace(_nekoImage, "*", "", -1)
-			if strings.Contains(imageName, pattern) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
 		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
@@ -113,11 +99,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", fmt.Errorf("mounts cannot be specified, because storage is disabled or unavailable")
 	}
 
-	if !manager.IsValidImage(settings.NekoImage, manager.config.NekoImages) {
+	if !utils.IsValidImage(settings.NekoImage, manager.config.NekoImages) {
 		return "", fmt.Errorf("invalid neko image: %q. valid are: %q", settings.NekoImage, manager.config.NekoImages)
 	}
 
-	isPrivilegedImage	:= manager.IsValidImage(settings.NekoImage, manager.config.NekoPrivilegedImages)
+	isPrivilegedImage	:= utils.IsValidImage(settings.NekoImage, manager.config.NekoPrivilegedImages)
 
 	// TODO: Check if path name exists.
 	roomName := settings.Name
@@ -655,41 +641,78 @@ func (manager *RoomManagerCtx) Restart(id string) error {
 	return manager.client.ContainerRestart(context.Background(), id, nil)
 }
 
-func (manager *RoomManagerCtx) Snapshot(id string) (*types.RoomSnapshot, error) {
+func (manager *RoomManagerCtx) Snapshot(id string, settings types.SnapshotRequest) error {
+	manager.logger.Info().
+		Str("id", id).
+		Str("NekoImage", settings.NekoImage).
+		Str("RegistryUser", settings.RegistryUser).
+		Str("RegistryPass", settings.RegistryPass).
+		Msg("Container snapshot")
+
 	container, err := manager.inspectContainer(id)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	imageListOps := dockerTypes.ImageListOptions{
-		All: true,
-	}
-	images, _ := manager.client.ImageList(context.Background(), imageListOps)
-	var containerImage string
-	for _, image := range images {
-		if image.ID == container.Image {
-			containerImage = image.RepoTags[0]
-			break
-		}
-	}
-
-	conatinerImage := strings.Split(containerImage, ":")[0]
-	tag := conatinerImage + ":" + time.Now().Format("20060102150405")
 	ops := dockerTypes.ContainerCommitOptions{
 		Pause: true,
 		Config: &containerTypes.Config{
-			Image: tag,
+			Image: settings.NekoImage,
 		},
 	}
 
-	// Restart the actual container
+	// Commit container
 	_, err = manager.client.ContainerCommit(context.Background(), container.ID, ops)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &types.RoomSnapshot{
-		RoomId: id,
-		Name: tag,
-	}, nil
+	// Push to registry if credentials are present
+	if settings.RegistryUser != "" && settings.RegistryPass != "" {
+		err = manager.ImagePush(settings)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+
+func (manager *RoomManagerCtx) ImagePush(settings types.SnapshotRequest) error {
+	manager.logger.Info().
+		Str("NekoImage", settings.NekoImage).
+		Str("RegistryUser", settings.RegistryUser).
+		Str("RegistryPass", settings.RegistryPass).
+		Msg("Image push")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
+	defer cancel()
+
+	authConfig := dockerTypes.AuthConfig{
+		Username: settings.RegistryUser,
+		Password: settings.RegistryPass,
+	}
+
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		return err
+	}
+
+	opts := dockerTypes.ImagePushOptions{
+		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
+	}
+
+	tag := settings.NekoImage
+	rd, err := manager.client.ImagePush(ctx, tag, opts)
+	if err != nil {
+		return err
+	}
+
+	defer rd.Close()
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/go-chi/chi"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
+
+	"github.com/rs/zerolog/log"
 )
 
 func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) {
@@ -152,13 +154,29 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) fu
 }
 
 func (manager *ApiManagerCtx) roomSnapshot(w http.ResponseWriter, r *http.Request) {
+
 	roomId := chi.URLParam(r, "roomId")
-	response, err := manager.rooms.Snapshot(roomId)
+	request := types.SnapshotRequest{
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	
+	err := manager.rooms.Snapshot(roomId, request)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
+	response := types.SnapshotResponse{
+		NekoImage: request.NekoImage,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+
+	out, _ := json.Marshal(request)
+	log.Info().Str("Request", string(out)).Msg("roomSnapshot request")
 }

@@ -96,9 +96,15 @@ type RoomSettings struct {
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 
-type RoomSnapshot struct {
-	RoomId      string `json:"roomId"`
-	Name        string `json:"name"`
+type SnapshotRequest struct {
+	RoomId       string `json:"roomId"`
+	NekoImage    string `json:"neko_image"`
+	RegistryUser string `json:"registry_user"`
+	RegistryPass string `json:"registry_pass"`
+}
+
+type SnapshotResponse struct {
+	NekoImage    string `json:"neko_image"`
 }
 
 func (settings *RoomSettings) ToEnv() []string {
@@ -268,5 +274,6 @@ type RoomManager interface {
 	Start(id string) error
 	Stop(id string) error
 	Restart(id string) error
-	Snapshot(id string) (*RoomSnapshot, error)
+	Snapshot(id string, settings SnapshotRequest) (error)
+	ImagePush(settings SnapshotRequest) (error)
 }
