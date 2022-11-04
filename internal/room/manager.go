@@ -12,7 +12,6 @@ import (
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
-	containerTypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/container"
 	dockerMount "github.com/docker/docker/api/types/mount"
 	network "github.com/docker/docker/api/types/network"
@@ -642,13 +641,6 @@ func (manager *RoomManagerCtx) Restart(id string) error {
 }
 
 func (manager *RoomManagerCtx) Snapshot(id string, settings types.SnapshotRequest) error {
-	manager.logger.Info().
-		Str("id", id).
-		Str("NekoImage", settings.NekoImage).
-		Str("RegistryUser", settings.RegistryUser).
-		Str("RegistryPass", settings.RegistryPass).
-		Msg("Container snapshot")
-
 	container, err := manager.inspectContainer(id)
 	if err != nil {
 		return err
@@ -656,13 +648,16 @@ func (manager *RoomManagerCtx) Snapshot(id string, settings types.SnapshotReques
 
 	ops := dockerTypes.ContainerCommitOptions{
 		Pause: true,
-		Config: &containerTypes.Config{
-			Image: settings.NekoImage,
-		},
 	}
 
+	var newImage dockerTypes.IDResponse
 	// Commit container
-	_, err = manager.client.ContainerCommit(context.Background(), container.ID, ops)
+	newImage, err = manager.client.ContainerCommit(context.Background(), container.ID, ops)
+	if err != nil {
+		return err
+	}
+
+	err = manager.client.ImageTag(context.Background(), newImage.ID, settings.NekoImage)
 	if err != nil {
 		return err
 	}
@@ -680,12 +675,6 @@ func (manager *RoomManagerCtx) Snapshot(id string, settings types.SnapshotReques
 
 
 func (manager *RoomManagerCtx) ImagePush(settings types.SnapshotRequest) error {
-	manager.logger.Info().
-		Str("NekoImage", settings.NekoImage).
-		Str("RegistryUser", settings.RegistryUser).
-		Str("RegistryPass", settings.RegistryPass).
-		Msg("Image push")
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
 	defer cancel()
 

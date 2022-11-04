@@ -97,7 +97,6 @@ type RoomSettings struct {
 }
 
 type SnapshotRequest struct {
-	RoomId       string `json:"roomId"`
 	NekoImage    string `json:"neko_image"`
 	RegistryUser string `json:"registry_user"`
 	RegistryPass string `json:"registry_pass"`
