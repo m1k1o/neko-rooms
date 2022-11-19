@@ -7,8 +7,6 @@ import (
 	"github.com/go-chi/chi"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
-
-	"github.com/rs/zerolog/log"
 )
 
 func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) {

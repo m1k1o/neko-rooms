@@ -650,11 +650,20 @@ func (manager *RoomManagerCtx) Snapshot(id string, settings types.SnapshotReques
 		Pause: true,
 	}
 
+	restart := container.State.Running
+	if restart {
+		manager.Stop(id)
+	}
+
 	var newImage dockerTypes.IDResponse
 	// Commit container
 	newImage, err = manager.client.ContainerCommit(context.Background(), container.ID, ops)
 	if err != nil {
 		return err
+	}
+
+	if restart {
+		manager.Start(id)
 	}
 
 	err = manager.client.ImageTag(context.Background(), newImage.ID, settings.NekoImage)
