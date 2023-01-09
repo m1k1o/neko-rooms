@@ -574,11 +574,20 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 
 	var roomResources types.RoomResources
 	if container.HostConfig != nil {
+		// TODO: Refactor.
+		gpus := []string{}
+		for _, gpu := range container.HostConfig.DeviceRequests {
+			if gpu.Count == -1 {
+				gpus = append(gpus, "all")
+			}
+		}
+
 		roomResources = types.RoomResources{
 			CPUShares: container.HostConfig.CPUShares,
 			NanoCPUs:  container.HostConfig.NanoCPUs,
 			ShmSize:   container.HostConfig.ShmSize,
 			Memory:    container.HostConfig.Memory,
+			Gpus:      gpus,
 		}
 	}
 
