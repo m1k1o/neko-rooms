@@ -173,6 +173,7 @@
             <tr><th> Memory </th><td :title="settings.resources.memory"><span v-if="settings.resources.memory">{{ settings.resources.memory | memory }}</span><i v-else>--undefined--</i></td></tr>
             <tr><th> CPU Shares </th><td :title="settings.resources.cpu_shares"><span v-if="settings.resources.cpu_shares">{{ settings.resources.cpu_shares }}</span><i v-else>--undefined--</i></td></tr>
             <tr><th> Shared memory </th><td :title="settings.resources.shm_size">{{ settings.resources.shm_size | memory }}</td></tr>
+            <tr><th> GPUs </th><td><span v-if="settings.resources.gpus && settings.resources.gpus.length > 0">{{ settings.resources.gpus.join(",") }}</span><i v-else>--not used--</i></td></tr>
           </tbody>
         </template>
       </v-simple-table>
