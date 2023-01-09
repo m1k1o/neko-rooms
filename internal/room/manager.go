@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/docker/cli/opts"
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dockerMount "github.com/docker/docker/api/types/mount"
@@ -389,6 +390,22 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	//
+	// Set container device requests
+	//
+
+	var deviceRequests []container.DeviceRequest
+
+	if len(settings.Resources.Gpus) > 0 {
+		gpuOpts := opts.GpuOpts{}
+		for _, opt := range settings.Resources.Gpus {
+			if err := gpuOpts.Set(opt); err != nil {
+				return "", err
+			}
+		}
+		deviceRequests = append(deviceRequests, gpuOpts.Value()...)
+	}
+
+	//
 	// Set container configs
 	//
 
@@ -430,9 +447,10 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		Mounts: mounts,
 		// Resources contains container's resources (cgroups config, ulimits...)
 		Resources: container.Resources{
-			CPUShares: settings.Resources.CPUShares,
-			NanoCPUs:  settings.Resources.NanoCPUs,
-			Memory:    settings.Resources.Memory,
+			CPUShares:      settings.Resources.CPUShares,
+			NanoCPUs:       settings.Resources.NanoCPUs,
+			Memory:         settings.Resources.Memory,
+			DeviceRequests: deviceRequests,
 		},
 		// Privileged
 		Privileged: isPrivilegedImage,
