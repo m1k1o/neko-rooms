@@ -349,6 +349,11 @@ components:
         memory:
           type: number
           description: in bytes
+        gpus:
+          type: array
+          items:
+            type: string
+            example: all
 
     RoomSettings:
       type: object

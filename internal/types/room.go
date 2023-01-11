@@ -60,10 +60,11 @@ type RoomMount struct {
 }
 
 type RoomResources struct {
-	CPUShares int64 `json:"cpu_shares"` // relative weight vs. other containers
-	NanoCPUs  int64 `json:"nano_cpus"`  // in units of 10^-9 CPUs
-	ShmSize   int64 `json:"shm_size"`   // in bytes
-	Memory    int64 `json:"memory"`     // in bytes
+	CPUShares int64    `json:"cpu_shares"` // relative weight vs. other containers
+	NanoCPUs  int64    `json:"nano_cpus"`  // in units of 10^-9 CPUs
+	ShmSize   int64    `json:"shm_size"`   // in bytes
+	Memory    int64    `json:"memory"`     // in bytes
+	Gpus      []string `json:"gpus"`       // gpu opts
 }
 
 type RoomSettings struct {

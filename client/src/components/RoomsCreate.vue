@@ -358,6 +358,13 @@
                 </template>
               </v-slider>
             </v-col>
+            <v-col>
+              <v-checkbox
+                @change="$set(data.resources, 'gpus', $event ? ['all'] : [])"
+                label="Enable GPU support"
+                class="shrink ml-2 mt-0"
+              ></v-checkbox>
+            </v-col>
           </v-row>
         </template>
 
