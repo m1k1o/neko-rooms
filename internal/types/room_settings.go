@@ -126,6 +126,8 @@ func (settings *RoomSettings) toEnvV2(config *config.Room, ports PortSettings) [
 
 func (settings *RoomSettings) fromEnvV2(envs []string) error {
 	settings.Envs = map[string]string{}
+	settings.VideoCodec = "VP8"  // default
+	settings.AudioCodec = "OPUS" // default
 
 	var err error
 	for _, env := range envs {
@@ -281,6 +283,8 @@ func (settings *RoomSettings) fromEnvV3(envs []string) error {
 	settings.Envs = map[string]string{}
 	// enabled implicit control by default
 	settings.ImplicitControl = true
+	settings.VideoCodec = "VP8"  // default
+	settings.AudioCodec = "OPUS" // default
 
 	var err error
 	for _, env := range envs {
