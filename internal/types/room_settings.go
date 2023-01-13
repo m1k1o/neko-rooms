@@ -87,8 +87,8 @@ func (settings *RoomSettings) toEnvV2(config *config.Room, ports PortSettings) [
 		env = append(env, "NEKO_IMPLICIT_CONTROL=true")
 	}
 
-	if settings.VideoCodec == "VP8" || settings.VideoCodec == "VP9" || settings.VideoCodec == "H264" {
-		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.VideoCodec)))
+	if settings.VideoCodec != "VP8" { // VP8 is default
+		env = append(env, fmt.Sprintf("NEKO_VIDEO_CODEC=%s", strings.ToLower(settings.VideoCodec)))
 	}
 
 	if settings.VideoBitrate != 0 {
@@ -99,8 +99,8 @@ func (settings *RoomSettings) toEnvV2(config *config.Room, ports PortSettings) [
 		env = append(env, fmt.Sprintf("NEKO_VIDEO=%s", settings.VideoPipeline))
 	}
 
-	if settings.AudioCodec == "OPUS" || settings.AudioCodec == "G722" || settings.AudioCodec == "PCMU" || settings.AudioCodec == "PCMA" {
-		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.AudioCodec)))
+	if settings.AudioCodec != "OPUS" { // OPUS is default
+		env = append(env, fmt.Sprintf("NEKO_AUDIO_CODEC=%s", strings.ToLower(settings.AudioCodec)))
 	}
 
 	if settings.AudioBitrate != 0 {
@@ -151,38 +151,14 @@ func (settings *RoomSettings) fromEnvV2(envs []string) error {
 			settings.VideoMaxFPS, err = strconv.Atoi(val)
 		case "NEKO_BROADCAST_PIPELINE":
 			settings.BroadcastPipeline = val
-		case "NEKO_VP8":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.VideoCodec = "VP8"
-			}
-		case "NEKO_VP9":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.VideoCodec = "VP9"
-			}
-		case "NEKO_H264":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.VideoCodec = "H264"
-			}
+		case "NEKO_VIDEO_CODEC":
+			settings.VideoCodec = strings.ToUpper(val)
 		case "NEKO_VIDEO_BITRATE":
 			settings.VideoBitrate, err = strconv.Atoi(val)
 		case "NEKO_VIDEO":
 			settings.VideoPipeline = val
-		case "NEKO_OPUS":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "OPUS"
-			}
-		case "NEKO_G722":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "G722"
-			}
-		case "NEKO_PCMU":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "PCMU"
-			}
-		case "NEKO_PCMA":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "PCMA"
-			}
+		case "NEKO_AUDIO_CODEC":
+			settings.VideoCodec = strings.ToUpper(val)
 		case "NEKO_AUDIO_BITRATE":
 			settings.AudioBitrate, err = strconv.Atoi(val)
 		case "NEKO_AUDIO":
@@ -259,10 +235,12 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 	//	env = append(env, "NEKO_CONTROL_PROTECTION=true") // TODO: not supported yet
 	//}
 
-	// implicit control
-	env = append(env, fmt.Sprintf("NEKO_SESSION_IMPLICIT_HOSTING=%s", strconv.FormatBool(settings.ImplicitControl)))
+	// implicit control - enabled by default
+	if !settings.ImplicitControl {
+		env = append(env, "NEKO_SESSION_IMPLICIT_HOSTING=false")
+	}
 
-	if settings.VideoCodec == "VP8" || settings.VideoCodec == "VP9" || settings.VideoCodec == "H264" {
+	if settings.VideoCodec != "VP8" { // VP8 is default
 		env = append(env, fmt.Sprintf("NEKO_CAPTURE_VIDEO_CODEC=%s", strings.ToLower(settings.VideoCodec)))
 	}
 
@@ -274,7 +252,7 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 		env = append(env, fmt.Sprintf("NEKO_CAPTURE_VIDEO_PIPELINES=%s", settings.VideoPipeline)) // TOOD: multiple pipelines, as JSON
 	}
 
-	if settings.AudioCodec == "OPUS" || settings.AudioCodec == "G722" || settings.AudioCodec == "PCMU" || settings.AudioCodec == "PCMA" {
+	if settings.AudioCodec != "OPUS" { // OPUS is default
 		env = append(env, fmt.Sprintf("NEKO_CAPTURE_AUDIO_CODEC=%s", strings.ToLower(settings.AudioCodec)))
 	}
 
@@ -301,6 +279,8 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 
 func (settings *RoomSettings) fromEnvV3(envs []string) error {
 	settings.Envs = map[string]string{}
+	// enabled implicit control by default
+	settings.ImplicitControl = true
 
 	var err error
 	for _, env := range envs {
@@ -317,8 +297,8 @@ func (settings *RoomSettings) fromEnvV3(envs []string) error {
 		//		settings.ControlProtection = true
 		//	}
 		case "NEKO_SESSION_IMPLICIT_HOSTING":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.ImplicitControl = true
+			if ok, _ := strconv.ParseBool(val); !ok {
+				settings.ImplicitControl = false
 			}
 		case "NEKO_DESKTOP_SCREEN":
 			settings.Screen = val
