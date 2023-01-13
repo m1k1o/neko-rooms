@@ -250,11 +250,14 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set environment variables
 	//
 
-	env := settings.ToEnv(manager.config, types.PortSettings{
+	env, err := settings.ToEnv(manager.config, types.PortSettings{
 		FrontendPort: frontendPort,
 		EprMin:       epr.Min,
 		EprMax:       epr.Max,
 	})
+	if err != nil {
+		return "", err
+	}
 
 	//
 	// Set browser policies
@@ -632,7 +635,7 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		settings.MaxConnections = 0
 	}
 
-	err = settings.FromEnv(container.Config.Env)
+	err = settings.FromEnv(manager.config.ApiVersion, container.Config.Env)
 	return &settings, err
 }
 
@@ -643,7 +646,7 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 	}
 
 	settings := types.RoomSettings{}
-	err = settings.FromEnv(container.Config.Env)
+	err = settings.FromEnv(manager.config.ApiVersion, container.Config.Env)
 	if err != nil {
 		return nil, err
 	}
