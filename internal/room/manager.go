@@ -250,26 +250,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set environment variables
 	//
 
-	env := []string{
-		fmt.Sprintf("NEKO_BIND=:%d", frontendPort),
-		"NEKO_ICELITE=true",
-	}
-
-	if manager.config.Mux {
-		env = append(env,
-			fmt.Sprintf("NEKO_UDPMUX=%d", epr.Min),
-			fmt.Sprintf("NEKO_TCPMUX=%d", epr.Min),
-		)
-	} else {
-		env = append(env,
-			fmt.Sprintf("NEKO_EPR=%d-%d", epr.Min, epr.Max),
-		)
-	}
-
-	// optional nat mapping
-	if len(manager.config.NAT1To1IPs) > 0 {
-		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(manager.config.NAT1To1IPs, ",")))
-	}
+	env := settings.ToEnv(manager.config, types.PortSettings{
+		FrontendPort: frontendPort,
+		EprMin:       epr.Min,
+		EprMax:       epr.Max,
+	})
 
 	//
 	// Set browser policies
@@ -429,7 +414,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		// List of exposed ports
 		ExposedPorts: exposedPorts,
 		// List of environment variable to set in the container
-		Env: append(env, settings.ToEnv()...),
+		Env: env,
 		// Name of the image as it was passed by the operator (e.g. could be symbolic)
 		Image: settings.NekoImage,
 		// List of labels set to this container
