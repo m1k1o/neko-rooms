@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/m1k1o/neko-rooms/internal/config"
 	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
@@ -60,10 +61,11 @@ type RoomMount struct {
 }
 
 type RoomResources struct {
-	CPUShares int64 `json:"cpu_shares"` // relative weight vs. other containers
-	NanoCPUs  int64 `json:"nano_cpus"`  // in units of 10^-9 CPUs
-	ShmSize   int64 `json:"shm_size"`   // in bytes
-	Memory    int64 `json:"memory"`     // in bytes
+	CPUShares int64    `json:"cpu_shares"` // relative weight vs. other containers
+	NanoCPUs  int64    `json:"nano_cpus"`  // in units of 10^-9 CPUs
+	ShmSize   int64    `json:"shm_size"`   // in bytes
+	Memory    int64    `json:"memory"`     // in bytes
+	Gpus      []string `json:"gpus"`       // gpu opts
 }
 
 type RoomSettings struct {
@@ -106,12 +108,37 @@ type SnapshotResponse struct {
 	NekoImage    string `json:"neko_image"`
 }
 
-func (settings *RoomSettings) ToEnv() []string {
+type PortSettings struct {
+	FrontendPort   uint16
+	EprMin, EprMax uint16
+}
+
+func (settings *RoomSettings) ToEnv(config *config.Room, ports PortSettings) []string {
 	env := []string{
+		fmt.Sprintf("NEKO_BIND=:%d", ports.FrontendPort),
+		"NEKO_ICELITE=true",
+
+		// from settings
 		fmt.Sprintf("NEKO_PASSWORD=%s", settings.UserPass),
 		fmt.Sprintf("NEKO_PASSWORD_ADMIN=%s", settings.AdminPass),
 		fmt.Sprintf("NEKO_SCREEN=%s", settings.Screen),
 		fmt.Sprintf("NEKO_MAX_FPS=%d", settings.VideoMaxFPS),
+	}
+
+	if config.Mux {
+		env = append(env,
+			fmt.Sprintf("NEKO_UDPMUX=%d", ports.EprMin),
+			fmt.Sprintf("NEKO_TCPMUX=%d", ports.EprMin),
+		)
+	} else {
+		env = append(env,
+			fmt.Sprintf("NEKO_EPR=%d-%d", ports.EprMin, ports.EprMax),
+		)
+	}
+
+	// optional nat mapping
+	if len(config.NAT1To1IPs) > 0 {
+		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(config.NAT1To1IPs, ",")))
 	}
 
 	if settings.ControlProtection {

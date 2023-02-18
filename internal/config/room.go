@@ -47,8 +47,8 @@ type Room struct {
 }
 
 func (Room) Init(cmd *cobra.Command) error {
-	cmd.PersistentFlags().StringSlice("usemux", []string{}, "use mux for connection - needs only one UDP and TCP port per room")
-	if err := viper.BindPFlag("usemux", cmd.PersistentFlags().Lookup("usemux")); err != nil {
+	cmd.PersistentFlags().Bool("mux", false, "use mux for connection - needs only one UDP and TCP port per room")
+	if err := viper.BindPFlag("mux", cmd.PersistentFlags().Lookup("mux")); err != nil {
 		return err
 	}
 

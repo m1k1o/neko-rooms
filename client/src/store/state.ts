@@ -67,7 +67,15 @@ export const state = {
     // eslint-disable-next-line
     envs: {},
     // eslint-disable-next-line
-    mounts: [],
+    mounts: [],
+    // eslint-disable-next-line
+    resources: {
+      // eslint-disable-next-line
+      nano_cpus: 0,
+      memory: 0,
+      // eslint-disable-next-line
+      shm_size: 2000000000,
+    },
   } as RoomSettings,
   videoCodecs: [
     "VP8",

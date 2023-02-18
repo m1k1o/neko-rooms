@@ -13,13 +13,15 @@
  */
 
 
-import { Configuration } from './configuration';
-import globalAxios, { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { Configuration } from './configuration';
+import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common';
+import type { RequestArgs } from './base';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from './base';
+import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
 
 /**
  * 
@@ -47,14 +49,12 @@ export interface BrowserPolicy {
     'content'?: BrowserPolicyContent;
 }
 
-/**
-    * @export
-    * @enum {string}
-    */
-export enum BrowserPolicyTypeEnum {
-    firefox = 'firefox',
-    chromium = 'chromium'
-}
+export const BrowserPolicyTypeEnum = {
+    firefox: 'firefox',
+    chromium: 'chromium'
+} as const;
+
+export type BrowserPolicyTypeEnum = typeof BrowserPolicyTypeEnum[keyof typeof BrowserPolicyTypeEnum];
 
 /**
  * 
@@ -249,7 +249,7 @@ export interface RoomEntry {
      */
     'is_outdated'?: boolean;
     /**
-     * 
+     * 0 when using mux
      * @type {number}
      * @memberof RoomEntry
      */
@@ -330,16 +330,14 @@ export interface RoomMount {
     'container_path'?: string;
 }
 
-/**
-    * @export
-    * @enum {string}
-    */
-export enum RoomMountTypeEnum {
-    private = 'private',
-    template = 'template',
-    protected = 'protected',
-    public = 'public'
-}
+export const RoomMountTypeEnum = {
+    private: 'private',
+    template: 'template',
+    protected: 'protected',
+    public: 'public'
+} as const;
+
+export type RoomMountTypeEnum = typeof RoomMountTypeEnum[keyof typeof RoomMountTypeEnum];
 
 /**
  * 
@@ -371,6 +369,12 @@ export interface RoomResources {
      * @memberof RoomResources
      */
     'memory'?: number;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof RoomResources
+     */
+    'gpus'?: Array<string>;
 }
 /**
  * 
@@ -391,7 +395,7 @@ export interface RoomSettings {
      */
     'neko_image'?: string;
     /**
-     * 
+     * 0 when using mux
      * @type {number}
      * @memberof RoomSettings
      */
