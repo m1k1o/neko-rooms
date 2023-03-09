@@ -74,6 +74,7 @@ func (Room) Init(cmd *cobra.Command) error {
 		"m1k1o/neko:vlc",
 		"m1k1o/neko:remmina",
 		"m1k1o/neko:xfce",
+		"m1k1o/neko:kde",
 	}, "neko images to be used")
 	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
 		return err
