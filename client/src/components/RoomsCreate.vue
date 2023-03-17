@@ -571,8 +571,14 @@ export default class RoomsCreate extends Vue {
   get browserPolicyConfig() {
     const nekoImage = this.data.neko_image
     if (!nekoImage) return undefined
-  
-    return this.$store.state.browserPolicyConfig.find(({ images }: { images: string[] }): boolean => images.includes(nekoImage))
+
+    return this.$store.state.browserPolicyConfig.find(
+      // find browser policy config for this image
+      ({ images }: { images: string[] }): boolean => images.some(
+        // if nekoImage includes the image name
+        (image: string): boolean => nekoImage.includes(image)
+      )
+    )
   }
 
   get browserPolicyExtensions() {
