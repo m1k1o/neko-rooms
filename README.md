@@ -61,6 +61,23 @@ You might have encountered this error:
 
 If you didn't specify storage yet, you can do it using [this tutorial](./docs/storage.md).
 
+### Use nvidia GPU
+
+If you want to use nvidia GPU, you need to install [nvidia-docker](https://github.com/NVIDIA/nvidia-docker).
+
+Change neko images to nvidia images in `docker-compose.yml` using envorinment variable `NEKO_ROOMS_NEKO_IMAGES`:
+
+```bash
+NEKO_ROOMS_NEKO_IMAGES="
+  ghcr.io/m1k1o/neko/nvidia-chromium:latest
+  ghcr.io/m1k1o/neko/nvidia-google-chrome:latest
+  ghcr.io/m1k1o/neko/nvidia-microsoft-edge:latest
+  ghcr.io/m1k1o/neko/nvidia-brave:latest
+"
+```
+
+When creating new room, you need to specify to use GPU in expext settings.
+
 ### Docs
 
 For more information visit [docs](./docs).
