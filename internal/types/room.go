@@ -13,6 +13,7 @@ import (
 var blacklistedEnvs = []string{
 	// ignore bunch of default envs
 	"DEBIAN_FRONTEND",
+	"PULSE_SERVER",
 	"DISPLAY",
 	"USER",
 	"PATH",
