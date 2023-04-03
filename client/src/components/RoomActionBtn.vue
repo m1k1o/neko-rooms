@@ -61,6 +61,14 @@ export default class RoomActionBtn extends Vue {
           color: 'red',
           icon: 'mdi-trash-can-outline',
         }
+      case 'snapshot':
+        return {
+          dispatch: 'ROOMS_SNAPSHOT',
+          msg: 'Room snapshot created!',
+          tooltip: 'Snapshot',
+          color: 'blue',
+          icon: 'mdi-content-save',
+        }
     }
 
     return undefined

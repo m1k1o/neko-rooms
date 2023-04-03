@@ -150,3 +150,28 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) fu
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
+
+func (manager *ApiManagerCtx) roomSnapshot(w http.ResponseWriter, r *http.Request) {
+
+	roomId := chi.URLParam(r, "roomId")
+	request := types.SnapshotRequest{
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	
+	err := manager.rooms.Snapshot(roomId, request)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	response := types.SnapshotResponse{
+		NekoImage: request.NekoImage,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}

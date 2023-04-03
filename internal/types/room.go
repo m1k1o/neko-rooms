@@ -99,6 +99,16 @@ type RoomSettings struct {
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 
+type SnapshotRequest struct {
+	NekoImage    string `json:"neko_image"`
+	RegistryUser string `json:"registry_user"`
+	RegistryPass string `json:"registry_pass"`
+}
+
+type SnapshotResponse struct {
+	NekoImage    string `json:"neko_image"`
+}
+
 type PortSettings struct {
 	FrontendPort   uint16
 	EprMin, EprMax uint16
@@ -291,4 +301,6 @@ type RoomManager interface {
 	Start(id string) error
 	Stop(id string) error
 	Restart(id string) error
+	Snapshot(id string, settings SnapshotRequest) (error)
+	ImagePush(settings SnapshotRequest) (error)
 }

@@ -3,6 +3,7 @@ package room
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/docker/cli/opts"
 	dockerTypes "github.com/docker/docker/api/types"
@@ -99,11 +101,11 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", fmt.Errorf("mounts cannot be specified, because storage is disabled or unavailable")
 	}
 
-	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
-		return "", fmt.Errorf("invalid neko image")
+	if !utils.IsValidImage(settings.NekoImage, manager.config.NekoImages) {
+		return "", fmt.Errorf("invalid neko image: %q. valid are: %q", settings.NekoImage, manager.config.NekoImages)
 	}
 
-	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
+	isPrivilegedImage	:= utils.IsValidImage(settings.NekoImage, manager.config.NekoPrivilegedImages)
 
 	// TODO: Check if path name exists.
 	roomName := settings.Name
@@ -691,4 +693,79 @@ func (manager *RoomManagerCtx) Restart(id string) error {
 
 	// Restart the actual container
 	return manager.client.ContainerRestart(context.Background(), id, nil)
+}
+
+func (manager *RoomManagerCtx) Snapshot(id string, settings types.SnapshotRequest) error {
+	container, err := manager.inspectContainer(id)
+	if err != nil {
+		return err
+	}
+
+	ops := dockerTypes.ContainerCommitOptions{
+		Pause: true,
+	}
+
+	restart := container.State.Running
+	if restart {
+		manager.Stop(id)
+	}
+
+	var newImage dockerTypes.IDResponse
+	// Commit container
+	newImage, err = manager.client.ContainerCommit(context.Background(), container.ID, ops)
+	if err != nil {
+		return err
+	}
+
+	if restart {
+		manager.Start(id)
+	}
+
+	err = manager.client.ImageTag(context.Background(), newImage.ID, settings.NekoImage)
+	if err != nil {
+		return err
+	}
+
+	// Push to registry if credentials are present
+	if settings.RegistryUser != "" && settings.RegistryPass != "" {
+		err = manager.ImagePush(settings)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+
+func (manager *RoomManagerCtx) ImagePush(settings types.SnapshotRequest) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 120)
+	defer cancel()
+
+	authConfig := dockerTypes.AuthConfig{
+		Username: settings.RegistryUser,
+		Password: settings.RegistryPass,
+	}
+
+	encodedJSON, err := json.Marshal(authConfig)
+	if err != nil {
+		return err
+	}
+
+	opts := dockerTypes.ImagePushOptions{
+		RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
+	}
+
+	tag := settings.NekoImage
+	rd, err := manager.client.ImagePush(ctx, tag, opts)
+	if err != nil {
+		return err
+	}
+
+	defer rd.Close()
+
+	if err != nil {
+		return err
+	}
+	return nil
 }

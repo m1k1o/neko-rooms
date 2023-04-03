@@ -11,6 +11,7 @@ import {
   RoomsApi,
   DefaultApi,
   PullStatus,
+  RoomSnapshot,
 } from '@/api/index'
 
 import { state, State } from './state'
@@ -60,6 +61,9 @@ export default new Vuex.Store({
     },
     PULL_STATUS(state: State, pullStatus: PullStatus) {
       Vue.set(state, 'pullStatus', pullStatus)
+    },
+    ROOMS_SNAPSHOT_ADD(state: State, snapshot: RoomSnapshot) {
+      Vue.set(state, 'snapshot', snapshot)
     },
   },
   actions: {
@@ -133,6 +137,14 @@ export default new Vuex.Store({
     },
     async PULL_STOP() {
       const res = await defaultApi.pullStop()
+      return res.data
+    },
+    async ROOMS_SNAPSHOT({ commit }: ActionContext<State, State>, roomId: string) {
+      const res = await roomsApi.roomSnapshot(roomId)
+      commit('ROOMS_SNAPSHOT_ADD', {
+        roomId: roomId,
+        data: res.data
+      });
       return res.data
     },
   },
