@@ -36,6 +36,14 @@ func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
 	}
 
 	//
+	// Install Extensions
+	//
+
+	if val, ok := policiesTmpl["ExtensionInstallBlocklist"]; ok {
+		policies.InstallExtensions = len(val.([]interface{})) == 0
+	}
+
+	//
 	// Developer Tools
 	//
 

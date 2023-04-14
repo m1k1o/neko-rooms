@@ -21,12 +21,21 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 	}
 
 	//
+	// Install Extensions
+	//
+
+	installationMode := "blocked"
+	if policies.InstallExtensions {
+		installationMode = "allowed"
+	}
+
+	//
 	// Extensions
 	//
 
 	ExtensionSettings := map[string]interface{}{}
 	ExtensionSettings["*"] = map[string]interface{}{
-		"installation_mode": "blocked",
+		"installation_mode": installationMode,
 	}
 
 	for _, e := range policies.Extensions {
