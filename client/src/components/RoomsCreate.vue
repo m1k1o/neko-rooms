@@ -406,12 +406,13 @@
           <v-row align="center">
             <v-col>
               <v-checkbox
-                v-model="browserPolicyContent.developer_tools"
-                label="Enable developer tools"
+                v-model="browserPolicyContent.install_extensions"
+                label="Allow installing extensions"
                 hide-details
                 class="shrink ml-2 mt-0"
                 :disabled="!browserPolicyEnabled"
               ></v-checkbox>
+              <div style="margin-left: 41px;"><i>User can install any extension from the Chrome Web Store.</i></div>
             </v-col>
             <v-col>
               <v-checkbox
@@ -421,8 +422,22 @@
                 class="shrink ml-2 mt-0"
                 :disabled="!browserPolicyEnabled"
               ></v-checkbox>
+              <div style="margin-left: 41px;"><i>All cookies, local storage, etc. will be persistent between restarts.</i></div>
             </v-col>
           </v-row>
+
+          <v-row align="center">
+            <v-col>
+              <v-checkbox
+                v-model="browserPolicyContent.developer_tools"
+                label="Enable developer tools"
+                hide-details
+                class="shrink ml-2 mt-0"
+                :disabled="!browserPolicyEnabled"
+              ></v-checkbox>
+            </v-col>
+          </v-row>
+
         </template>
         <v-alert
           border="left"

@@ -501,6 +501,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BrowserPolicyExtension'
+        install_extensions:
+          type: boolean
+          example: false
         developer_tools:
           type: boolean
           example: true

@@ -73,6 +73,12 @@ export interface BrowserPolicyContent {
      * @type {boolean}
      * @memberof BrowserPolicyContent
      */
+    'install_extensions'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof BrowserPolicyContent
+     */
     'developer_tools'?: boolean;
     /**
      * 
