@@ -362,10 +362,11 @@
             <v-col>
               <v-checkbox
                 @change="$set(data.resources, 'gpus', $event ? ['all'] : [])"
-                label="Enable GPU support"
+                label="Enable Nvidia GPU support"
                 hide-details
                 class="shrink ml-2 mt-0"
               ></v-checkbox>
+            <div style="margin-left: 41px;"><i>Nvidia docker runtime is required.</i></div>
             </v-col>
           </v-row>
           <v-row align="center">
