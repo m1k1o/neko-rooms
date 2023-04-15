@@ -249,16 +249,8 @@
           </v-row>
           <v-row align="center" no-gutters class="my-3">
               <h2> Mounts </h2>
-              <v-btn :disabled="!storageEnabled" @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+              <v-btn @click="data.mounts = [ ...data.mounts, { type: storageEnabled ? 'private' : 'public', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
-          <v-alert
-            border="left"
-            type="warning"
-            v-if="!storageEnabled"
-          >
-            <p><strong>Not available!</strong></p>
-            <p class="mb-0">Mounts are not available, because storage is not enabled.</p>
-          </v-alert>
           <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="index">
             <v-col class="py-0" cols="2">
               <v-select
@@ -292,9 +284,20 @@
             </div>
           </v-row>
           <v-row align="center" no-gutters v-if="data.mounts.length > 0">
+            <v-alert
+              border="left"
+              type="warning"
+              v-if="!storageEnabled"
+              style="width: 100%"
+            >
+              <p><strong>Not all mount types are available!</strong></p>
+              <p class="mb-0">Private and Template mounts are not available, because storage is not enabled.</p>
+            </v-alert>
             <p>
-              <strong>Private</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/rooms/&lt;room name&gt;/</code>. <br />
-              <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code>, and will be readonly. <br />
+              <span :style="{ opacity: !storageEnabled ? 0.25 : 1 }">
+                <strong>Private</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/rooms/&lt;room name&gt;/</code>. <br />
+                <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code>, and will be readonly. <br />
+              </span>
               <strong>Protected</strong>: Host path must be whitelisted in config and exists on the host, will be readonly. <br />
               <strong>Public</strong>: Host path must be whitelisted in config and exists on the host.
             </p>
@@ -581,14 +584,16 @@ export default class RoomsCreate extends Vue {
 
   get mountTypes() {
     return [
-      {
-        text: 'Private',
-        value: 'private',
-      },
-      {
-        text: 'Template',
-        value: 'template',
-      },
+      ...(this.storageEnabled ? [
+        {
+          text: 'Private',
+          value: 'private',
+        },
+        {
+          text: 'Template',
+          value: 'template',
+        },
+      ] : []),
       {
         text: 'Protected',
         value: 'protected',

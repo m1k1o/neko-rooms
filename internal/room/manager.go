@@ -95,10 +95,6 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
 	}
 
-	if !manager.config.StorageEnabled && len(settings.Mounts) > 0 {
-		return "", fmt.Errorf("mounts cannot be specified, because storage is disabled or unavailable")
-	}
-
 	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
 		return "", fmt.Errorf("invalid neko image")
 	}
@@ -316,8 +312,12 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			return "", fmt.Errorf("mount paths must be absolute")
 		}
 
-		// private container's data
-		if mount.Type == types.MountPrivate {
+		switch mount.Type {
+		case types.MountPrivate:
+			if !manager.config.StorageEnabled {
+				return "", fmt.Errorf("private mounts cannot be specified, because storage is disabled or unavailable")
+			}
+
 			// ensure that target exists with correct permissions
 			internalPath := path.Join(manager.config.StorageInternal, privateStoragePath, roomName, hostPath)
 			if _, err := os.Stat(internalPath); os.IsNotExist(err) {
@@ -332,13 +332,17 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 			// prefix host path
 			hostPath = path.Join(manager.config.StorageExternal, privateStoragePath, roomName, hostPath)
-		} else if mount.Type == types.MountTemplate {
+		case types.MountTemplate:
+			if !manager.config.StorageEnabled {
+				return "", fmt.Errorf("template mounts cannot be specified, because storage is disabled or unavailable")
+			}
+
 			// readonly template data
 			readOnly = true
 
 			// prefix host path
 			hostPath = path.Join(manager.config.StorageExternal, templateStoragePath, hostPath)
-		} else if mount.Type == types.MountProtected || mount.Type == types.MountPublic {
+		case types.MountProtected, types.MountPublic:
 			// readonly if mount type is protected
 			readOnly = mount.Type == types.MountProtected
 
@@ -354,7 +358,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			if !isAllowed {
 				return "", fmt.Errorf("mount path is not whitelisted in config")
 			}
-		} else {
+		default:
 			return "", fmt.Errorf("unknown mount type %q", mount.Type)
 		}
 
