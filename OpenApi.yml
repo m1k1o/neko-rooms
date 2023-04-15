@@ -358,7 +358,7 @@ components:
           type: array
           items:
             type: string
-            example: /dev/dri/renderD128:/dev/dri/renderD128:rwm
+            example: /dev/dri/renderD128
 
     RoomSettings:
       type: object
