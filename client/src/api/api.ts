@@ -375,6 +375,12 @@ export interface RoomResources {
      * @memberof RoomResources
      */
     'gpus'?: Array<string>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof RoomResources
+     */
+    'devices'?: Array<string>;
 }
 /**
  * 
