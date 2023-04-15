@@ -624,12 +624,23 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 			}
 		}
 
+		devices := []string{}
+		for _, dev := range container.HostConfig.Devices {
+			// TODO: dev.CgroupPermissions
+			if dev.PathOnHost == dev.PathInContainer {
+				devices = append(devices, dev.PathOnHost)
+			} else {
+				devices = append(devices, fmt.Sprintf("%s:%s", dev.PathOnHost, dev.PathInContainer))
+			}
+		}
+
 		roomResources = types.RoomResources{
 			CPUShares: container.HostConfig.CPUShares,
 			NanoCPUs:  container.HostConfig.NanoCPUs,
 			ShmSize:   container.HostConfig.ShmSize,
 			Memory:    container.HostConfig.Memory,
 			Gpus:      gpus,
+			Devices:   devices,
 		}
 	}
 
