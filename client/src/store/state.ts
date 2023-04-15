@@ -75,6 +75,7 @@ export const state = {
       memory: 0,
       // eslint-disable-next-line
       shm_size: 2000000000,
+      devices: [],
     },
   } as RoomSettings,
   videoCodecs: [
@@ -135,41 +136,43 @@ export const state = {
   //
 
   browserPolicyConfig: [
-    {
-      type: BrowserPolicyTypeEnum.firefox,
-      path: '/usr/lib/firefox/distribution/policies.json',
-      profile: '/home/neko/.mozilla/firefox/profile.default',
-      images: [ 'm1k1o/neko:latest', 'm1k1o/neko:firefox' ],
-    },
+    // firefox esr
     {
       type: BrowserPolicyTypeEnum.firefox,
       path: '/usr/lib/firefox-esr/distribution/policies.json',
       profile: '/home/neko/.mozilla/firefox/profile.default',
-      images: [ 'm1k1o/neko:arm-firefox' ],
+      images: [ 'arm-firefox' ],
+    },
+    // firefox (needs to be after firefox-esr, because it matches all remaining firefox images)
+    {
+      type: BrowserPolicyTypeEnum.firefox,
+      path: '/usr/lib/firefox/distribution/policies.json',
+      profile: '/home/neko/.mozilla/firefox/profile.default',
+      images: [ 'm1k1o/neko:latest', 'firefox' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/chromium/policies/managed/policies.json',
       profile: '/home/neko/.config/chromium',
-      images: [ 'm1k1o/neko:chromium', 'm1k1o/neko:arm-chromium', 'm1k1o/neko:ungoogled-chromium' ],
+      images: [ 'chromium', 'ungoogled-chromium' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/opt/chrome/policies/managed/policies.json',
       profile: '/home/neko/.config/google-chrome',
-      images: [ 'm1k1o/neko:google-chrome' ],
+      images: [ 'google-chrome' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/brave/policies/managed/policies.json',
       profile: '/home/neko/.config/brave',
-      images: [ 'm1k1o/neko:brave' ],
+      images: [ 'brave' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/opt/edge/policies/managed/policies.json',
       profile: '/home/neko/.config/microsoft-edge',
-      images: [ 'm1k1o/neko:microsoft-edge' ],
+      images: [ 'microsoft-edge' ],
     },
   ] as BrowserPolicyConfig[],
   browserPolicyExtensions: [

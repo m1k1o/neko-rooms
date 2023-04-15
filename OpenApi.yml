@@ -354,6 +354,11 @@ components:
           items:
             type: string
             example: all
+        devices:
+          type: array
+          items:
+            type: string
+            example: /dev/dri/renderD128
 
     RoomSettings:
       type: object

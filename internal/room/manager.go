@@ -405,6 +405,19 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	}
 
 	//
+	// Set container devices
+	//
+
+	var devices []container.DeviceMapping
+	for _, device := range settings.Resources.Devices {
+		devices = append(devices, container.DeviceMapping{
+			PathOnHost:        device,
+			PathInContainer:   device,
+			CgroupPermissions: "rwm",
+		})
+	}
+
+	//
 	// Set container configs
 	//
 
@@ -450,6 +463,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			NanoCPUs:       settings.Resources.NanoCPUs,
 			Memory:         settings.Resources.Memory,
 			DeviceRequests: deviceRequests,
+			Devices:        devices,
 		},
 		// Privileged
 		Privileged: isPrivilegedImage,
@@ -613,12 +627,23 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 			}
 		}
 
+		devices := []string{}
+		for _, dev := range container.HostConfig.Devices {
+			// TODO: dev.CgroupPermissions
+			if dev.PathOnHost == dev.PathInContainer {
+				devices = append(devices, dev.PathOnHost)
+			} else {
+				devices = append(devices, fmt.Sprintf("%s:%s", dev.PathOnHost, dev.PathInContainer))
+			}
+		}
+
 		roomResources = types.RoomResources{
 			CPUShares: container.HostConfig.CPUShares,
 			NanoCPUs:  container.HostConfig.NanoCPUs,
 			ShmSize:   container.HostConfig.ShmSize,
 			Memory:    container.HostConfig.Memory,
 			Gpus:      gpus,
+			Devices:   devices,
 		}
 	}
 

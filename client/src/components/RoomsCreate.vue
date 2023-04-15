@@ -351,6 +351,7 @@
                 :max="20*1e9"
                 :step="0.2*1e9"
                 color="blue"
+                hide-details
               >
                 <template v-slot:thumb-label="{ value }">
                   <span v-if="value">{{ value | memory }}</span>
@@ -361,9 +362,40 @@
             <v-col>
               <v-checkbox
                 @change="$set(data.resources, 'gpus', $event ? ['all'] : [])"
-                label="Enable GPU support"
+                label="Enable Nvidia GPU support"
+                hide-details
                 class="shrink ml-2 mt-0"
               ></v-checkbox>
+            <div style="margin-left: 41px;"><i>Nvidia docker runtime is required.</i></div>
+            </v-col>
+          </v-row>
+          <v-row align="center">
+            <v-col class="pt-0">
+              <v-combobox class="pt-0"
+                label="Devices"
+                v-model="data.resources.devices"
+                :items="[ '/dev/dri/renderD128' ]"
+                multiple
+              >
+                <template v-slot:selection="{ attrs, item, parent, selected }">
+                  <v-chip
+                    v-bind="attrs"
+                    :input-value="selected"
+                    label
+                    small
+                  >
+                    <span class="pr-2">
+                      {{ item }}
+                    </span>
+                    <v-icon
+                      small
+                      @click="parent.selectItem(item)"
+                    >
+                      $delete
+                    </v-icon>
+                  </v-chip>
+                </template>
+              </v-combobox>
             </v-col>
           </v-row>
         </template>
@@ -571,8 +603,14 @@ export default class RoomsCreate extends Vue {
   get browserPolicyConfig() {
     const nekoImage = this.data.neko_image
     if (!nekoImage) return undefined
-  
-    return this.$store.state.browserPolicyConfig.find(({ images }: { images: string[] }): boolean => images.includes(nekoImage))
+
+    return this.$store.state.browserPolicyConfig.find(
+      // find browser policy config for this image
+      ({ images }: { images: string[] }): boolean => images.some(
+        // if nekoImage includes the image name
+        (image: string): boolean => nekoImage.includes(image)
+      )
+    )
   }
 
   get browserPolicyExtensions() {
