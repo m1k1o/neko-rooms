@@ -1,7 +1,10 @@
 package types
 
 import (
+	"fmt"
 	"time"
+
+	"github.com/m1k1o/neko-rooms/internal/config"
 )
 
 type RoomsConfig struct {
@@ -75,6 +78,28 @@ type RoomSettings struct {
 	Resources RoomResources     `json:"resources"`
 
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
+}
+
+func (settings *RoomSettings) ToEnv(config *config.Room, ports PortSettings) ([]string, error) {
+	switch config.ApiVersion {
+	case 2:
+		return settings.toEnvV2(config, ports), nil
+	case 3:
+		return settings.toEnvV3(config, ports), nil
+	default:
+		return nil, fmt.Errorf("unsupported API version: %d", config.ApiVersion)
+	}
+}
+
+func (settings *RoomSettings) FromEnv(apiVersion int, envs []string) error {
+	switch apiVersion {
+	case 2:
+		return settings.fromEnvV2(envs)
+	case 3:
+		return settings.fromEnvV3(envs)
+	default:
+		return fmt.Errorf("unsupported API version: %d", apiVersion)
+	}
 }
 
 type PortSettings struct {
