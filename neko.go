@@ -145,6 +145,7 @@ func (main *MainCtx) Start() {
 	main.proxyManager = proxy.New(
 		client,
 		main.Configs.Room.InstanceName,
+		main.Configs.Room.WaitEnabled,
 	)
 	main.proxyManager.Start()
 

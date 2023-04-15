@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,23 +24,34 @@ type entry struct {
 	handler *httputil.ReverseProxy
 }
 
+type wait struct {
+	subs   int
+	signal chan struct{}
+}
+
 type ProxyManagerCtx struct {
 	logger zerolog.Logger
 	mu     sync.RWMutex
 	ctx    context.Context
 	cancel func()
 
+	waitMu      sync.RWMutex
+	waitChans   map[string]*wait
+	waitEnabled bool
+
 	client       *dockerClient.Client
 	instanceName string
 	handlers     *prefixHandler[*entry]
 }
 
-func New(client *dockerClient.Client, instanceName string) *ProxyManagerCtx {
+func New(client *dockerClient.Client, instanceName string, waitEnabled bool) *ProxyManagerCtx {
 	return &ProxyManagerCtx{
-		logger: log.With().Str("module", "proxy").Logger(),
+		logger:    log.With().Str("module", "proxy").Logger(),
+		waitChans: map[string]*wait{},
 
 		client:       client,
 		instanceName: instanceName,
+		waitEnabled:  waitEnabled,
 		handlers:     &prefixHandler[*entry]{},
 	}
 }
@@ -67,9 +79,19 @@ func (p *ProxyManagerCtx) Start() {
 
 		for {
 			select {
-			case err := <-errs:
-				p.logger.Err(err).Msg("got docker event")
-			case msg := <-msgs:
+			case err, ok := <-errs:
+				if !ok {
+					p.logger.Fatal().Msg("docker event error channel closed")
+					return
+				}
+
+				p.logger.Err(err).Msg("got docker event error")
+			case msg, ok := <-msgs:
+				if !ok {
+					p.logger.Fatal().Msg("docker event channel closed")
+					return
+				}
+
 				enabled, path, port, ok := p.parseLabels(msg.Actor.Attributes)
 				if !ok {
 					break
@@ -82,6 +104,17 @@ func (p *ProxyManagerCtx) Start() {
 					Str("path", path).
 					Str("host", host).
 					Msg("got docker event")
+
+				// terminate waiting for any events
+				if p.waitEnabled {
+					p.waitMu.Lock()
+					ch, ok := p.waitChans[path]
+					if ok {
+						close(ch.signal)
+						delete(p.waitChans, path)
+					}
+					p.waitMu.Unlock()
+				}
 
 				p.mu.Lock()
 				switch msg.Action {
@@ -222,28 +255,76 @@ func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, p
 	return
 }
 
+func (p *ProxyManagerCtx) waitForPath(w http.ResponseWriter, r *http.Request, path string) {
+	p.logger.Debug().Str("path", path).Msg("adding new wait handler")
+
+	p.waitMu.Lock()
+	ch, ok := p.waitChans[path]
+	if !ok {
+		ch = &wait{
+			subs:   1,
+			signal: make(chan struct{}),
+		}
+		p.waitChans[path] = ch
+	} else {
+		p.waitChans[path].subs += 1
+	}
+	p.waitMu.Unlock()
+
+	select {
+	case <-ch.signal:
+		w.Write([]byte("ready"))
+	case <-r.Context().Done():
+		http.Error(w, r.Context().Err().Error(), http.StatusRequestTimeout)
+
+		p.waitMu.Lock()
+		ch.subs -= 1
+		if ch.subs <= 0 {
+			delete(p.waitChans, path)
+		}
+		p.waitMu.Unlock()
+		p.logger.Debug().Str("path", path).Msg("wait handler removed")
+	case <-p.ctx.Done():
+		w.Write([]byte("shutdown"))
+	}
+}
+
 func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	cleanPath := path.Clean(r.URL.Path)
+
 	// get proxy by room name
 	p.mu.RLock()
-	proxy, prefix, ok := p.handlers.Match(r.URL.Path)
+	proxy, prefix, ok := p.handlers.Match(cleanPath)
 	p.mu.RUnlock()
 
 	// if room not found
 	if !ok {
-		RoomNotFound(w, r)
+		// blocking until room is created
+		if r.URL.Query().Has("wait") && p.waitEnabled {
+			p.waitForPath(w, r, cleanPath)
+			return
+		}
+
+		RoomNotFound(w, r, p.waitEnabled)
 		return
 	}
 
 	// redirect to room ending with /
-	if r.URL.Path == prefix {
-		r.URL.Path += "/"
+	if cleanPath == prefix && !strings.HasSuffix(r.URL.Path, "/") {
+		r.URL.Path = cleanPath + "/"
 		http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
 		return
 	}
 
 	// if room not running
 	if !proxy.running {
-		RoomNotRunning(w, r)
+		// blocking until room is running
+		if r.URL.Query().Has("wait") && p.waitEnabled {
+			p.waitForPath(w, r, cleanPath)
+			return
+		}
+
+		RoomNotRunning(w, r, p.waitEnabled)
 		return
 	}
 

@@ -31,6 +31,7 @@ type Room struct {
 	NekoPrivilegedImages []string
 	PathPrefix           string
 	Labels               []string
+	WaitEnabled          bool
 
 	StorageEnabled  bool
 	StorageInternal string
@@ -46,8 +47,8 @@ type Room struct {
 }
 
 func (Room) Init(cmd *cobra.Command) error {
-	cmd.PersistentFlags().StringSlice("usemux", []string{}, "use mux for connection - needs only one UDP and TCP port per room")
-	if err := viper.BindPFlag("usemux", cmd.PersistentFlags().Lookup("usemux")); err != nil {
+	cmd.PersistentFlags().Bool("mux", false, "use mux for connection - needs only one UDP and TCP port per room")
+	if err := viper.BindPFlag("mux", cmd.PersistentFlags().Lookup("mux")); err != nil {
 		return err
 	}
 
@@ -73,6 +74,7 @@ func (Room) Init(cmd *cobra.Command) error {
 		"m1k1o/neko:vlc",
 		"m1k1o/neko:remmina",
 		"m1k1o/neko:xfce",
+		"m1k1o/neko:kde",
 	}, "neko images to be used")
 	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
 		return err
@@ -90,6 +92,11 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().StringSlice("labels", []string{}, "additional labels appended to every room")
 	if err := viper.BindPFlag("labels", cmd.PersistentFlags().Lookup("labels")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().Bool("wait_enabled", true, "enable active waiting for the room")
+	if err := viper.BindPFlag("wait_enabled", cmd.PersistentFlags().Lookup("wait_enabled")); err != nil {
 		return err
 	}
 
@@ -199,6 +206,7 @@ func (s *Room) Set() {
 	s.NekoPrivilegedImages = viper.GetStringSlice("neko_privileged_images")
 	s.PathPrefix = path.Join("/", path.Clean(viper.GetString("path_prefix")))
 	s.Labels = viper.GetStringSlice("labels")
+	s.WaitEnabled = viper.GetBool("wait_enabled")
 
 	s.StorageEnabled = viper.GetBool("storage.enabled")
 	s.StorageInternal = viper.GetString("storage.internal")

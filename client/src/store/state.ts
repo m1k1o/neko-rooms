@@ -67,7 +67,15 @@ export const state = {
     // eslint-disable-next-line
     envs: {},
     // eslint-disable-next-line
-    mounts: [],
+    mounts: [],
+    // eslint-disable-next-line
+    resources: {
+      // eslint-disable-next-line
+      nano_cpus: 0,
+      memory: 0,
+      // eslint-disable-next-line
+      shm_size: 2000000000,
+    },
   } as RoomSettings,
   videoCodecs: [
     "VP8",
@@ -127,41 +135,43 @@ export const state = {
   //
 
   browserPolicyConfig: [
-    {
-      type: BrowserPolicyTypeEnum.firefox,
-      path: '/usr/lib/firefox/distribution/policies.json',
-      profile: '/home/neko/.mozilla/firefox/profile.default',
-      images: [ 'm1k1o/neko:latest', 'm1k1o/neko:firefox' ],
-    },
+    // firefox esr
     {
       type: BrowserPolicyTypeEnum.firefox,
       path: '/usr/lib/firefox-esr/distribution/policies.json',
       profile: '/home/neko/.mozilla/firefox/profile.default',
-      images: [ 'm1k1o/neko:arm-firefox' ],
+      images: [ 'arm-firefox' ],
+    },
+    // firefox (needs to be after firefox-esr, because it matches all remaining firefox images)
+    {
+      type: BrowserPolicyTypeEnum.firefox,
+      path: '/usr/lib/firefox/distribution/policies.json',
+      profile: '/home/neko/.mozilla/firefox/profile.default',
+      images: [ 'm1k1o/neko:latest', 'firefox' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/chromium/policies/managed/policies.json',
       profile: '/home/neko/.config/chromium',
-      images: [ 'm1k1o/neko:chromium', 'm1k1o/neko:arm-chromium', 'm1k1o/neko:ungoogled-chromium' ],
+      images: [ 'chromium', 'ungoogled-chromium' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/opt/chrome/policies/managed/policies.json',
       profile: '/home/neko/.config/google-chrome',
-      images: [ 'm1k1o/neko:google-chrome' ],
+      images: [ 'google-chrome' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/brave/policies/managed/policies.json',
       profile: '/home/neko/.config/brave',
-      images: [ 'm1k1o/neko:brave' ],
+      images: [ 'brave' ],
     },
     {
       type: BrowserPolicyTypeEnum.chromium,
       path: '/etc/opt/edge/policies/managed/policies.json',
       profile: '/home/neko/.config/microsoft-edge',
-      images: [ 'm1k1o/neko:microsoft-edge' ],
+      images: [ 'microsoft-edge' ],
     },
   ] as BrowserPolicyConfig[],
   browserPolicyExtensions: [
@@ -178,18 +188,6 @@ export const state = {
       },
     },
     {
-      text: 'NordVPN',
-      value: {
-        [BrowserPolicyTypeEnum.firefox]: {
-          id: 'nordvpnproxy@nordvpn.com',
-          url: 'https://addons.mozilla.org/firefox/downloads/latest/nordvpn-proxy-extension/latest.xpi',
-        } as BrowserPolicyExtension,
-        [BrowserPolicyTypeEnum.chromium]: {
-          id: 'fjoaledfpmneenckfbpdfhkmimnjocfa',
-        } as BrowserPolicyExtension,
-      },
-    },
-    {
       text: 'SponsorBlock for YouTube',
       value: {
         [BrowserPolicyTypeEnum.firefox]: {
@@ -198,27 +196,6 @@ export const state = {
         } as BrowserPolicyExtension,
         [BrowserPolicyTypeEnum.chromium]: {
           id: 'mnjggcdmjocbbbhaepdhchncahnbgone',
-        } as BrowserPolicyExtension,
-      },
-    },
-    {
-      text: 'Google Input Tools',
-      value: {
-        // not available for firefox
-        [BrowserPolicyTypeEnum.chromium]: {
-          id: 'mclkkofklkfljcocdinagocijmpgbhab',
-        } as BrowserPolicyExtension,
-      },
-    },
-    {
-      text: 'Surfshark VPN Extension',
-      value: {
-        [BrowserPolicyTypeEnum.firefox]: {
-          id: '{732216ec-0dab-43bb-ac85-4b5e1977599d}',
-          url: 'https://addons.mozilla.org/firefox/downloads/latest/surfshark-vpn-proxy/latest.xpi',
-        } as BrowserPolicyExtension,
-        [BrowserPolicyTypeEnum.chromium]: {
-          id: 'ailoabdmgclmfmhdagmlohpjlbpffblp',
         } as BrowserPolicyExtension,
       },
     },
@@ -243,6 +220,88 @@ export const state = {
         } as BrowserPolicyExtension,
         [BrowserPolicyTypeEnum.chromium]: {
           id: 'cjfbmleiaobegagekpmlhmaadepdeedn',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Google Input Tools',
+      value: {
+        // not available for firefox
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'mclkkofklkfljcocdinagocijmpgbhab',
+        } as BrowserPolicyExtension,
+      },
+    },
+
+    //
+    // VPN
+    //
+
+    {
+      text: 'Windscribe - Free Proxy and Ad Blocker',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '@windscribeff',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/windscribe/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'hnmpcagpplmpfojmgmnngilcnanddlhb',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Private Internet Access',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '{3e4d2037-d300-4e95-859d-3cba866f46d3}',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/private-internet-access-ext/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'jplnlifepflhkbkgonidnobkakhmpnmh',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'SetupVPN - Lifetime Free VPN',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '@setupvpncom',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/setupvpn/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'oofgbpoabipfcfjapgnbbjjaenockbdp',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'NordVPN',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'nordvpnproxy@nordvpn.com',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/nordvpn-proxy-extension/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'fjoaledfpmneenckfbpdfhkmimnjocfa',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Surfshark VPN Extension',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: '{732216ec-0dab-43bb-ac85-4b5e1977599d}',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/surfshark-vpn-proxy/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'ailoabdmgclmfmhdagmlohpjlbpffblp',
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'Hola VPN - The Website Unblocker',
+      value: {
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'gkojfkhlekighikafcpjkiklfbnlmeio',
         } as BrowserPolicyExtension,
       },
     },
