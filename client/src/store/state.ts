@@ -75,6 +75,7 @@ export const state = {
       memory: 0,
       // eslint-disable-next-line
       shm_size: 2000000000,
+      devices: [],
     },
   } as RoomSettings,
   videoCodecs: [
