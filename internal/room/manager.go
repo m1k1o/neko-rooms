@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/docker/cli/opts"
 	dockerTypes "github.com/docker/docker/api/types"
@@ -676,16 +677,76 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 		return nil, err
 	}
 
-	output, err := manager.containerExec(id, []string{
-		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + settings.AdminPass,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	var stats types.RoomStats
-	if err := json.Unmarshal([]byte(output), &stats); err != nil {
-		return nil, err
+	switch manager.config.ApiVersion {
+	case 2:
+		output, err := manager.containerExec(id, []string{
+			"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + settings.AdminPass,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal([]byte(output), &stats); err != nil {
+			return nil, err
+		}
+	case 3:
+		output, err := manager.containerExec(id, []string{
+			"wget", "-q", "-O-", "http://127.0.0.1:8080/api/sessions?token=" + settings.AdminPass,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		var sessions []struct {
+			ID      string `json:"id"`
+			Profile struct {
+				Name    string `json:"name"`
+				IsAdmin bool   `json:"is_admin"`
+			} `json:"profile"`
+			State struct {
+				IsConnected       bool       `json:"is_connected"`
+				NotConnectedSince *time.Time `json:"not_connected_since"`
+			} `json:"state"`
+		}
+
+		if err := json.Unmarshal([]byte(output), &sessions); err != nil {
+			return nil, err
+		}
+
+		for _, session := range sessions {
+			if session.State.IsConnected {
+				stats.Connections++
+				// append members
+				stats.Members = append(stats.Members, &types.RoomMember{
+					ID:    session.ID,
+					Name:  session.Profile.Name,
+					Admin: session.Profile.IsAdmin,
+					Muted: false, // not supported
+				})
+			} else if session.State.NotConnectedSince != nil {
+				// populate last admin left time
+				if session.Profile.IsAdmin && (stats.LastAdminLeftAt == nil || (*session.State.NotConnectedSince).After(*stats.LastAdminLeftAt)) {
+					stats.LastAdminLeftAt = session.State.NotConnectedSince
+				}
+				// populate last user left time
+				if !session.Profile.IsAdmin && (stats.LastUserLeftAt == nil || (*session.State.NotConnectedSince).After(*stats.LastUserLeftAt)) {
+					stats.LastUserLeftAt = session.State.NotConnectedSince
+				}
+			}
+		}
+
+		// parse started time
+		if container.State.StartedAt != "" {
+			stats.ServerStartedAt, err = time.Parse(time.RFC3339, container.State.StartedAt)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// TODO: settings & host
+	default:
+		return nil, fmt.Errorf("unsupported API version: %d", manager.config.ApiVersion)
 	}
 
 	return &stats, nil

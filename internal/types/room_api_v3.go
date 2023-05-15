@@ -45,6 +45,7 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 		"NEKO_MEMBER_PROVIDER=multiuser",
 		fmt.Sprintf("NEKO_MEMBER_MULTIUSER_USER_PASSWORD=%s", settings.UserPass),
 		fmt.Sprintf("NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD=%s", settings.AdminPass),
+		fmt.Sprintf("NEKO_SESSION_TOKEN=%s", settings.AdminPass), // TODO: should be random and saved somewhere
 		fmt.Sprintf("NEKO_DESKTOP_SCREEN=%s", settings.Screen),
 		//fmt.Sprintf("NEKO_MAX_FPS=%d", settings.VideoMaxFPS), // TODO: not supported yet
 	}
