@@ -714,6 +714,9 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 			return nil, err
 		}
 
+		// create empty array so that it's not null in json
+		stats.Members = []*types.RoomMember{}
+
 		for _, session := range sessions {
 			if session.State.IsConnected {
 				stats.Connections++
