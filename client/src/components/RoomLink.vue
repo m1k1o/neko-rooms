@@ -51,9 +51,8 @@ export default class RoomLink extends Vue {
   @Prop(String) readonly password!: string
   @Prop(String) readonly label!: string
 
-  private showPass = false
-  private copied = false
-  private copiedTimeout = 0
+  public showPass = false
+  public copied = false
 
   get room(): RoomEntry {
     return this.$store.state.rooms.find(({ id }: RoomEntry) => id == this.roomId)
@@ -77,6 +76,8 @@ export default class RoomLink extends Vue {
       $el: () => HTMLElement;
     }).$el.querySelector('input')?.select();
   }
+
+  private copiedTimeout = 0
 
   copyToClipboard() {
     if (this.copiedTimeout) {

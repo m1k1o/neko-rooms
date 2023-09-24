@@ -224,12 +224,12 @@ import {
 export default class RoomInfo extends Vue {
   @Prop(String) readonly roomId!: string
 
-  private statsLoading = false
-  private statsErr = ""
-  private stats: RoomStats | null = null
+  public statsLoading = false
+  public statsErr = ""
+  public stats: RoomStats | null = null
 
-  private settingsLoading = false
-  private settings: RoomSettings | null = null
+  public settingsLoading = false
+  public settings: RoomSettings | null = null
 
   get room(): RoomEntry {
     return this.$store.state.rooms.find(({ id }: RoomEntry) => id == this.roomId)

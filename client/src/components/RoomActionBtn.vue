@@ -17,7 +17,7 @@ export default class RoomActionBtn extends Vue {
   @Prop(String) readonly roomId!: string
   @Prop(Boolean) readonly disabled!: boolean
 
-  private loading = false
+  public loading = false
 
   // eslint-disable-next-line
   get tmpl(): any | undefined {
