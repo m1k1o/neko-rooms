@@ -17,6 +17,7 @@ type Server struct {
 	Key   string
 	Bind  string
 	Proxy bool
+	CORS  bool
 	PProf bool
 
 	Admin Admin
@@ -40,6 +41,11 @@ func (Server) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().Bool("proxy", false, "trust reverse proxy headers")
 	if err := viper.BindPFlag("proxy", cmd.PersistentFlags().Lookup("proxy")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().Bool("cors", false, "enable CORS")
+	if err := viper.BindPFlag("cors", cmd.PersistentFlags().Lookup("cors")); err != nil {
 		return err
 	}
 
@@ -78,6 +84,7 @@ func (s *Server) Set() {
 	s.Key = viper.GetString("key")
 	s.Bind = viper.GetString("bind")
 	s.Proxy = viper.GetBool("proxy")
+	s.CORS = viper.GetBool("cors")
 	s.PProf = viper.GetBool("pprof")
 
 	s.Admin.Static = viper.GetString("admin.static")
