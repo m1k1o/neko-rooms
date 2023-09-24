@@ -22,4 +22,4 @@ docker run --rm -it \
     -v "${PWD}/../client:/app" \
     --entrypoint="npm" \
     --workdir="/app" \
-    node:14 run lint -- --fix src/api
+    node:18-bullseye-slim run lint -- --fix src/api

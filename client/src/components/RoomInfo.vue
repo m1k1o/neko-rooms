@@ -287,7 +287,7 @@ export default class RoomInfo extends Vue {
       })
       this.stats = stats
       this.statsErr = ""
-    } catch (e: any) {
+    } catch(e) {
       this.statsErr = e
     } finally {
       this.statsLoading = false

@@ -73,7 +73,9 @@ export default class RoomLink extends Vue {
   }
 
   selectAll() {
-    this.$refs.input.$el.querySelector('input').select();
+    (this.$refs.input as Vue & {
+      $el: () => HTMLElement;
+    }).$el.querySelector('input')?.select();
   }
 
   copyToClipboard() {
