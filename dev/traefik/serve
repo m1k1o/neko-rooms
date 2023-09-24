@@ -22,4 +22,4 @@ docker run --rm -it \
     --user="$(id -u):$(id -g)" \
     --workdir="/app" \
     --entrypoint="npm" \
-    node:14 run serve;
+    node:18-bullseye-slim run serve;
