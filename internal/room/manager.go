@@ -509,7 +509,7 @@ func (manager *RoomManagerCtx) Remove(id string) error {
 	}
 
 	// Stop the actual container
-	err = manager.client.ContainerStop(context.Background(), id, nil)
+	err = manager.client.ContainerStop(context.Background(), id, container.StopOptions{})
 
 	if err != nil {
 		return err
@@ -709,7 +709,7 @@ func (manager *RoomManagerCtx) Stop(id string) error {
 	}
 
 	// Stop the actual container
-	return manager.client.ContainerStop(context.Background(), id, nil)
+	return manager.client.ContainerStop(context.Background(), id, container.StopOptions{})
 }
 
 func (manager *RoomManagerCtx) Restart(id string) error {
@@ -719,5 +719,5 @@ func (manager *RoomManagerCtx) Restart(id string) error {
 	}
 
 	// Restart the actual container
-	return manager.client.ContainerRestart(context.Background(), id, nil)
+	return manager.client.ContainerRestart(context.Background(), id, container.StopOptions{})
 }
