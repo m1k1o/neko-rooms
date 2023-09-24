@@ -17,7 +17,7 @@ RUN npm run build
 #
 # STAGE 2: build executable binary
 #
-FROM golang:1.18-buster as builder
+FROM golang:1.21-bullseye as builder
 WORKDIR /app
 
 COPY . .
