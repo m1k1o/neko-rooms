@@ -9,6 +9,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator'
+import { AxiosError } from 'axios'
 
 @Component
 export default class RoomActionBtn extends Vue {
@@ -102,10 +103,11 @@ export default class RoomActionBtn extends Vue {
         icon: 'success',
       })
     } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: response.data,
           icon: 'error',
         })
       } else {

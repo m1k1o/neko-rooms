@@ -492,6 +492,7 @@
 
 <script lang="ts">
 import { Vue, Component, Ref, Watch } from 'vue-property-decorator'
+import { AxiosError } from 'axios'
 import { randomPassword } from '@/utils/random'
 
 import {
@@ -700,10 +701,11 @@ export default class RoomsCreate extends Vue {
       this.Clear()
       this.$emit('finished', true)
      } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: response.data,
           icon: 'error',
         })
       } else {
