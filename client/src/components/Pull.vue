@@ -53,6 +53,7 @@
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
+import { AxiosError } from 'axios'
 
 @Component
 export default class Pull extends Vue {
@@ -74,10 +75,11 @@ export default class Pull extends Vue {
     try {
       await this.$store.dispatch('PULL_START', this.nekoImage)
     } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: response.data,
           icon: 'error',
         })
       } else {
@@ -98,10 +100,11 @@ export default class Pull extends Vue {
     try {
       await this.$store.dispatch('PULL_STOP')
     } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: response.data,
           icon: 'error',
         })
       } else {
@@ -128,7 +131,12 @@ export default class Pull extends Vue {
       try {
         await this.$store.dispatch('PULL_STATUS')
       } catch(e) {
-        console.error(e)
+        const response = (e as AxiosError).response
+        if (response) {
+          console.error('Server error', response.data)
+        } else {
+          console.error('Network error', String(e))
+        }
       }
     }, 1000)
   }

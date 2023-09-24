@@ -206,6 +206,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import { AxiosError } from 'axios'
 import RoomLink from './RoomLink.vue'
 
 import {
@@ -247,10 +248,11 @@ export default class RoomInfo extends Vue {
         this.LoadStats()
       }
     } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: response.data,
           icon: 'error',
         })
       } else {
@@ -288,7 +290,12 @@ export default class RoomInfo extends Vue {
       this.stats = stats
       this.statsErr = ""
     } catch(e) {
-      this.statsErr = e
+      const response = (e as AxiosError).response
+      if (response) {
+        this.statsErr = `Server error: ${response.data}`
+      } else {
+        this.statsErr = `Network error: ${String(e)}`
+      }
     } finally {
       this.statsLoading = false
     }

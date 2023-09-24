@@ -46,8 +46,10 @@
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
-import RoomInfo from '@/components/RoomInfo.vue'
+import { AxiosError } from 'axios'
 import { randomPassword } from '@/utils/random'
+
+import RoomInfo from '@/components/RoomInfo.vue'
 
 @Component({
   components: {
@@ -81,10 +83,11 @@ export default class RoomActionBtn extends Vue {
       this.roomId = entry.id
       this.dialog = true
     } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: response.data,
           icon: 'error',
         })
       } else {
