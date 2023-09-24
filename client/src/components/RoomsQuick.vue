@@ -57,9 +57,9 @@ import RoomInfo from '@/components/RoomInfo.vue'
   }
 })
 export default class RoomActionBtn extends Vue {
-  private dialog = false
-  private loading = false
-  private roomId = ''
+  public dialog = false
+  public loading = false
+  public roomId = ''
 
   get nekoImages() {
     return this.$store.state.roomsConfig.neko_images

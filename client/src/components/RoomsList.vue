@@ -85,9 +85,9 @@ import RoomActionBtn from '@/components/RoomActionBtn.vue'
 export default class RoomsList extends Vue {
   @Prop(Boolean) readonly loading: boolean = false
 
-  private dialog = false
-  private roomId = ''
-  private roomLoading = [] as Array<string>
+  public dialog = false
+  public roomId = ''
+  public roomLoading = [] as Array<string>
 
   get headers() {
     return [

@@ -57,9 +57,9 @@ import { AxiosError } from 'axios'
 
 @Component
 export default class Pull extends Vue {
-  private dialog = false
-  private loading = false
-  private nekoImage = ''
+  public dialog = false
+  public loading = false
+  public nekoImage = ''
 
   get status() {
     return this.$store.state.pullStatus
@@ -123,22 +123,25 @@ export default class Pull extends Vue {
   private interval!: number
 
   async mounted() {
-    await this.$store.dispatch('PULL_STATUS')
+    await this.pullStatus()
 
     this.interval = window.setInterval(async () => {
       if (!this.status.active) return
-
-      try {
-        await this.$store.dispatch('PULL_STATUS')
-      } catch(e) {
-        const response = (e as AxiosError).response
-        if (response) {
-          console.error('Server error', response.data)
-        } else {
-          console.error('Network error', String(e))
-        }
-      }
+      await this.pullStatus()
     }, 1000)
+  }
+
+  async pullStatus() {
+    try {
+      await this.$store.dispatch('PULL_STATUS')
+    } catch(e) {
+      const response = (e as AxiosError).response
+      if (response) {
+        console.error('Server error', response.data)
+      } else {
+        console.error('Network error', String(e))
+      }
+    }
   }
 
   beforeDestroy() {

@@ -513,28 +513,28 @@ export type VForm = Vue & {
 export default class RoomsCreate extends Vue {
   @Ref('form') readonly _form!: VForm
 
-  private valid = true
+  public valid = true
 
-  private screen = true
-  private extended = false
-  private expert = false
+  public screen = true
+  public extended = false
+  public expert = false
 
-  private showUserPass = false
-  private showAdminPass = false
+  public showUserPass = false
+  public showAdminPass = false
 
-  private maxFpsEnabled = true
-  private videoPipelineEnabled = false
-  private audioPipelineEnabled = false
-  private broadcastPipelineEnabled = false
-  private browserPolicyEnabled = false
+  public maxFpsEnabled = true
+  public videoPipelineEnabled = false
+  public audioPipelineEnabled = false
+  public broadcastPipelineEnabled = false
+  public browserPolicyEnabled = false
 
-  private loading = false
-  private data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
-  private browserPolicyContent: BrowserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
-  private envList: { key: string; val: string }[] = []
+  public loading = false
+  public data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
+  public browserPolicyContent: BrowserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
+  public envList: { key: string; val: string }[] = []
 
   // eslint-disable-next-line
-  private rules: any = {
+  public rules: any = {
     // eslint-disable-next-line
     required(val: any) {
       return val === null || typeof val === 'undefined' || val === "" ? 'This filed is mandatory.' : true
