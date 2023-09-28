@@ -6,7 +6,7 @@ WORKDIR /src
 
 #
 # install dependencies
-COPY client/package*.json ./
+COPY client/package*.json client/.npmrc ./
 RUN npm install
 
 #

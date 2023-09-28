@@ -79,7 +79,7 @@ export default class Pull extends Vue {
       if (response) {
         this.$swal({
           title: 'Server error',
-          text: response.data,
+          text: String(response.data),
           icon: 'error',
         })
       } else {
@@ -104,7 +104,7 @@ export default class Pull extends Vue {
       if (response) {
         this.$swal({
           title: 'Server error',
-          text: response.data,
+          text: String(response.data),
           icon: 'error',
         })
       } else {
