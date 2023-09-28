@@ -107,7 +107,7 @@ export default class RoomActionBtn extends Vue {
       if (response) {
         this.$swal({
           title: 'Server error',
-          text: response.data,
+          text: String(response.data),
           icon: 'error',
         })
       } else {
