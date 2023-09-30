@@ -11,13 +11,56 @@ env:
   IMAGE_NAME: m1k1o/neko-rooms
 
 jobs:
-  build:
+  build-client:
     runs-on: ubuntu-latest
     #
     # do not run on forks
     #
     if: github.repository_owner == 'm1k1o'
     steps:
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - 
+        name: Install dependencies
+        run: npm install
+      - 
+        name: Build
+        run: npm run build
+      - 
+        name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: client
+          path: dist
+
+  build-docker:
+    needs: build-client
+    runs-on: ubuntu-latest
+    #
+    # do not run on forks
+    #
+    if: github.repository_owner == 'm1k1o'
+    steps:
+      - 
+        name: Download client artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: client
+          path: ./client/dist
+      - 
+        name: Remove client stage from Dockerfile
+        # Change dockerfile: remove first stage - everything between # STAGE 1 and # STAGE 2
+        # Replace "--from=frontend /src/dist/" with "./client/dist/"
+        run: |
+          sed -i '/# STAGE 1/,/# STAGE 2/d' ./Dockerfile
+          sed -i 's/--from=frontend \/src\/dist\//.\/client\/dist\//g' ./Dockerfile
       -
         name: Checkout
         uses: actions/checkout@v2
