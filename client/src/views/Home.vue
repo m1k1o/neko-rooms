@@ -128,11 +128,11 @@ export default class Home extends Vue {
   @Watch('autoRefresh', { immediate: true })
   onAutoRefresh() {
     if (this.interval) {
-      clearInterval(this.interval)
+      window.clearInterval(this.interval)
     }
   
     if (this.autoRefresh) {
-      this.interval = setInterval(this.LoadRooms, this.autoRefresh * 1000)
+      this.interval = window.setInterval(this.LoadRooms, this.autoRefresh * 1000)
     }
   }
 

@@ -15,7 +15,7 @@
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "vue-sweetalert2",
+      "node",
       "webpack-env"
     ],
     "paths": {
