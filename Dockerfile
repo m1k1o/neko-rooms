@@ -1,7 +1,7 @@
 #
 # STAGE 1: build static web files
 #
-FROM node:18-bullseye-slim as frontend
+FROM node:20-bookworm-slim as frontend
 WORKDIR /src
 
 #
