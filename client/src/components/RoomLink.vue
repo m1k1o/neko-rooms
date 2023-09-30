@@ -65,7 +65,7 @@ export default class RoomLink extends Vue {
   togglePass() {
     this.showPass = !this.showPass
     if (this.showPass) {
-      setTimeout(() => {
+      window.setTimeout(() => {
         this.selectAll()
       }, 0)
     }
@@ -81,13 +81,13 @@ export default class RoomLink extends Vue {
 
   copyToClipboard() {
     if (this.copiedTimeout) {
-      clearInterval(this.copiedTimeout)
+      window.clearInterval(this.copiedTimeout)
     }
 
     navigator.clipboard.writeText(this.url)
     this.copied = true
 
-    this.copiedTimeout = setTimeout(() => {
+    this.copiedTimeout = window.setTimeout(() => {
       this.copied = false
       this.copiedTimeout = 0
     }, 3000)

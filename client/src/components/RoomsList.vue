@@ -83,7 +83,7 @@ import RoomActionBtn from '@/components/RoomActionBtn.vue'
   }
 })
 export default class RoomsList extends Vue {
-  @Prop(Boolean) readonly loading: boolean = false
+  @Prop(Boolean) readonly loading!: boolean
 
   public dialog = false
   public roomId = ''

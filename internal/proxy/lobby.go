@@ -31,9 +31,9 @@ func roomWait(w http.ResponseWriter, r *http.Request) {
 				}
 
 				// wait for 10 sec
-				await new Promise(res => setTimeout(res, 2500))
+				await new Promise(res => window.setTimeout(res, 2500))
 				document.querySelector(".swal2-loader").style.visibility = 'hidden'
-				await new Promise(res => setTimeout(res, 7500))
+				await new Promise(res => window.setTimeout(res, 7500))
 			}
 		}
 	}())
