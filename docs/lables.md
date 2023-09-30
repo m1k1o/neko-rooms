@@ -1,6 +1,6 @@
 # custom labels
 
-You can add custom lables for every room.
+You can add custom labels for every room.
 
 Example: Expose port 3000 from every room under `3000-(room-name)`:
 

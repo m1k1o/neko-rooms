@@ -3,14 +3,28 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/m1k1o/neko-rooms/internal/room"
 	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
 func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) {
-	response, err := manager.rooms.List()
+	labelsMap := map[string]string{}
+	for key, value := range r.URL.Query() {
+		key = strings.ToLower(key)
+
+		if !room.CheckLabelKey(key) {
+			http.Error(w, "invalid label name, allowed characters: [a-z0-9.-]", 400)
+			return
+		}
+
+		labelsMap[key] = value[0]
+	}
+
+	response, err := manager.rooms.List(labelsMap)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

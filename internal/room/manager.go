@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -62,13 +63,13 @@ func (manager *RoomManagerCtx) Config() types.RoomsConfig {
 	}
 }
 
-func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
-	containers, err := manager.listContainers()
+func (manager *RoomManagerCtx) List(labels map[string]string) ([]types.RoomEntry, error) {
+	containers, err := manager.listContainers(labels)
 	if err != nil {
 		return nil, err
 	}
 
-	result := []types.RoomEntry{}
+	result := make([]types.RoomEntry, 0, len(containers))
 	for _, container := range containers {
 		entry, err := manager.containerToEntry(container)
 		if err != nil {
@@ -174,6 +175,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		NekoImage: settings.NekoImage,
 
 		BrowserPolicy: browserPolicyLabels,
+		UserDefined:   settings.Labels,
 	})
 
 	//
@@ -652,9 +654,10 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
+		Labels:         labels.UserDefined,
 		Mounts:         mounts,
-		BrowserPolicy:  browserPolicy,
 		Resources:      roomResources,
+		BrowserPolicy:  browserPolicy,
 	}
 
 	if labels.Mux {
@@ -678,7 +681,7 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 	}
 
 	output, err := manager.containerExec(id, []string{
-		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + settings.AdminPass,
+		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + url.QueryEscape(settings.AdminPass),
 	})
 	if err != nil {
 		return nil, err

@@ -33,6 +33,13 @@ paths:
         - rooms
       summary: List all rooms
       operationId: roomsList
+      parameters:
+        - in: query
+          name: labels
+          schema:
+            type: object
+            additionalProperties: 
+              type: string
       responses:
         '200':
           description: OK
@@ -318,6 +325,10 @@ components:
           type: string
           format: datetime
           example: "2021-03-07T21:56:34Z"
+        labels:
+          type: object
+          additionalProperties: 
+            type: string
 
     RoomMount:
       type: object
@@ -415,6 +426,10 @@ components:
             type: string
           example:
             CUSTOM_ENV: custom value
+        labels:
+          type: object
+          additionalProperties: 
+            type: string
         mounts:
           type: array
           items:

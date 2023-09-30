@@ -35,15 +35,16 @@ type RoomsConfig struct {
 }
 
 type RoomEntry struct {
-	ID             string    `json:"id"`
-	URL            string    `json:"url"`
-	Name           string    `json:"name"`
-	NekoImage      string    `json:"neko_image"`
-	IsOutdated     bool      `json:"is_outdated"`
-	MaxConnections uint16    `json:"max_connections"` // 0 when using mux
-	Running        bool      `json:"running"`
-	Status         string    `json:"status"`
-	Created        time.Time `json:"created"`
+	ID             string            `json:"id"`
+	URL            string            `json:"url"`
+	Name           string            `json:"name"`
+	NekoImage      string            `json:"neko_image"`
+	IsOutdated     bool              `json:"is_outdated"`
+	MaxConnections uint16            `json:"max_connections"` // 0 when using mux
+	Running        bool              `json:"running"`
+	Status         string            `json:"status"`
+	Created        time.Time         `json:"created"`
+	Labels         map[string]string `json:"labels,omitempty"`
 }
 
 type MountType string
@@ -94,6 +95,7 @@ type RoomSettings struct {
 	BroadcastPipeline string `json:"broadcast_pipeline,omitempty"`
 
 	Envs      map[string]string `json:"envs"`
+	Labels    map[string]string `json:"labels"`
 	Mounts    []RoomMount       `json:"mounts"`
 	Resources RoomResources     `json:"resources"`
 
@@ -280,7 +282,7 @@ type RoomMember struct {
 
 type RoomManager interface {
 	Config() RoomsConfig
-	List() ([]RoomEntry, error)
+	List(labels map[string]string) ([]RoomEntry, error)
 	FindByName(name string) (*RoomEntry, error)
 
 	Create(settings RoomSettings) (string, error)
