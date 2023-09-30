@@ -111,6 +111,29 @@ paths:
           description: OK
         '500':
           description: Internal server error
+  /api/rooms/{roomName}/by-name:
+    get:
+      tags:
+        - rooms
+      summary: Get room entry by name
+      operationId: roomGetByName
+      parameters:
+        - in: path
+          name: roomName
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomEntry'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
   /api/rooms/{roomId}/settings:
     get:
       tags:

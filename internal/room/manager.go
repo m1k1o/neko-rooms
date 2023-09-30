@@ -82,15 +82,6 @@ func (manager *RoomManagerCtx) List(labels map[string]string) ([]types.RoomEntry
 	return result, nil
 }
 
-func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error) {
-	container, err := manager.containerByName(name)
-	if err != nil {
-		return nil, err
-	}
-
-	return manager.containerToEntry(*container)
-}
-
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
 		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
@@ -497,6 +488,15 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
 	container, err := manager.containerById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.containerToEntry(*container)
+}
+
+func (manager *RoomManagerCtx) GetEntryByName(name string) (*types.RoomEntry, error) {
+	container, err := manager.containerByName(name)
 	if err != nil {
 		return nil, err
 	}

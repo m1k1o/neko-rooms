@@ -133,6 +133,20 @@ func (manager *ApiManagerCtx) roomGetEntry(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(response)
 }
 
+func (manager *ApiManagerCtx) roomGetEntryByName(w http.ResponseWriter, r *http.Request) {
+	// roomId is actually room name here
+	roomName := chi.URLParam(r, "roomId")
+
+	response, err := manager.rooms.GetEntryByName(roomName)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 func (manager *ApiManagerCtx) roomGetSettings(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 

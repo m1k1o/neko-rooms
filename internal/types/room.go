@@ -283,10 +283,10 @@ type RoomMember struct {
 type RoomManager interface {
 	Config() RoomsConfig
 	List(labels map[string]string) ([]RoomEntry, error)
-	FindByName(name string) (*RoomEntry, error)
 
 	Create(settings RoomSettings) (string, error)
 	GetEntry(id string) (*RoomEntry, error)
+	GetEntryByName(name string) (*RoomEntry, error)
 	GetSettings(id string) (*RoomSettings, error)
 	GetStats(id string) (*RoomStats, error)
 	Remove(id string) error
