@@ -706,6 +706,7 @@ export class ConfigApi extends BaseAPI {
 }
 
 
+
 /**
  * DefaultApi - axios parameter creator
  * @export
@@ -929,6 +930,7 @@ export class DefaultApi extends BaseAPI {
         return DefaultApiFp(this.configuration).pullStop(options).then((request) => request(this.axios, this.basePath));
     }
 }
+
 
 
 /**
@@ -1630,5 +1632,6 @@ export class RoomsApi extends BaseAPI {
         return RoomsApiFp(this.configuration).roomsList(options).then((request) => request(this.axios, this.basePath));
     }
 }
+
 
 
