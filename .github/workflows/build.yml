@@ -22,6 +22,9 @@ jobs:
         name: Checkout
         uses: actions/checkout@v4
       - 
+        name: Change directory
+        run: cd ./client
+      - 
         name: Setup Node
         uses: actions/setup-node@v3
         with:
