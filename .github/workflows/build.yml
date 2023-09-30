@@ -13,6 +13,9 @@ env:
 jobs:
   build-client:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
     #
     # do not run on forks
     #
@@ -21,9 +24,6 @@ jobs:
       - 
         name: Checkout
         uses: actions/checkout@v4
-      - 
-        name: Change directory
-        run: cd ./client
       - 
         name: Setup Node
         uses: actions/setup-node@v3
