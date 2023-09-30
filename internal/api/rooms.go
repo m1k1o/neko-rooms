@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -81,6 +83,12 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 	settings, err := manager.rooms.GetSettings(roomId)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// optional settings payload
+	if err := json.NewDecoder(r.Body).Decode(&settings); err != nil && !errors.Is(err, io.EOF) {
+		http.Error(w, err.Error(), 400)
 		return
 	}
 
