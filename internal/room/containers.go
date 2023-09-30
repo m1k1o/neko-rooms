@@ -19,7 +19,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 	}
 
 	entry := &types.RoomEntry{
-		ID:             container.ID,
+		ID:             container.ID[:12],
 		URL:            labels.URL,
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,

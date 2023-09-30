@@ -483,7 +483,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", err
 	}
 
-	return container.ID, nil
+	return container.ID[:12], nil
 }
 
 func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
