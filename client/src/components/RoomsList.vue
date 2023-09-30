@@ -58,7 +58,7 @@
           Room information
         </v-card-title>
         <v-card-text>
-          <RoomInfo :roomId="roomId" />
+          <RoomInfo v-if="dialog" :roomId="roomId" />
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>

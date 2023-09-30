@@ -36,11 +36,7 @@
       </v-col>
       <v-col class="text-right">
         <RoomsQuick class="mr-3" />
-        <v-dialog
-          v-model="dialog"
-          persistent
-          max-width="600px"
-        >
+        <v-dialog v-model="dialog" persistent max-width="600px">
           <template v-slot:activator="{ on, attrs }">
             <v-btn
               v-bind="attrs"
@@ -52,7 +48,7 @@
             </v-btn>
           </template>
 
-          <RoomsCreate @finished="dialog = false" />
+          <RoomsCreate v-if="dialog" @finished="dialog = false" />
         </v-dialog>
       </v-col>
     </v-row>
