@@ -99,6 +99,9 @@ type RoomSettings struct {
 	Mounts    []RoomMount       `json:"mounts"`
 	Resources RoomResources     `json:"resources"`
 
+	Hostname string   `json:"hostname,omitempty"`
+	DNS      []string `json:"dns,omitempty"`
+
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 

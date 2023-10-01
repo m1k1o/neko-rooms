@@ -561,9 +561,14 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set container configs
 	//
 
+	hostname := containerName
+	if settings.Hostname != "" {
+		hostname = settings.Hostname
+	}
+
 	config := &container.Config{
 		// Hostname
-		Hostname: containerName,
+		Hostname: hostname,
 		// Domainname is preventing from running container on LXC (Proxmox)
 		// https://www.gitmemory.com/issue/docker/for-linux/743/524569376
 		// Domainname: containerName,
@@ -605,6 +610,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			DeviceRequests: deviceRequests,
 			Devices:        devices,
 		},
+		// DNS
+		DNS: settings.DNS,
 		// Privileged
 		Privileged: isPrivilegedImage,
 	}
@@ -803,6 +810,8 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		Labels:         labels.UserDefined,
 		Mounts:         mounts,
 		Resources:      roomResources,
+		Hostname:       container.Config.Hostname,
+		DNS:            container.HostConfig.DNS,
 		BrowserPolicy:  browserPolicy,
 	}
 

@@ -516,6 +516,18 @@ export interface RoomSettings {
     'resources'?: RoomResources;
     /**
      * 
+     * @type {string}
+     * @memberof RoomSettings
+     */
+    'hostname'?: string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof RoomSettings
+     */
+    'dns'?: Array<string>;
+    /**
+     * 
      * @type {BrowserPolicy}
      * @memberof RoomSettings
      */
