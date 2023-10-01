@@ -35,7 +35,20 @@ export default new Vuex.Store({
       Vue.set(state, 'rooms', roomEntries)
     },
     ROOMS_ADD(state: State, roomEntry: RoomEntry) {
-      Vue.set(state, 'rooms', [roomEntry, ...state.rooms])
+      // check if room already exists
+      if (state.rooms.some(({ id }) => id == roomEntry.id)) {
+        // replace room
+        Vue.set(state, 'rooms', state.rooms.map((room) => {
+          if (room.id == roomEntry.id) {
+            return roomEntry
+          } else {
+            return room
+          }
+        }))
+      } else {
+        // add room
+        Vue.set(state, 'rooms', [roomEntry, ...state.rooms])
+      }
     },
     ROOMS_PUT(state: State, roomEntry: RoomEntry) {
       let exists = false
