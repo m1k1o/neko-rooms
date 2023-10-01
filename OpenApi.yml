@@ -313,6 +313,24 @@ paths:
           description: OK
         '500':
           description: Internal server error
+  /api/pull/sse:
+    get:
+      tags:
+        - default
+      summary: Get pull status as SSE
+      operationId: pullStatusSSE
+      responses:
+        '200':
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  $ref: '#/components/schemas/PullLayer'
+        '500':
+          description: Internal server error
 
 components:
   schemas:

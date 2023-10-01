@@ -35,6 +35,7 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 
 	r.Route("/pull", func(r chi.Router) {
 		r.Get("/", manager.pullStatus)
+		r.Get("/sse", manager.pullStatusSSE)
 		r.Post("/", manager.pullStart)
 		r.Delete("/", manager.pullStop)
 	})

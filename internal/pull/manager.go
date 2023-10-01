@@ -10,6 +10,7 @@ import (
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	dockerClient "github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -27,6 +28,9 @@ type PullManagerCtx struct {
 	cancel func()
 	status types.PullStatus
 	layers map[string]int
+
+	chansMu sync.Mutex
+	chans   []chan<- string
 }
 
 func New(client *dockerClient.Client, nekoImages []string) *PullManagerCtx {
@@ -83,7 +87,7 @@ func (manager *PullManagerCtx) Start(request types.PullStart) error {
 	// handle registry auth
 	var opts dockerTypes.ImagePullOptions
 	if request.RegistryUser != "" && request.RegistryPass != "" {
-		authConfig := dockerTypes.AuthConfig{
+		authConfig := registry.AuthConfig{
 			Username: request.RegistryUser,
 			Password: request.RegistryPass,
 		}
@@ -109,6 +113,7 @@ func (manager *PullManagerCtx) Start(request types.PullStart) error {
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 			data := scanner.Bytes()
+			manager.sendSSE(string(data))
 
 			layer := types.PullLayer{}
 			if err := json.Unmarshal(data, &layer); err != nil {
@@ -167,4 +172,50 @@ func (manager *PullManagerCtx) Status() types.PullStatus {
 	defer manager.mu.Unlock()
 
 	return manager.status
+}
+
+func (manager *PullManagerCtx) sendSSE(status string) {
+	manager.chansMu.Lock()
+	defer manager.chansMu.Unlock()
+
+	for _, ch := range manager.chans {
+		ch <- status
+	}
+}
+
+func (manager *PullManagerCtx) Subscribe(ch chan<- string) func() {
+	manager.chansMu.Lock()
+	defer manager.chansMu.Unlock()
+
+	// subscribe
+	manager.chans = append(manager.chans, ch)
+
+	// unsubscribe
+	return func() {
+		manager.chansMu.Lock()
+		defer manager.chansMu.Unlock()
+
+		for i, c := range manager.chans {
+			if c == ch {
+				manager.chans = append(manager.chans[:i], manager.chans[i+1:]...)
+				break
+			}
+		}
+	}
+}
+
+func (manager *PullManagerCtx) Shutdown() error {
+	manager.chansMu.Lock()
+	for _, ch := range manager.chans {
+		close(ch)
+	}
+	manager.chansMu.Unlock()
+
+	manager.mu.Lock()
+	if manager.cancel != nil {
+		manager.cancel()
+	}
+	manager.mu.Unlock()
+
+	return nil
 }

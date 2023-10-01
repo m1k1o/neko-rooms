@@ -166,6 +166,9 @@ func (main *MainCtx) Shutdown() {
 
 	err = main.proxyManager.Shutdown()
 	main.logger.Err(err).Msg("proxy manager shutdown")
+
+	err = main.pullManager.Shutdown()
+	main.logger.Err(err).Msg("pull manager shutdown")
 }
 
 func (main *MainCtx) ServeCommand(cmd *cobra.Command, args []string) {

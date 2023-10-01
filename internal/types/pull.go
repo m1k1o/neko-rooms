@@ -30,4 +30,5 @@ type PullManager interface {
 	Start(request PullStart) error
 	Stop() error
 	Status() PullStatus
+	Subscribe(ch chan<- string) func()
 }
