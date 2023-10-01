@@ -283,6 +283,7 @@ type RoomMember struct {
 type RoomManager interface {
 	Config() RoomsConfig
 	List(labels map[string]string) ([]RoomEntry, error)
+	ExportAsDockerCompose() ([]byte, error)
 
 	Create(settings RoomSettings) (string, error)
 	GetEntry(id string) (*RoomEntry, error)

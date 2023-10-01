@@ -186,3 +186,14 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) fu
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
+
+func (manager *ApiManagerCtx) dockerCompose(w http.ResponseWriter, r *http.Request) {
+	response, err := manager.rooms.ExportAsDockerCompose()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/yaml")
+	w.Write(response)
+}

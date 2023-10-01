@@ -953,6 +953,36 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
+         * @summary Export room as docker-compose
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        exportAsDockerCompose: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/docker-compose.yaml`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create new room
          * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
@@ -1344,6 +1374,16 @@ export const RoomsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Export room as docker-compose
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async exportAsDockerCompose(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.exportAsDockerCompose(options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
          * @summary Create new room
          * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
@@ -1476,6 +1516,15 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
     return {
         /**
          * 
+         * @summary Export room as docker-compose
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        exportAsDockerCompose(options?: any): AxiosPromise<void> {
+            return localVarFp.exportAsDockerCompose(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Create new room
          * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
@@ -1595,6 +1644,17 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
  * @extends {BaseAPI}
  */
 export class RoomsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Export room as docker-compose
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RoomsApi
+     */
+    public exportAsDockerCompose(options?: AxiosRequestConfig) {
+        return RoomsApiFp(this.configuration).exportAsDockerCompose(options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 
      * @summary Create new room

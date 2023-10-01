@@ -255,6 +255,19 @@ paths:
                 $ref: '#/components/schemas/RoomEntry'
         '500':
           description: Internal server error
+  /api/docker-compose.yaml:
+    get:
+      tags:
+        - rooms
+      summary: Export room as docker-compose
+      operationId: exportAsDockerCompose
+      responses:
+        '200':
+          description: OK
+          content:
+            application/yaml: {}
+        '500':
+          description: Internal server error
 
   /api/pull:
     get:

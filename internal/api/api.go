@@ -59,4 +59,6 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 		r.Post("/restart", manager.roomGenericAction(manager.rooms.Restart))
 		r.Post("/recreate", manager.roomRecreate)
 	})
+
+	r.Get("/docker-compose.yaml", manager.dockerCompose)
 }
