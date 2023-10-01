@@ -58,7 +58,7 @@
           Room information
         </v-card-title>
         <v-card-text>
-          <RoomInfo :roomId="roomId" />
+          <RoomInfo v-if="dialog" :roomId="roomId" />
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -83,11 +83,11 @@ import RoomActionBtn from '@/components/RoomActionBtn.vue'
   }
 })
 export default class RoomsList extends Vue {
-  @Prop(Boolean) readonly loading: boolean = false
+  @Prop(Boolean) readonly loading!: boolean
 
-  private dialog = false
-  private roomId = ''
-  private roomLoading = [] as Array<string>
+  public dialog = false
+  public roomId = ''
+  public roomLoading = [] as Array<string>
 
   get headers() {
     return [

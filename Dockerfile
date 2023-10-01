@@ -1,12 +1,12 @@
 #
 # STAGE 1: build static web files
 #
-FROM node:14 as frontend
+FROM node:20-bookworm-slim as frontend
 WORKDIR /src
 
 #
 # install dependencies
-COPY client/package*.json ./
+COPY client/package*.json client/.npmrc ./
 RUN npm install
 
 #
@@ -17,7 +17,7 @@ RUN npm run build
 #
 # STAGE 2: build executable binary
 #
-FROM golang:1.18-buster as builder
+FROM golang:1.21-bullseye as builder
 WORKDIR /app
 
 COPY . .

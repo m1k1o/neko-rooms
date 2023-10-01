@@ -25,11 +25,15 @@ func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
 		policies.Extensions = []types.BrowserPolicyExtension{}
 		for _, val := range extensions.([]interface{}) {
 			s := strings.Split(val.(string), ";")
+			url := ""
+			if len(s) > 1 {
+				url = s[1]
+			}
 			policies.Extensions = append(
 				policies.Extensions,
 				types.BrowserPolicyExtension{
 					ID:  s[0],
-					URL: s[1],
+					URL: url,
 				},
 			)
 		}

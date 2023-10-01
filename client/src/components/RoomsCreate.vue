@@ -249,16 +249,8 @@
           </v-row>
           <v-row align="center" no-gutters class="my-3">
               <h2> Mounts </h2>
-              <v-btn :disabled="!storageEnabled" @click="data.mounts = [ ...data.mounts, { type: 'private', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
+              <v-btn @click="data.mounts = [ ...data.mounts, { type: storageEnabled ? 'private' : 'public', host_path: '', container_path: '' }]" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
-          <v-alert
-            border="left"
-            type="warning"
-            v-if="!storageEnabled"
-          >
-            <p><strong>Not available!</strong></p>
-            <p class="mb-0">Mounts are not available, because storage is not enabled.</p>
-          </v-alert>
           <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="index">
             <v-col class="py-0" cols="2">
               <v-select
@@ -292,9 +284,20 @@
             </div>
           </v-row>
           <v-row align="center" no-gutters v-if="data.mounts.length > 0">
+            <v-alert
+              border="left"
+              type="warning"
+              v-if="!storageEnabled"
+              style="width: 100%"
+            >
+              <p><strong>Not all mount types are available!</strong></p>
+              <p class="mb-0">Private and Template mounts are not available, because storage is not enabled.</p>
+            </v-alert>
             <p>
-              <strong>Private</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/rooms/&lt;room name&gt;/</code>. <br />
-              <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code>, and will be readonly. <br />
+              <span :style="{ opacity: !storageEnabled ? 0.25 : 1 }">
+                <strong>Private</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/rooms/&lt;room name&gt;/</code>. <br />
+                <strong>Template</strong>: Host path is relative to <code class="mx-1">&lt;storage path&gt;/templates/</code>, and will be readonly. <br />
+              </span>
               <strong>Protected</strong>: Host path must be whitelisted in config and exists on the host, will be readonly. <br />
               <strong>Public</strong>: Host path must be whitelisted in config and exists on the host.
             </p>
@@ -398,9 +401,54 @@
               </v-combobox>
             </v-col>
           </v-row>
+          <v-row align="center" no-gutters class="mt-3">
+            <h2> Network </h2>
+          </v-row>
+          <v-row align="center" class="mt-0">
+            <v-col class="py-0">
+              <v-text-field
+                label="Hostname"
+                v-model="data.hostname"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <v-col class="pt-0">
+              <v-combobox class="pt-0"
+                label="DNS"
+                v-model="data.dns"
+                multiple
+                hide-details
+              >
+                <template v-slot:selection="{ attrs, item, parent, selected }">
+                  <v-chip
+                    v-bind="attrs"
+                    :input-value="selected"
+                    label
+                    small
+                  >
+                    <span class="pr-2">
+                      {{ item }}
+                    </span>
+                    <v-icon
+                      small
+                      @click="parent.selectItem(item)"
+                    >
+                      $delete
+                    </v-icon>
+                  </v-chip>
+                </template>
+              </v-combobox>
+            </v-col>
+          </v-row>
+          <v-row align="center" no-gutters class="mb-3">
+            <v-col>
+              <p> <i> Leave empty to use container name. </i> </p>
+            </v-col>
+            <v-col class="pl-6">
+              <p> <i> Leave empty to use system defaults.</i> </p>
+            </v-col>
+          </v-row>
         </template>
-
-        <hr />
 
         <v-row align="center" no-gutters class="mt-3">
           <h2 class="my-3">
@@ -489,6 +537,7 @@
 
 <script lang="ts">
 import { Vue, Component, Ref, Watch } from 'vue-property-decorator'
+import { AxiosError } from 'axios'
 import { randomPassword } from '@/utils/random'
 
 import {
@@ -509,28 +558,28 @@ export type VForm = Vue & {
 export default class RoomsCreate extends Vue {
   @Ref('form') readonly _form!: VForm
 
-  private valid = true
+  public valid = true
 
-  private screen = true
-  private extended = false
-  private expert = false
+  public screen = true
+  public extended = false
+  public expert = false
 
-  private showUserPass = false
-  private showAdminPass = false
+  public showUserPass = false
+  public showAdminPass = false
 
-  private maxFpsEnabled = true
-  private videoPipelineEnabled = false
-  private audioPipelineEnabled = false
-  private broadcastPipelineEnabled = false
-  private browserPolicyEnabled = false
+  public maxFpsEnabled = true
+  public videoPipelineEnabled = false
+  public audioPipelineEnabled = false
+  public broadcastPipelineEnabled = false
+  public browserPolicyEnabled = false
 
-  private loading = false
-  private data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
-  private browserPolicyContent: BrowserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
-  private envList: { key: string; val: string }[] = []
+  public loading = false
+  public data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
+  public browserPolicyContent: BrowserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
+  public envList: { key: string; val: string }[] = []
 
   // eslint-disable-next-line
-  private rules: any = {
+  public rules: any = {
     // eslint-disable-next-line
     required(val: any) {
       return val === null || typeof val === 'undefined' || val === "" ? 'This filed is mandatory.' : true
@@ -581,14 +630,16 @@ export default class RoomsCreate extends Vue {
 
   get mountTypes() {
     return [
-      {
-        text: 'Private',
-        value: 'private',
-      },
-      {
-        text: 'Template',
-        value: 'template',
-      },
+      ...(this.storageEnabled ? [
+        {
+          text: 'Private',
+          value: 'private',
+        },
+        {
+          text: 'Template',
+          value: 'template',
+        },
+      ] : []),
       {
         text: 'Protected',
         value: 'protected',
@@ -695,10 +746,11 @@ export default class RoomsCreate extends Vue {
       this.Clear()
       this.$emit('finished', true)
      } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: String(response.data),
           icon: 'error',
         })
       } else {

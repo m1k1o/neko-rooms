@@ -31,7 +31,7 @@
           Room information
         </v-card-title>
         <v-card-text>
-          <RoomInfo :roomId="roomId" />
+          <RoomInfo v-if="dialog" :roomId="roomId" />
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -46,8 +46,10 @@
 
 <script lang="ts">
 import { Vue, Component } from 'vue-property-decorator'
-import RoomInfo from '@/components/RoomInfo.vue'
+import { AxiosError } from 'axios'
 import { randomPassword } from '@/utils/random'
+
+import RoomInfo from '@/components/RoomInfo.vue'
 
 @Component({
   components: {
@@ -55,9 +57,9 @@ import { randomPassword } from '@/utils/random'
   }
 })
 export default class RoomActionBtn extends Vue {
-  private dialog = false
-  private loading = false
-  private roomId = ''
+  public dialog = false
+  public loading = false
+  public roomId = ''
 
   get nekoImages() {
     return this.$store.state.roomsConfig.neko_images
@@ -81,10 +83,11 @@ export default class RoomActionBtn extends Vue {
       this.roomId = entry.id
       this.dialog = true
     } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: String(response.data),
           icon: 'error',
         })
       } else {

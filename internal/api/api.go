@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -35,6 +35,7 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 
 	r.Route("/pull", func(r chi.Router) {
 		r.Get("/", manager.pullStatus)
+		r.Get("/sse", manager.pullStatusSSE)
 		r.Post("/", manager.pullStart)
 		r.Delete("/", manager.pullStop)
 	})
@@ -48,14 +49,17 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 
 	r.Route("/rooms/{roomId}", func(r chi.Router) {
 		r.Get("/", manager.roomGetEntry)
-		r.Delete("/", manager.roomGenericAction(manager.rooms.Remove))
+		r.Get("/by-name", manager.roomGetEntryByName)
 
 		r.Get("/settings", manager.roomGetSettings)
 		r.Get("/stats", manager.roomGetStats)
 
+		r.Delete("/", manager.roomGenericAction(manager.rooms.Remove))
 		r.Post("/start", manager.roomGenericAction(manager.rooms.Start))
 		r.Post("/stop", manager.roomGenericAction(manager.rooms.Stop))
 		r.Post("/restart", manager.roomGenericAction(manager.rooms.Restart))
 		r.Post("/recreate", manager.roomRecreate)
 	})
+
+	r.Get("/docker-compose.yaml", manager.dockerCompose)
 }

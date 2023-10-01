@@ -156,14 +156,27 @@
         </template>
       </v-simple-table>
 
-      <div class="my-3 headline">Mounts</div>
-      <v-simple-table>
-        <template v-slot:default>
-          <tbody>
-            <tr v-for="({ type, host_path, container_path }, index) in settings.mounts" :key="index"><td style="width:50%;">{{ host_path }} <v-chip small>{{ type }}</v-chip></td><td>{{ container_path }}</td></tr>
-          </tbody>
-        </template>
-      </v-simple-table>
+      <template v-if="settings.labels && Object.keys(settings.labels).length > 0">
+        <div class="my-3 headline">Labels</div>
+        <v-simple-table>
+          <template v-slot:default>
+            <tbody>
+              <tr v-for="(val, key) in settings.labels" :key="key"><th style="width:50%;">{{ key }}</th><td>{{ val }}</td></tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </template>
+
+      <template v-if="settings.mounts && settings.mounts.length > 0">
+        <div class="my-3 headline">Mounts</div>
+        <v-simple-table>
+          <template v-slot:default>
+            <tbody>
+              <tr v-for="({ type, host_path, container_path }, index) in settings.mounts" :key="index"><td style="width:50%;">{{ host_path }} <v-chip small>{{ type }}</v-chip></td><td>{{ container_path }}</td></tr>
+            </tbody>
+          </template>
+        </v-simple-table>
+      </template>
 
       <div class="my-3 headline">Resources</div>
       <v-simple-table>
@@ -175,6 +188,16 @@
             <tr><th> Shared memory </th><td :title="settings.resources.shm_size">{{ settings.resources.shm_size | memory }}</td></tr>
             <tr><th> GPUs </th><td><span v-if="settings.resources.gpus && settings.resources.gpus.length > 0">{{ settings.resources.gpus.join(",") }}</span><i v-else>--not used--</i></td></tr>
             <tr><th> Devices </th><td><span v-if="settings.resources.devices && settings.resources.devices.length > 0">{{ settings.resources.devices.join(",") }}</span><i v-else>--none--</i></td></tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+
+      <div class="my-3 headline">Network</div>
+      <v-simple-table>
+        <template v-slot:default>
+          <tbody>
+            <tr><th style="width:50%;"> Hostname </th><td>{{ settings.hostname }}</td></tr>
+            <tr><th> DNS </th><td><span v-if="settings.dns">{{ settings.dns.join(", ") }}</span><i v-else>--system-default--</i></td></tr>
           </tbody>
         </template>
       </v-simple-table>
@@ -206,6 +229,7 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator'
+import { AxiosError } from 'axios'
 import RoomLink from './RoomLink.vue'
 
 import {
@@ -223,12 +247,12 @@ import {
 export default class RoomInfo extends Vue {
   @Prop(String) readonly roomId!: string
 
-  private statsLoading = false
-  private statsErr = ""
-  private stats: RoomStats | null = null
+  public statsLoading = false
+  public statsErr = ""
+  public stats: RoomStats | null = null
 
-  private settingsLoading = false
-  private settings: RoomSettings | null = null
+  public settingsLoading = false
+  public settings: RoomSettings | null = null
 
   get room(): RoomEntry {
     return this.$store.state.rooms.find(({ id }: RoomEntry) => id == this.roomId)
@@ -247,10 +271,11 @@ export default class RoomInfo extends Vue {
         this.LoadStats()
       }
     } catch(e) {
-      if (e.response) {
+      const response = (e as AxiosError).response
+      if (response) {
         this.$swal({
           title: 'Server error',
-          text: e.response.data,
+          text: String(response.data),
           icon: 'error',
         })
       } else {
@@ -287,8 +312,13 @@ export default class RoomInfo extends Vue {
       })
       this.stats = stats
       this.statsErr = ""
-    } catch (e: any) {
-      this.statsErr = e
+    } catch(e) {
+      const response = (e as AxiosError).response
+      if (response) {
+        this.statsErr = `Server error: ${response.data}`
+      } else {
+        this.statsErr = `Network error: ${String(e)}`
+      }
     } finally {
       this.statsLoading = false
     }

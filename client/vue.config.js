@@ -1,4 +1,5 @@
-module.exports = {
+const { defineConfig } = require('@vue/cli-service')
+module.exports = defineConfig({
   productionSourceMap: false,
   transpileDependencies: [
     'vuetify'
@@ -6,11 +7,11 @@ module.exports = {
   publicPath: './',
   assetsDir: './',
   devServer: {
-    disableHostCheck: true,
+    allowedHosts: "all",
     proxy: process.env.API_PROXY ? {
       '^/api': {
         target: process.env.API_PROXY,
       },
     } : undefined,
   }
-}
+})

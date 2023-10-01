@@ -2,10 +2,14 @@ package room
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
 )
+
+var labelRegex = regexp.MustCompile(`^[a-z0-9.-]+$`)
 
 type RoomLabels struct {
 	Name      string
@@ -15,6 +19,7 @@ type RoomLabels struct {
 	NekoImage string
 
 	BrowserPolicy *BrowserPolicyLabels
+	UserDefined   map[string]string
 }
 
 type BrowserPolicyLabels struct {
@@ -101,6 +106,14 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 		}
 	}
 
+	// extract user defined labels
+	userDefined := map[string]string{}
+	for key, val := range labels {
+		if strings.HasPrefix(key, "m1k1o.neko_rooms.x-") {
+			userDefined[strings.TrimPrefix(key, "m1k1o.neko_rooms.x-")] = val
+		}
+	}
+
 	return &RoomLabels{
 		Name:      name,
 		URL:       url,
@@ -109,6 +122,7 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 		Epr:       epr,
 
 		BrowserPolicy: browserPolicy,
+		UserDefined:   userDefined,
 	}, nil
 }
 
@@ -133,5 +147,16 @@ func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]str
 		labelsMap["m1k1o.neko_rooms.browser_policy.path"] = labels.BrowserPolicy.Path
 	}
 
+	for key, val := range labels.UserDefined {
+		// to lowercase
+		key = strings.ToLower(key)
+
+		labelsMap[fmt.Sprintf("m1k1o.neko_rooms.x-%s", key)] = val
+	}
+
 	return labelsMap
+}
+
+func CheckLabelKey(name string) bool {
+	return labelRegex.MatchString(name)
 }

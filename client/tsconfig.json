@@ -10,10 +10,12 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
     "sourceMap": true,
     "baseUrl": ".",
     "types": [
-      "vue-sweetalert2",
+      "node",
       "webpack-env"
     ],
     "paths": {

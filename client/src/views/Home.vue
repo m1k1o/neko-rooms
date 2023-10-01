@@ -36,11 +36,7 @@
       </v-col>
       <v-col class="text-right">
         <RoomsQuick class="mr-3" />
-        <v-dialog
-          v-model="dialog"
-          persistent
-          max-width="600px"
-        >
+        <v-dialog v-model="dialog" persistent max-width="600px">
           <template v-slot:activator="{ on, attrs }">
             <v-btn
               v-bind="attrs"
@@ -52,7 +48,7 @@
             </v-btn>
           </template>
 
-          <RoomsCreate @finished="dialog = false" />
+          <RoomsCreate v-if="dialog" @finished="dialog = false" />
         </v-dialog>
       </v-col>
     </v-row>
@@ -67,6 +63,7 @@
 
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
+import { AxiosError } from 'axios'
 import RoomsList from '@/components/RoomsList.vue'
 import RoomsQuick from '@/components/RoomsQuick.vue'
 import RoomsCreate from '@/components/RoomsCreate.vue'
@@ -82,12 +79,12 @@ import { RoomEntry } from '@/api/index'
   }
 })
 export default class Home extends Vue {
-  private loading = false
-  private dialog = false
+  public loading = false
+  public dialog = false
 
-  private interval!: number
-  private autoRefresh = 10
-  private autoRefreshItems = [
+  public interval!: number
+  public autoRefresh = 10
+  public autoRefreshItems = [
     { text: 'Off', value: 0 },
     { text: '5s', value: 5 },
     { text: '10s', value: 10 },
@@ -112,26 +109,42 @@ export default class Home extends Vue {
 
     try {
       await this.$store.dispatch('ROOMS_LOAD')
+    } catch(e) {
+      const response = (e as AxiosError).response
+      if (response) {
+        console.error('Server error', response.data)
+      } else {
+        console.error('Network error', String(e))
+      }
     } finally {
       this.loading = false
     }
   }
 
-
   @Watch('autoRefresh', { immediate: true })
   onAutoRefresh() {
     if (this.interval) {
-      clearInterval(this.interval)
+      window.clearInterval(this.interval)
     }
   
     if (this.autoRefresh) {
-      this.interval = setInterval(this.LoadRooms, this.autoRefresh * 1000)
+      this.interval = window.setInterval(this.LoadRooms, this.autoRefresh * 1000)
     }
   }
 
-  mounted() {
-    this.$store.dispatch('ROOMS_CONFIG')
-    this.LoadRooms()
+  async mounted() {
+    try {
+      await this.$store.dispatch('ROOMS_CONFIG')
+    } catch(e) {
+      const response = (e as AxiosError).response
+      if (response) {
+        console.error('Server error', response.data)
+      } else {
+        console.error('Network error', String(e))
+      }
+    }
+
+    await this.LoadRooms()
   }
 
   beforeDestroy() {

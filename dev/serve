@@ -28,4 +28,4 @@ docker run --rm -it \
     --volume "${PWD}/../client:/app" \
     --entrypoint="npm" \
     --workdir="/app" \
-    node:14 run serve;
+    node:20-bookworm-slim run serve;

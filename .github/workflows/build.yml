@@ -11,7 +11,38 @@ env:
   IMAGE_NAME: m1k1o/neko-rooms
 
 jobs:
-  build:
+  build-client:
+    runs-on: ubuntu-latest
+    #
+    # do not run on forks
+    #
+    if: github.repository_owner == 'm1k1o'
+    steps:
+      - 
+        name: Checkout
+        uses: actions/checkout@v4
+      - 
+        name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./client/package-lock.json
+      - 
+        name: Install dependencies
+        run: cd ./client && npm install
+      - 
+        name: Build
+        run: cd ./client && npm run build
+      - 
+        name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: client
+          path: ./client/dist
+
+  build-docker:
+    needs: build-client
     runs-on: ubuntu-latest
     #
     # do not run on forks
@@ -21,6 +52,19 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
+      - 
+        name: Download client artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: client
+          path: ./client/dist
+      - 
+        name: Remove client stage from Dockerfile
+        # Change dockerfile: remove first stage - everything between # STAGE 1 and # STAGE 2
+        # Replace "--from=frontend /src/dist/" with "./client/dist/"
+        run: |
+          sed -i '/# STAGE 1/,/# STAGE 2/d' ./Dockerfile
+          sed -i 's/--from=frontend \/src\/dist\//.\/client\/dist\//g' ./Dockerfile
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -52,6 +96,10 @@ jobs:
         name: Build and push
         uses: docker/build-push-action@v2
         with:
+          # Turns out the build-push-action runs in a "GitHub" context by default.
+          # At the very least, it means pulling down your repository as part of pre-Dockerfile command.
+          # You can change it to the "file" context by using:
+          context: .
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7

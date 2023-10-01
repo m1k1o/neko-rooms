@@ -19,7 +19,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 	}
 
 	entry := &types.RoomEntry{
-		ID:             container.ID,
+		ID:             container.ID[:12],
 		URL:            labels.URL,
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
@@ -28,6 +28,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		Running:        container.State == "running",
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),
+		Labels:         labels.UserDefined,
 	}
 
 	if labels.Mux {
@@ -37,35 +38,23 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 	return entry, nil
 }
 
-func (manager *RoomManagerCtx) listContainers() ([]dockerTypes.Container, error) {
+func (manager *RoomManagerCtx) listContainers(labels map[string]string) ([]dockerTypes.Container, error) {
 	args := filters.NewArgs(
-		filters.Arg("label", "m1k1o.neko_rooms.instance"),
+		filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", manager.config.InstanceName)),
 	)
 
-	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
+	for key, val := range labels {
+		args.Add("label", fmt.Sprintf("m1k1o.neko_rooms.x-%s=%s", key, val))
+	}
+
+	return manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
 		All:     true,
 		Filters: args,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	result := []dockerTypes.Container{}
-	for _, container := range containers {
-		val, ok := container.Labels["m1k1o.neko_rooms.instance"]
-		if !ok || val != manager.config.InstanceName {
-			continue
-		}
-
-		result = append(result, container)
-	}
-
-	return result, nil
 }
 
 func (manager *RoomManagerCtx) containerFilter(args filters.Args) (*dockerTypes.Container, error) {
-	args.Add("label", "m1k1o.neko_rooms.instance")
+	args.Add("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", manager.config.InstanceName))
 
 	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
 		All:     true,
@@ -81,12 +70,6 @@ func (manager *RoomManagerCtx) containerFilter(args filters.Args) (*dockerTypes.
 	}
 
 	container := containers[0]
-
-	val, ok := container.Labels["m1k1o.neko_rooms.instance"]
-	if !ok || val != manager.config.InstanceName {
-		return nil, fmt.Errorf("this container does not belong to neko_rooms")
-	}
-
 	return &container, nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -23,6 +24,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 
 	"github.com/m1k1o/neko-rooms/internal/config"
 	"github.com/m1k1o/neko-rooms/internal/policies"
@@ -63,13 +65,13 @@ func (manager *RoomManagerCtx) Config() types.RoomsConfig {
 	}
 }
 
-func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
-	containers, err := manager.listContainers()
+func (manager *RoomManagerCtx) List(labels map[string]string) ([]types.RoomEntry, error) {
+	containers, err := manager.listContainers(labels)
 	if err != nil {
 		return nil, err
 	}
 
-	result := []types.RoomEntry{}
+	result := make([]types.RoomEntry, 0, len(containers))
 	for _, container := range containers {
 		entry, err := manager.containerToEntry(container)
 		if err != nil {
@@ -82,22 +84,164 @@ func (manager *RoomManagerCtx) List() ([]types.RoomEntry, error) {
 	return result, nil
 }
 
-func (manager *RoomManagerCtx) FindByName(name string) (*types.RoomEntry, error) {
-	container, err := manager.containerByName(name)
+func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
+	services := map[string]any{}
+
+	dockerCompose := map[string]any{
+		"version": "3.8",
+		"networks": map[string]any{
+			"default": map[string]any{
+				"external": map[string]any{
+					"name": manager.config.InstanceNetwork,
+				},
+			},
+		},
+		"services": services,
+	}
+
+	containers, err := manager.listContainers(map[string]string{})
 	if err != nil {
 		return nil, err
 	}
 
-	return manager.containerToEntry(*container)
+	for _, container := range containers {
+		containerJson, err := manager.inspectContainer(container.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		labels, err := manager.extractLabels(containerJson.Config.Labels)
+		if err != nil {
+			return nil, err
+		}
+
+		containerName := containerJson.Name
+		containerName = strings.TrimPrefix(containerName, "/")
+
+		service := map[string]any{}
+		services[containerName] = service
+
+		service["image"] = labels.NekoImage
+		service["container_name"] = containerName
+		service["hostname"] = containerJson.Config.Hostname
+		service["restart"] = containerJson.HostConfig.RestartPolicy.Name
+
+		// privileged
+		if containerJson.HostConfig.Privileged {
+			service["privileged"] = true
+		}
+
+		// total shm memory usage
+		service["shm_size"] = containerJson.HostConfig.ShmSize
+
+		// capabilites
+		capAdd := []string{}
+		for _, cap := range containerJson.HostConfig.CapAdd {
+			capAdd = append(capAdd, string(cap))
+		}
+		if len(capAdd) > 0 {
+			service["cap_add"] = capAdd
+		}
+
+		// resources
+		resources := map[string]any{}
+		{
+			limits := map[string]string{}
+			// TODO: CPUShares
+			if containerJson.HostConfig.NanoCPUs > 0 {
+				limits["cpus"] = fmt.Sprintf("%f", float64(containerJson.HostConfig.NanoCPUs)/1000000000)
+			}
+			if containerJson.HostConfig.Memory > 0 {
+				limits["memory"] = fmt.Sprintf("%dM", containerJson.HostConfig.Memory/1024/1024)
+			}
+			if len(limits) > 0 {
+				resources["limits"] = limits
+			}
+
+			deviceRequests := []any{}
+			for _, device := range containerJson.HostConfig.DeviceRequests {
+				deviceRequests = append(deviceRequests, map[string]any{
+					"driver":       device.Driver,
+					"count":        device.Count,
+					"capabilities": device.Capabilities,
+				})
+			}
+			if len(deviceRequests) > 0 {
+				resources["reservations"] = map[string]any{
+					"devices": deviceRequests,
+				}
+			}
+		}
+		if len(resources) > 0 {
+			service["deploy"] = map[string]any{
+				"resources": resources,
+			}
+		}
+
+		// hostname
+		if containerJson.Config.Hostname != containerName {
+			service["hostname"] = containerJson.Config.Hostname
+		}
+
+		// dns
+		if len(containerJson.HostConfig.DNS) > 0 {
+			service["dns"] = containerJson.HostConfig.DNS
+		}
+
+		// ports
+		ports := []string{}
+		for port, host := range containerJson.HostConfig.PortBindings {
+			for _, binding := range host {
+				ports = append(ports, fmt.Sprintf("%s:%s", binding.HostPort, port))
+			}
+		}
+		if len(ports) > 0 {
+			service["ports"] = ports
+		}
+
+		// environment variables
+		if len(containerJson.Config.Env) > 0 {
+			service["environment"] = containerJson.Config.Env
+		}
+
+		// volumes
+		volumes := []string{}
+		for _, mount := range containerJson.Mounts {
+			if mount.RW {
+				volumes = append(volumes, fmt.Sprintf("%s:%s:ro", mount.Source, mount.Destination))
+			} else {
+				volumes = append(volumes, fmt.Sprintf("%s:%s", mount.Source, mount.Destination))
+			}
+		}
+		if len(volumes) > 0 {
+			service["volumes"] = volumes
+		}
+
+		// devices
+		devices := []string{}
+		for _, device := range containerJson.HostConfig.Devices {
+			devices = append(devices, fmt.Sprintf("%s:%s:%s", device.PathOnHost, device.PathInContainer, device.CgroupPermissions))
+		}
+		if len(devices) > 0 {
+			service["devices"] = devices
+		}
+
+		// labels
+		labelsArr := []string{}
+		for key, val := range containerJson.Config.Labels {
+			labelsArr = append(labelsArr, fmt.Sprintf("%s=%s", key, val))
+		}
+		if len(labelsArr) > 0 {
+			service["labels"] = labelsArr
+		}
+	}
+
+	return yaml.Marshal(dockerCompose)
 }
 
 func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
 		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
-	}
-
-	if !manager.config.StorageEnabled && len(settings.Mounts) > 0 {
-		return "", fmt.Errorf("mounts cannot be specified, because storage is disabled or unavailable")
 	}
 
 	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
@@ -179,6 +323,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		NekoImage: settings.NekoImage,
 
 		BrowserPolicy: browserPolicyLabels,
+		UserDefined:   settings.Labels,
 	})
 
 	//
@@ -320,8 +465,12 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			return "", fmt.Errorf("mount paths must be absolute")
 		}
 
-		// private container's data
-		if mount.Type == types.MountPrivate {
+		switch mount.Type {
+		case types.MountPrivate:
+			if !manager.config.StorageEnabled {
+				return "", fmt.Errorf("private mounts cannot be specified, because storage is disabled or unavailable")
+			}
+
 			// ensure that target exists with correct permissions
 			internalPath := path.Join(manager.config.StorageInternal, privateStoragePath, roomName, hostPath)
 			if _, err := os.Stat(internalPath); os.IsNotExist(err) {
@@ -336,13 +485,17 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 			// prefix host path
 			hostPath = path.Join(manager.config.StorageExternal, privateStoragePath, roomName, hostPath)
-		} else if mount.Type == types.MountTemplate {
+		case types.MountTemplate:
+			if !manager.config.StorageEnabled {
+				return "", fmt.Errorf("template mounts cannot be specified, because storage is disabled or unavailable")
+			}
+
 			// readonly template data
 			readOnly = true
 
 			// prefix host path
 			hostPath = path.Join(manager.config.StorageExternal, templateStoragePath, hostPath)
-		} else if mount.Type == types.MountProtected || mount.Type == types.MountPublic {
+		case types.MountProtected, types.MountPublic:
 			// readonly if mount type is protected
 			readOnly = mount.Type == types.MountProtected
 
@@ -358,7 +511,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			if !isAllowed {
 				return "", fmt.Errorf("mount path is not whitelisted in config")
 			}
-		} else {
+		default:
 			return "", fmt.Errorf("unknown mount type %q", mount.Type)
 		}
 
@@ -422,9 +575,14 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	// Set container configs
 	//
 
+	hostname := containerName
+	if settings.Hostname != "" {
+		hostname = settings.Hostname
+	}
+
 	config := &container.Config{
 		// Hostname
-		Hostname: containerName,
+		Hostname: hostname,
 		// Domainname is preventing from running container on LXC (Proxmox)
 		// https://www.gitmemory.com/issue/docker/for-linux/743/524569376
 		// Domainname: containerName,
@@ -466,6 +624,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 			DeviceRequests: deviceRequests,
 			Devices:        devices,
 		},
+		// DNS
+		DNS: settings.DNS,
 		// Privileged
 		Privileged: isPrivilegedImage,
 	}
@@ -490,11 +650,20 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		return "", err
 	}
 
-	return container.ID, nil
+	return container.ID[:12], nil
 }
 
 func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
 	container, err := manager.containerById(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.containerToEntry(*container)
+}
+
+func (manager *RoomManagerCtx) GetEntryByName(name string) (*types.RoomEntry, error) {
+	container, err := manager.containerByName(name)
 	if err != nil {
 		return nil, err
 	}
@@ -509,7 +678,7 @@ func (manager *RoomManagerCtx) Remove(id string) error {
 	}
 
 	// Stop the actual container
-	err = manager.client.ContainerStop(context.Background(), id, nil)
+	err = manager.client.ContainerStop(context.Background(), id, container.StopOptions{})
 
 	if err != nil {
 		return err
@@ -652,9 +821,12 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
+		Labels:         labels.UserDefined,
 		Mounts:         mounts,
-		BrowserPolicy:  browserPolicy,
 		Resources:      roomResources,
+		Hostname:       container.Config.Hostname,
+		DNS:            container.HostConfig.DNS,
+		BrowserPolicy:  browserPolicy,
 	}
 
 	if labels.Mux {
@@ -681,7 +853,7 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 	switch manager.config.ApiVersion {
 	case 2:
 		output, err := manager.containerExec(id, []string{
-			"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + settings.AdminPass,
+			"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + url.QueryEscape(settings.AdminPass),
 		})
 		if err != nil {
 			return nil, err
@@ -692,7 +864,7 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 		}
 	case 3:
 		output, err := manager.containerExec(id, []string{
-			"wget", "-q", "-O-", "http://127.0.0.1:8080/api/sessions?token=" + settings.AdminPass,
+			"wget", "-q", "-O-", "http://127.0.0.1:8080/api/sessions?token=" + url.QueryEscape(settings.AdminPass),
 		})
 		if err != nil {
 			return nil, err
@@ -772,7 +944,7 @@ func (manager *RoomManagerCtx) Stop(id string) error {
 	}
 
 	// Stop the actual container
-	return manager.client.ContainerStop(context.Background(), id, nil)
+	return manager.client.ContainerStop(context.Background(), id, container.StopOptions{})
 }
 
 func (manager *RoomManagerCtx) Restart(id string) error {
@@ -782,5 +954,5 @@ func (manager *RoomManagerCtx) Restart(id string) error {
 	}
 
 	// Restart the actual container
-	return manager.client.ContainerRestart(context.Background(), id, nil)
+	return manager.client.ContainerRestart(context.Background(), id, container.StopOptions{})
 }

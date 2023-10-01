@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -133,14 +133,6 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 				}
 				defer res.Body.Close()
 
-				// read whole body
-				body, err := ioutil.ReadAll(res.Body)
-				if err != nil {
-					logger.Err(err).Msg("proxy auth request `ioutil.ReadAll` err")
-					http.Error(w, "proxy auth failed", http.StatusForbidden)
-					return
-				}
-
 				if res.StatusCode < 200 || res.StatusCode >= 300 {
 					// copy headers
 					for k, vv := range res.Header {
@@ -151,8 +143,14 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 
 					// copy status & body
 					w.WriteHeader(res.StatusCode)
-					w.Write(body)
+					_, err := io.Copy(w, res.Body)
+					if err != nil {
+						logger.Err(err).Msg("proxy auth request `io.Copy` err")
+					}
 					return
+				} else {
+					// discard body so that the connection can be reused
+					_, _ = io.Copy(io.Discard, res.Body)
 				}
 
 				next.ServeHTTP(w, r)

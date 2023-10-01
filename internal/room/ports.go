@@ -44,7 +44,7 @@ func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
 }
 
 func (manager *RoomManagerCtx) getUsedPorts() ([]EprPorts, error) {
-	containers, err := manager.listContainers()
+	containers, err := manager.listContainers(nil)
 	if err != nil {
 		return nil, err
 	}

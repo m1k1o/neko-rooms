@@ -77,6 +77,11 @@ export const state = {
       shm_size: 2000000000,
       devices: [],
     },
+
+    // eslint-disable-next-line
+    hostname: '',
+    // eslint-disable-next-line
+    dns: [],
   } as RoomSettings,
   videoCodecs: [
     "VP8",

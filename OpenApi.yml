@@ -33,6 +33,13 @@ paths:
         - rooms
       summary: List all rooms
       operationId: roomsList
+      parameters:
+        - in: query
+          name: labels
+          schema:
+            type: object
+            additionalProperties: 
+              type: string
       responses:
         '200':
           description: OK
@@ -102,6 +109,29 @@ paths:
       responses:
         '204':
           description: OK
+        '500':
+          description: Internal server error
+  /api/rooms/{roomName}/by-name:
+    get:
+      tags:
+        - rooms
+      summary: Get room entry by name
+      operationId: roomGetByName
+      parameters:
+        - in: path
+          name: roomName
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomEntry'
+        '400':
+          description: Bad request
         '500':
           description: Internal server error
   /api/rooms/{roomId}/settings:
@@ -211,6 +241,11 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomSettings'
       responses:
         '200':
           description: OK
@@ -218,6 +253,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomEntry'
+        '500':
+          description: Internal server error
+  /api/docker-compose.yaml:
+    get:
+      tags:
+        - rooms
+      summary: Export room as docker-compose
+      operationId: exportAsDockerCompose
+      responses:
+        '200':
+          description: OK
+          content:
+            application/yaml: {}
         '500':
           description: Internal server error
 
@@ -263,6 +311,24 @@ paths:
       responses:
         '204':
           description: OK
+        '500':
+          description: Internal server error
+  /api/pull/sse:
+    get:
+      tags:
+        - default
+      summary: Get pull status as SSE
+      operationId: pullStatusSSE
+      responses:
+        '200':
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                type: array
+                format: event-stream
+                items:
+                  $ref: '#/components/schemas/PullLayer'
         '500':
           description: Internal server error
 
@@ -318,6 +384,10 @@ components:
           type: string
           format: datetime
           example: "2021-03-07T21:56:34Z"
+        labels:
+          type: object
+          additionalProperties: 
+            type: string
 
     RoomMount:
       type: object
@@ -415,12 +485,24 @@ components:
             type: string
           example:
             CUSTOM_ENV: custom value
+        labels:
+          type: object
+          additionalProperties: 
+            type: string
         mounts:
           type: array
           items:
             $ref: '#/components/schemas/RoomMount'
         resources:
           $ref: '#/components/schemas/RoomResources'
+        hostname:
+          type: string
+          example: server.lan
+        dns:
+          type: array
+          items:
+            type: string
+            example: 1.1.1.1
         browser_policy:
           $ref: '#/components/schemas/BrowserPolicy'
 
