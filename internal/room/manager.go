@@ -90,9 +90,8 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
 		"version": "3.8",
 		"networks": map[string]any{
 			"default": map[string]any{
-				"external": map[string]any{
-					"name": manager.config.InstanceNetwork,
-				},
+				"name":     manager.config.InstanceNetwork,
+				"external": true,
 			},
 		},
 		"services": services,
