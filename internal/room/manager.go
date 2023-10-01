@@ -177,6 +177,16 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
 			}
 		}
 
+		// hostname
+		if containerJson.Config.Hostname != containerName {
+			service["hostname"] = containerJson.Config.Hostname
+		}
+
+		// dns
+		if len(containerJson.HostConfig.DNS) > 0 {
+			service["dns"] = containerJson.HostConfig.DNS
+		}
+
 		// ports
 		ports := []string{}
 		for port, host := range containerJson.HostConfig.PortBindings {
