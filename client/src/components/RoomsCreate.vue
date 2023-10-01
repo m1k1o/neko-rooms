@@ -401,9 +401,54 @@
               </v-combobox>
             </v-col>
           </v-row>
+          <v-row align="center" no-gutters class="mt-3">
+            <h2> Network </h2>
+          </v-row>
+          <v-row align="center" class="mt-0">
+            <v-col class="py-0">
+              <v-text-field
+                label="Hostname"
+                v-model="data.hostname"
+                autocomplete="off"
+              ></v-text-field>
+            </v-col>
+            <v-col class="pt-0">
+              <v-combobox class="pt-0"
+                label="DNS"
+                v-model="data.dns"
+                multiple
+                hide-details
+              >
+                <template v-slot:selection="{ attrs, item, parent, selected }">
+                  <v-chip
+                    v-bind="attrs"
+                    :input-value="selected"
+                    label
+                    small
+                  >
+                    <span class="pr-2">
+                      {{ item }}
+                    </span>
+                    <v-icon
+                      small
+                      @click="parent.selectItem(item)"
+                    >
+                      $delete
+                    </v-icon>
+                  </v-chip>
+                </template>
+              </v-combobox>
+            </v-col>
+          </v-row>
+          <v-row align="center" no-gutters class="mb-3">
+            <v-col>
+              <p> <i> Leave empty to use container name. </i> </p>
+            </v-col>
+            <v-col class="pl-6">
+              <p> <i> Leave empty to use system defaults.</i> </p>
+            </v-col>
+          </v-row>
         </template>
-
-        <hr />
 
         <v-row align="center" no-gutters class="mt-3">
           <h2 class="my-3">

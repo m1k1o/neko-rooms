@@ -477,6 +477,14 @@ components:
             $ref: '#/components/schemas/RoomMount'
         resources:
           $ref: '#/components/schemas/RoomResources'
+        hostname:
+          type: string
+          example: server.lan
+        dns:
+          type: array
+          items:
+            type: string
+            example: 1.1.1.1
         browser_policy:
           $ref: '#/components/schemas/BrowserPolicy'
 

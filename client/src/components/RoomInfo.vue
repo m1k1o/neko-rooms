@@ -192,6 +192,16 @@
         </template>
       </v-simple-table>
 
+      <div class="my-3 headline">Network</div>
+      <v-simple-table>
+        <template v-slot:default>
+          <tbody>
+            <tr><th style="width:50%;"> Hostname </th><td>{{ settings.hostname }}</td></tr>
+            <tr><th> DNS </th><td><span v-if="settings.dns">{{ settings.dns.join(", ") }}</span><i v-else>--system-default--</i></td></tr>
+          </tbody>
+        </template>
+      </v-simple-table>
+
       <div class="my-3 headline">Browser policy</div>
       <v-simple-table v-if="settings.browser_policy">
         <template v-slot:default>
