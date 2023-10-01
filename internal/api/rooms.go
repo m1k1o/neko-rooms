@@ -52,17 +52,20 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 
 	ID, err := manager.rooms.Create(request)
 	if err != nil {
+		manager.logger.Error().Err(err).Msg("create: failed to create room")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	if err := manager.rooms.Start(ID); err != nil {
+		manager.logger.Error().Err(err).Msg("create: failed to start room")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	response, err := manager.rooms.GetEntry(ID)
 	if err != nil {
+		manager.logger.Error().Err(err).Msg("create: failed to get room entry")
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -76,12 +79,14 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 
 	entry, err := manager.rooms.GetEntry(roomId)
 	if err != nil {
+		manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	settings, err := manager.rooms.GetSettings(roomId)
 	if err != nil {
+		manager.logger.Error().Err(err).Msg("recreate: failed to get room settings")
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -93,18 +98,21 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := manager.rooms.Remove(roomId); err != nil {
+		manager.logger.Error().Err(err).Msg("recreate: failed to remove room")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	ID, err := manager.rooms.Create(*settings)
 	if err != nil {
+		manager.logger.Error().Err(err).Msg("recreate: failed to create room")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	if entry.Running {
 		if err := manager.rooms.Start(ID); err != nil {
+			manager.logger.Error().Err(err).Msg("recreate: failed to start room")
 			http.Error(w, err.Error(), 500)
 			return
 		}
@@ -112,6 +120,7 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 
 	response, err := manager.rooms.GetEntry(ID)
 	if err != nil {
+		manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
 		http.Error(w, err.Error(), 500)
 		return
 	}
