@@ -91,9 +91,8 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
 		"version": "3.8",
 		"networks": map[string]any{
 			"default": map[string]any{
-				"external": map[string]any{
-					"name": manager.config.InstanceNetwork,
-				},
+				"name":     manager.config.InstanceNetwork,
+				"external": true,
 			},
 		},
 		"services": services,
@@ -206,11 +205,11 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
 
 		// volumes
 		volumes := []string{}
-		for _, mount := range containerJson.Mounts {
-			if mount.RW {
-				volumes = append(volumes, fmt.Sprintf("%s:%s:ro", mount.Source, mount.Destination))
+		for _, mount := range containerJson.HostConfig.Mounts {
+			if mount.ReadOnly {
+				volumes = append(volumes, fmt.Sprintf("%s:%s:ro", mount.Source, mount.Target))
 			} else {
-				volumes = append(volumes, fmt.Sprintf("%s:%s", mount.Source, mount.Destination))
+				volumes = append(volumes, fmt.Sprintf("%s:%s", mount.Source, mount.Target))
 			}
 		}
 		if len(volumes) > 0 {
