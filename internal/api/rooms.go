@@ -79,8 +79,12 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 
 	entry, err := manager.rooms.GetEntry(roomId)
 	if err != nil {
-		manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
-		http.Error(w, err.Error(), 500)
+		if errors.Is(err, types.ErrRoomNotFound) {
+			http.Error(w, err.Error(), 404)
+		} else {
+			manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
+			http.Error(w, err.Error(), 500)
+		}
 		return
 	}
 
@@ -134,7 +138,11 @@ func (manager *ApiManagerCtx) roomGetEntry(w http.ResponseWriter, r *http.Reques
 
 	response, err := manager.rooms.GetEntry(roomId)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		if errors.Is(err, types.ErrRoomNotFound) {
+			http.Error(w, err.Error(), 404)
+		} else {
+			http.Error(w, err.Error(), 500)
+		}
 		return
 	}
 
@@ -148,7 +156,11 @@ func (manager *ApiManagerCtx) roomGetEntryByName(w http.ResponseWriter, r *http.
 
 	response, err := manager.rooms.GetEntryByName(roomName)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		if errors.Is(err, types.ErrRoomNotFound) {
+			http.Error(w, err.Error(), 404)
+		} else {
+			http.Error(w, err.Error(), 500)
+		}
 		return
 	}
 
@@ -161,7 +173,11 @@ func (manager *ApiManagerCtx) roomGetSettings(w http.ResponseWriter, r *http.Req
 
 	response, err := manager.rooms.GetSettings(roomId)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		if errors.Is(err, types.ErrRoomNotFound) {
+			http.Error(w, err.Error(), 404)
+		} else {
+			http.Error(w, err.Error(), 500)
+		}
 		return
 	}
 
@@ -174,7 +190,11 @@ func (manager *ApiManagerCtx) roomGetStats(w http.ResponseWriter, r *http.Reques
 
 	response, err := manager.rooms.GetStats(roomId)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		if errors.Is(err, types.ErrRoomNotFound) {
+			http.Error(w, err.Error(), 404)
+		} else {
+			http.Error(w, err.Error(), 500)
+		}
 		return
 	}
 
@@ -188,7 +208,11 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) fu
 
 		err := action(roomId)
 		if err != nil {
-			http.Error(w, err.Error(), 500)
+			if errors.Is(err, types.ErrRoomNotFound) {
+				http.Error(w, err.Error(), 404)
+			} else {
+				http.Error(w, err.Error(), 500)
+			}
 			return
 		}
 
