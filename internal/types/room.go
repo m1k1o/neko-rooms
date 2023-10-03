@@ -283,6 +283,8 @@ type RoomMember struct {
 	Muted bool   `json:"muted"`
 }
 
+var ErrRoomNotFound = fmt.Errorf("room not found")
+
 type RoomManager interface {
 	Config() RoomsConfig
 	List(labels map[string]string) ([]RoomEntry, error)

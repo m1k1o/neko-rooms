@@ -8,6 +8,7 @@ import (
 
 	dockerTypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	dockerClient "github.com/docker/docker/client"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
 )
@@ -66,7 +67,7 @@ func (manager *RoomManagerCtx) containerFilter(args filters.Args) (*dockerTypes.
 	}
 
 	if len(containers) == 0 {
-		return nil, fmt.Errorf("container not found")
+		return nil, types.ErrRoomNotFound
 	}
 
 	container := containers[0]
@@ -88,6 +89,9 @@ func (manager *RoomManagerCtx) containerByName(name string) (*dockerTypes.Contai
 func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {
 	container, err := manager.client.ContainerInspect(context.Background(), id)
 	if err != nil {
+		if dockerClient.IsErrNotFound(err) {
+			return nil, types.ErrRoomNotFound
+		}
 		return nil, err
 	}
 
@@ -109,6 +113,9 @@ func (manager *RoomManagerCtx) containerExec(id string, cmd []string) (string, e
 		Detach:       false,
 	})
 	if err != nil {
+		if dockerClient.IsErrNotFound(err) {
+			return "", types.ErrRoomNotFound
+		}
 		return "", err
 	}
 

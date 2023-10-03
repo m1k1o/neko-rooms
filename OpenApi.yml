@@ -93,6 +93,8 @@ paths:
                 $ref: '#/components/schemas/RoomEntry'
         '400':
           description: Bad request
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
     delete:
@@ -109,6 +111,8 @@ paths:
       responses:
         '204':
           description: OK
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/rooms/{roomName}/by-name:
@@ -132,6 +136,8 @@ paths:
                 $ref: '#/components/schemas/RoomEntry'
         '400':
           description: Bad request
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/rooms/{roomId}/settings:
@@ -155,6 +161,8 @@ paths:
                 $ref: '#/components/schemas/RoomSettings'
         '400':
           description: Bad request
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/rooms/{roomId}/stats:
@@ -176,6 +184,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomStats'
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/rooms/{roomId}/stop:
@@ -193,6 +203,8 @@ paths:
       responses:
         '204':
           description: OK
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/rooms/{roomId}/start:
@@ -210,6 +222,8 @@ paths:
       responses:
         '204':
           description: OK
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/rooms/{roomId}/restart:
@@ -227,6 +241,8 @@ paths:
       responses:
         '204':
           description: OK
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/rooms/{roomId}/recreate:
@@ -253,6 +269,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoomEntry'
+        '404':
+          description: Room not found
         '500':
           description: Internal server error
   /api/docker-compose.yaml:
