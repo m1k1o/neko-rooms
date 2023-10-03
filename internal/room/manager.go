@@ -204,16 +204,8 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
 		}
 
 		// volumes
-		volumes := []string{}
-		for _, mount := range containerJson.HostConfig.Mounts {
-			if mount.ReadOnly {
-				volumes = append(volumes, fmt.Sprintf("%s:%s:ro", mount.Source, mount.Target))
-			} else {
-				volumes = append(volumes, fmt.Sprintf("%s:%s", mount.Source, mount.Target))
-			}
-		}
-		if len(volumes) > 0 {
-			service["volumes"] = volumes
+		if len(containerJson.HostConfig.Binds) > 0 {
+			service["volumes"] = containerJson.HostConfig.Binds
 		}
 
 		// devices
