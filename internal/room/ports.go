@@ -1,6 +1,7 @@
 package room
 
 import (
+	"context"
 	"fmt"
 	"sort"
 )
@@ -10,7 +11,7 @@ type EprPorts struct {
 	Max uint16
 }
 
-func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
+func (manager *RoomManagerCtx) allocatePorts(ctx context.Context, sum uint16) (EprPorts, error) {
 	if sum < 1 {
 		return EprPorts{}, fmt.Errorf("unable to allocate 0 ports")
 	}
@@ -23,7 +24,7 @@ func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
 		Max: min + sum - 1,
 	}
 
-	ports, err := manager.getUsedPorts()
+	ports, err := manager.getUsedPorts(ctx)
 	if err != nil {
 		return epr, err
 	}
@@ -43,8 +44,8 @@ func (manager *RoomManagerCtx) allocatePorts(sum uint16) (EprPorts, error) {
 	return epr, nil
 }
 
-func (manager *RoomManagerCtx) getUsedPorts() ([]EprPorts, error) {
-	containers, err := manager.listContainers(nil)
+func (manager *RoomManagerCtx) getUsedPorts(ctx context.Context) ([]EprPorts, error) {
+	containers, err := manager.listContainers(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
