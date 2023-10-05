@@ -49,7 +49,7 @@ type Room struct {
 }
 
 func (Room) Init(cmd *cobra.Command) error {
-	cmd.PersistentFlags().Int("api_version", 2, "neko container api version to use")
+	cmd.PersistentFlags().Int("api_version", 0, "use a specific neko container api version to use for new rooms; when not set, will be used automatically from image labels")
 	if err := viper.BindPFlag("api_version", cmd.PersistentFlags().Lookup("api_version")); err != nil {
 		return err
 	}

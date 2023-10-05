@@ -12,11 +12,13 @@ import (
 var labelRegex = regexp.MustCompile(`^[a-z0-9.-]+$`)
 
 type RoomLabels struct {
-	Name      string
-	URL       string
-	Mux       bool
-	Epr       EprPorts
-	NekoImage string
+	Name string
+	URL  string
+	Mux  bool
+	Epr  EprPorts
+
+	NekoImage  string
+	ApiVersion int
 
 	BrowserPolicy *BrowserPolicyLabels
 	UserDefined   map[string]string
@@ -38,11 +40,6 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 		// TODO: It should be always available.
 		url = manager.config.GetRoomUrl(name)
 		//return nil, fmt.Errorf("damaged container labels: url not found")
-	}
-
-	nekoImage, ok := labels["m1k1o.neko_rooms.neko_image"]
-	if !ok {
-		return nil, fmt.Errorf("damaged container labels: neko_image not found")
 	}
 
 	var mux bool
@@ -88,6 +85,21 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 		}
 	}
 
+	nekoImage, ok := labels["m1k1o.neko_rooms.neko_image"]
+	if !ok {
+		return nil, fmt.Errorf("damaged container labels: neko_image not found")
+	}
+
+	apiVersion := 2 // default, prior to api versioning
+	apiVersionStr, ok := labels["m1k1o.neko_rooms.api_version"]
+	if ok {
+		var err error
+		apiVersion, err = strconv.Atoi(apiVersionStr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var browserPolicy *BrowserPolicyLabels
 	if val, ok := labels["m1k1o.neko_rooms.browser_policy"]; ok && val == "true" {
 		policyType, ok := labels["m1k1o.neko_rooms.browser_policy.type"]
@@ -115,11 +127,13 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 	}
 
 	return &RoomLabels{
-		Name:      name,
-		URL:       url,
-		NekoImage: nekoImage,
-		Mux:       mux,
-		Epr:       epr,
+		Name: name,
+		URL:  url,
+		Mux:  mux,
+		Epr:  epr,
+
+		NekoImage:  nekoImage,
+		ApiVersion: apiVersion,
 
 		BrowserPolicy: browserPolicy,
 		UserDefined:   userDefined,
@@ -128,10 +142,16 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 
 func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]string {
 	labelsMap := map[string]string{
-		"m1k1o.neko_rooms.name":       labels.Name,
-		"m1k1o.neko_rooms.url":        manager.config.GetRoomUrl(labels.Name),
-		"m1k1o.neko_rooms.instance":   manager.config.InstanceName,
-		"m1k1o.neko_rooms.neko_image": labels.NekoImage,
+		"m1k1o.neko_rooms.name":        labels.Name,
+		"m1k1o.neko_rooms.url":         manager.config.GetRoomUrl(labels.Name),
+		"m1k1o.neko_rooms.instance":    manager.config.InstanceName,
+		"m1k1o.neko_rooms.neko_image":  labels.NekoImage,
+		"m1k1o.neko_rooms.api_version": fmt.Sprintf("%d", labels.ApiVersion),
+	}
+
+	// api version 2 is currently default
+	if labels.ApiVersion != 2 {
+		labelsMap["m1k1o.neko_rooms.api_version"] = fmt.Sprintf("%d", labels.ApiVersion)
 	}
 
 	if labels.Mux && labels.Epr.Min == labels.Epr.Max {

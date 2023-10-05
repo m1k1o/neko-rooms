@@ -86,14 +86,14 @@ type RoomSettings struct {
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 
-func (settings *RoomSettings) ToEnv(config *config.Room, ports PortSettings) ([]string, error) {
-	switch config.ApiVersion {
+func (settings *RoomSettings) ToEnv(apiVersion int, config *config.Room, ports PortSettings) ([]string, error) {
+	switch apiVersion {
 	case 2:
 		return settings.toEnvV2(config, ports), nil
 	case 3:
 		return settings.toEnvV3(config, ports), nil
 	default:
-		return nil, fmt.Errorf("unsupported API version: %d", config.ApiVersion)
+		return nil, fmt.Errorf("unsupported API version: %d", apiVersion)
 	}
 }
 
