@@ -28,6 +28,7 @@ var blacklistedEnvsV3 = []string{
 
 	// ignore bunch of envs managed by neko-rooms
 	"NEKO_SERVER_BIND",
+	"NEKO_SESSION_API_TOKEN",
 	"NEKO_MEMBER_PROVIDER",
 	"NEKO_WEBRTC_EPR",
 	"NEKO_WEBRTC_UDPMUX",
