@@ -39,7 +39,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 	return entry, nil
 }
 
-func (manager *RoomManagerCtx) listContainers(labels map[string]string) ([]dockerTypes.Container, error) {
+func (manager *RoomManagerCtx) listContainers(ctx context.Context, labels map[string]string) ([]dockerTypes.Container, error) {
 	args := filters.NewArgs(
 		filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", manager.config.InstanceName)),
 	)
@@ -48,16 +48,16 @@ func (manager *RoomManagerCtx) listContainers(labels map[string]string) ([]docke
 		args.Add("label", fmt.Sprintf("m1k1o.neko_rooms.x-%s=%s", key, val))
 	}
 
-	return manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
+	return manager.client.ContainerList(ctx, dockerTypes.ContainerListOptions{
 		All:     true,
 		Filters: args,
 	})
 }
 
-func (manager *RoomManagerCtx) containerFilter(args filters.Args) (*dockerTypes.Container, error) {
+func (manager *RoomManagerCtx) containerFilter(ctx context.Context, args filters.Args) (*dockerTypes.Container, error) {
 	args.Add("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", manager.config.InstanceName))
 
-	containers, err := manager.client.ContainerList(context.Background(), dockerTypes.ContainerListOptions{
+	containers, err := manager.client.ContainerList(ctx, dockerTypes.ContainerListOptions{
 		All:     true,
 		Filters: args,
 	})
@@ -74,20 +74,20 @@ func (manager *RoomManagerCtx) containerFilter(args filters.Args) (*dockerTypes.
 	return &container, nil
 }
 
-func (manager *RoomManagerCtx) containerById(id string) (*dockerTypes.Container, error) {
-	return manager.containerFilter(filters.NewArgs(
+func (manager *RoomManagerCtx) containerById(ctx context.Context, id string) (*dockerTypes.Container, error) {
+	return manager.containerFilter(ctx, filters.NewArgs(
 		filters.Arg("id", id),
 	))
 }
 
-func (manager *RoomManagerCtx) containerByName(name string) (*dockerTypes.Container, error) {
-	return manager.containerFilter(filters.NewArgs(
+func (manager *RoomManagerCtx) containerByName(ctx context.Context, name string) (*dockerTypes.Container, error) {
+	return manager.containerFilter(ctx, filters.NewArgs(
 		filters.Arg("name", manager.config.InstanceName+"-"+name),
 	))
 }
 
-func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.ContainerJSON, error) {
-	container, err := manager.client.ContainerInspect(context.Background(), id)
+func (manager *RoomManagerCtx) inspectContainer(ctx context.Context, id string) (*dockerTypes.ContainerJSON, error) {
+	container, err := manager.client.ContainerInspect(ctx, id)
 	if err != nil {
 		if dockerClient.IsErrNotFound(err) {
 			return nil, types.ErrRoomNotFound
@@ -103,8 +103,8 @@ func (manager *RoomManagerCtx) inspectContainer(id string) (*dockerTypes.Contain
 	return &container, nil
 }
 
-func (manager *RoomManagerCtx) containerExec(id string, cmd []string) (string, error) {
-	exec, err := manager.client.ContainerExecCreate(context.Background(), id, dockerTypes.ExecConfig{
+func (manager *RoomManagerCtx) containerExec(ctx context.Context, id string, cmd []string) (string, error) {
+	exec, err := manager.client.ContainerExecCreate(ctx, id, dockerTypes.ExecConfig{
 		AttachStderr: true,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -119,7 +119,7 @@ func (manager *RoomManagerCtx) containerExec(id string, cmd []string) (string, e
 		return "", err
 	}
 
-	conn, err := manager.client.ContainerExecAttach(context.Background(), exec.ID, dockerTypes.ExecStartCheck{
+	conn, err := manager.client.ContainerExecAttach(ctx, exec.ID, dockerTypes.ExecStartCheck{
 		Detach: false,
 		Tty:    true,
 	})

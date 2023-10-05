@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -139,17 +140,17 @@ var ErrRoomNotFound = fmt.Errorf("room not found")
 
 type RoomManager interface {
 	Config() RoomsConfig
-	List(labels map[string]string) ([]RoomEntry, error)
-	ExportAsDockerCompose() ([]byte, error)
+	List(ctx context.Context, labels map[string]string) ([]RoomEntry, error)
+	ExportAsDockerCompose(ctx context.Context) ([]byte, error)
 
-	Create(settings RoomSettings) (string, error)
-	GetEntry(id string) (*RoomEntry, error)
-	GetEntryByName(name string) (*RoomEntry, error)
-	GetSettings(id string) (*RoomSettings, error)
-	GetStats(id string) (*RoomStats, error)
-	Remove(id string) error
+	Create(ctx context.Context, settings RoomSettings) (string, error)
+	GetEntry(ctx context.Context, id string) (*RoomEntry, error)
+	GetEntryByName(ctx context.Context, name string) (*RoomEntry, error)
+	GetSettings(ctx context.Context, id string) (*RoomSettings, error)
+	GetStats(ctx context.Context, id string) (*RoomStats, error)
+	Remove(ctx context.Context, id string) error
 
-	Start(id string) error
-	Stop(id string) error
-	Restart(id string) error
+	Start(ctx context.Context, id string) error
+	Stop(ctx context.Context, id string) error
+	Restart(ctx context.Context, id string) error
 }

@@ -21,7 +21,7 @@
         class="fill-height"
         fluid
       >
-        <router-view />
+        <Home />
       </v-container>
     </v-main>
 
@@ -36,17 +36,17 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import { Vue, Component, Prop } from 'vue-property-decorator'
+import Home from './views/Home.vue'
 
-export default Vue.extend({
-  name: 'App',
-
-  data: () => ({
-    //
-  }),
-
-  created () {
-    this.$vuetify.theme.dark = true
+@Component({
+  components: {
+    Home,
   }
 })
+export default class App extends Vue {
+  created() {
+    this.$vuetify.theme.dark = true
+  }
+}
 </script>

@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -26,7 +28,7 @@ func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) 
 		labelsMap[key] = value[0]
 	}
 
-	response, err := manager.rooms.List(labelsMap)
+	response, err := manager.rooms.List(r.Context(), labelsMap)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -37,6 +39,16 @@ func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) 
 }
 
 func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request) {
+	var start = true // default value
+	if s := r.URL.Query().Get("start"); s != "" {
+		var err error
+		start, err = strconv.ParseBool(s)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+	}
+
 	// Default values
 	request := types.RoomSettings{
 		MaxConnections: 10,
@@ -50,20 +62,22 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ID, err := manager.rooms.Create(request)
+	ID, err := manager.rooms.Create(r.Context(), request)
 	if err != nil {
 		manager.logger.Error().Err(err).Msg("create: failed to create room")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	if err := manager.rooms.Start(ID); err != nil {
-		manager.logger.Error().Err(err).Msg("create: failed to start room")
-		http.Error(w, err.Error(), 500)
-		return
+	if start {
+		if err := manager.rooms.Start(r.Context(), ID); err != nil {
+			manager.logger.Error().Err(err).Msg("create: failed to start room")
+			http.Error(w, err.Error(), 500)
+			return
+		}
 	}
 
-	response, err := manager.rooms.GetEntry(ID)
+	response, err := manager.rooms.GetEntry(r.Context(), ID)
 	if err != nil {
 		manager.logger.Error().Err(err).Msg("create: failed to get room entry")
 		http.Error(w, err.Error(), 500)
@@ -77,21 +91,37 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
-	entry, err := manager.rooms.GetEntry(roomId)
+	var start bool
+	if s := r.URL.Query().Get("start"); s != "" {
+		var err error
+		start, err = strconv.ParseBool(s)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+	} else {
+		entry, err := manager.rooms.GetEntry(r.Context(), roomId)
+		if err != nil {
+			if errors.Is(err, types.ErrRoomNotFound) {
+				http.Error(w, err.Error(), 404)
+			} else {
+				manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
+				http.Error(w, err.Error(), 500)
+			}
+			return
+		}
+
+		start = entry.Running
+	}
+
+	settings, err := manager.rooms.GetSettings(r.Context(), roomId)
 	if err != nil {
 		if errors.Is(err, types.ErrRoomNotFound) {
 			http.Error(w, err.Error(), 404)
 		} else {
-			manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
+			manager.logger.Error().Err(err).Msg("recreate: failed to get room settings")
 			http.Error(w, err.Error(), 500)
 		}
-		return
-	}
-
-	settings, err := manager.rooms.GetSettings(roomId)
-	if err != nil {
-		manager.logger.Error().Err(err).Msg("recreate: failed to get room settings")
-		http.Error(w, err.Error(), 500)
 		return
 	}
 
@@ -101,28 +131,28 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := manager.rooms.Remove(roomId); err != nil {
+	if err := manager.rooms.Remove(r.Context(), roomId); err != nil {
 		manager.logger.Error().Err(err).Msg("recreate: failed to remove room")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	ID, err := manager.rooms.Create(*settings)
+	ID, err := manager.rooms.Create(r.Context(), *settings)
 	if err != nil {
 		manager.logger.Error().Err(err).Msg("recreate: failed to create room")
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	if entry.Running {
-		if err := manager.rooms.Start(ID); err != nil {
+	if start {
+		if err := manager.rooms.Start(r.Context(), ID); err != nil {
 			manager.logger.Error().Err(err).Msg("recreate: failed to start room")
 			http.Error(w, err.Error(), 500)
 			return
 		}
 	}
 
-	response, err := manager.rooms.GetEntry(ID)
+	response, err := manager.rooms.GetEntry(r.Context(), ID)
 	if err != nil {
 		manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
 		http.Error(w, err.Error(), 500)
@@ -136,7 +166,7 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 func (manager *ApiManagerCtx) roomGetEntry(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
-	response, err := manager.rooms.GetEntry(roomId)
+	response, err := manager.rooms.GetEntry(r.Context(), roomId)
 	if err != nil {
 		if errors.Is(err, types.ErrRoomNotFound) {
 			http.Error(w, err.Error(), 404)
@@ -154,7 +184,7 @@ func (manager *ApiManagerCtx) roomGetEntryByName(w http.ResponseWriter, r *http.
 	// roomId is actually room name here
 	roomName := chi.URLParam(r, "roomId")
 
-	response, err := manager.rooms.GetEntryByName(roomName)
+	response, err := manager.rooms.GetEntryByName(r.Context(), roomName)
 	if err != nil {
 		if errors.Is(err, types.ErrRoomNotFound) {
 			http.Error(w, err.Error(), 404)
@@ -171,7 +201,7 @@ func (manager *ApiManagerCtx) roomGetEntryByName(w http.ResponseWriter, r *http.
 func (manager *ApiManagerCtx) roomGetSettings(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
-	response, err := manager.rooms.GetSettings(roomId)
+	response, err := manager.rooms.GetSettings(r.Context(), roomId)
 	if err != nil {
 		if errors.Is(err, types.ErrRoomNotFound) {
 			http.Error(w, err.Error(), 404)
@@ -188,7 +218,7 @@ func (manager *ApiManagerCtx) roomGetSettings(w http.ResponseWriter, r *http.Req
 func (manager *ApiManagerCtx) roomGetStats(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
-	response, err := manager.rooms.GetStats(roomId)
+	response, err := manager.rooms.GetStats(r.Context(), roomId)
 	if err != nil {
 		if errors.Is(err, types.ErrRoomNotFound) {
 			http.Error(w, err.Error(), 404)
@@ -202,11 +232,11 @@ func (manager *ApiManagerCtx) roomGetStats(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(response)
 }
 
-func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) func(http.ResponseWriter, *http.Request) {
+func (manager *ApiManagerCtx) roomGenericAction(action func(ctx context.Context, id string) error) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		roomId := chi.URLParam(r, "roomId")
 
-		err := action(roomId)
+		err := action(r.Context(), roomId)
 		if err != nil {
 			if errors.Is(err, types.ErrRoomNotFound) {
 				http.Error(w, err.Error(), 404)
@@ -221,7 +251,7 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(id string) error) fu
 }
 
 func (manager *ApiManagerCtx) dockerCompose(w http.ResponseWriter, r *http.Request) {
-	response, err := manager.rooms.ExportAsDockerCompose()
+	response, err := manager.rooms.ExportAsDockerCompose(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

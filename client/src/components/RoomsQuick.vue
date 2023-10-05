@@ -70,7 +70,7 @@ export default class RoomActionBtn extends Vue {
     this.loading = true
   
     try {
-      const entry = await this.$store.dispatch('ROOMS_CREATE', {
+      const entry = await this.$store.dispatch('ROOMS_CREATE_AND_START', {
         ...this.$store.state.defaultRoomSettings,
         // eslint-disable-next-line
         neko_image,

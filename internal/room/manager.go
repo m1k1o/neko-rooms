@@ -65,8 +65,8 @@ func (manager *RoomManagerCtx) Config() types.RoomsConfig {
 	}
 }
 
-func (manager *RoomManagerCtx) List(labels map[string]string) ([]types.RoomEntry, error) {
-	containers, err := manager.listContainers(labels)
+func (manager *RoomManagerCtx) List(ctx context.Context, labels map[string]string) ([]types.RoomEntry, error) {
+	containers, err := manager.listContainers(ctx, labels)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (manager *RoomManagerCtx) List(labels map[string]string) ([]types.RoomEntry
 	return result, nil
 }
 
-func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
+func (manager *RoomManagerCtx) ExportAsDockerCompose(ctx context.Context) ([]byte, error) {
 	services := map[string]any{}
 
 	dockerCompose := map[string]any{
@@ -98,13 +98,13 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
 		"services": services,
 	}
 
-	containers, err := manager.listContainers(map[string]string{})
+	containers, err := manager.listContainers(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, container := range containers {
-		containerJson, err := manager.inspectContainer(container.ID)
+		containerJson, err := manager.inspectContainer(ctx, container.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -230,7 +230,7 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose() ([]byte, error) {
 	return yaml.Marshal(dockerCompose)
 }
 
-func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, error) {
+func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSettings) (string, error) {
 	if settings.Name != "" && !dockerNames.RestrictedNamePattern.MatchString(settings.Name) {
 		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
 	}
@@ -262,7 +262,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 		portsNeeded = 1
 	}
 
-	epr, err := manager.allocatePorts(portsNeeded)
+	epr, err := manager.allocatePorts(ctx, portsNeeded)
 	if err != nil {
 		return "", err
 	}
@@ -629,7 +629,7 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 
 	// Creating the actual container
 	container, err := manager.client.ContainerCreate(
-		context.Background(),
+		ctx,
 		config,
 		hostConfig,
 		networkingConfig,
@@ -644,8 +644,8 @@ func (manager *RoomManagerCtx) Create(settings types.RoomSettings) (string, erro
 	return container.ID[:12], nil
 }
 
-func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
-	container, err := manager.containerById(id)
+func (manager *RoomManagerCtx) GetEntry(ctx context.Context, id string) (*types.RoomEntry, error) {
+	container, err := manager.containerById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -653,8 +653,8 @@ func (manager *RoomManagerCtx) GetEntry(id string) (*types.RoomEntry, error) {
 	return manager.containerToEntry(*container)
 }
 
-func (manager *RoomManagerCtx) GetEntryByName(name string) (*types.RoomEntry, error) {
-	container, err := manager.containerByName(name)
+func (manager *RoomManagerCtx) GetEntryByName(ctx context.Context, name string) (*types.RoomEntry, error) {
+	container, err := manager.containerByName(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -662,21 +662,21 @@ func (manager *RoomManagerCtx) GetEntryByName(name string) (*types.RoomEntry, er
 	return manager.containerToEntry(*container)
 }
 
-func (manager *RoomManagerCtx) Remove(id string) error {
-	_, err := manager.inspectContainer(id)
+func (manager *RoomManagerCtx) Remove(ctx context.Context, id string) error {
+	_, err := manager.inspectContainer(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// Stop the actual container
-	err = manager.client.ContainerStop(context.Background(), id, container.StopOptions{})
+	err = manager.client.ContainerStop(ctx, id, container.StopOptions{})
 
 	if err != nil {
 		return err
 	}
 
 	// Remove the actual container
-	err = manager.client.ContainerRemove(context.Background(), id, dockerTypes.ContainerRemoveOptions{
+	err = manager.client.ContainerRemove(ctx, id, dockerTypes.ContainerRemoveOptions{
 		RemoveVolumes: true,
 		Force:         true,
 	})
@@ -684,8 +684,8 @@ func (manager *RoomManagerCtx) Remove(id string) error {
 	return err
 }
 
-func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, error) {
-	container, err := manager.inspectContainer(id)
+func (manager *RoomManagerCtx) GetSettings(ctx context.Context, id string) (*types.RoomSettings, error) {
+	container, err := manager.inspectContainer(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -828,8 +828,8 @@ func (manager *RoomManagerCtx) GetSettings(id string) (*types.RoomSettings, erro
 	return &settings, err
 }
 
-func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
-	container, err := manager.inspectContainer(id)
+func (manager *RoomManagerCtx) GetStats(ctx context.Context, id string) (*types.RoomStats, error) {
+	container, err := manager.inspectContainer(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -843,7 +843,7 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 	var stats types.RoomStats
 	switch manager.config.ApiVersion {
 	case 2:
-		output, err := manager.containerExec(id, []string{
+		output, err := manager.containerExec(ctx, id, []string{
 			"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + url.QueryEscape(settings.AdminPass),
 		})
 		if err != nil {
@@ -854,7 +854,7 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 			return nil, err
 		}
 	case 3:
-		output, err := manager.containerExec(id, []string{
+		output, err := manager.containerExec(ctx, id, []string{
 			"wget", "-q", "-O-", "http://127.0.0.1:8080/api/sessions?token=" + url.QueryEscape(settings.AdminPass),
 		})
 		if err != nil {
@@ -918,32 +918,32 @@ func (manager *RoomManagerCtx) GetStats(id string) (*types.RoomStats, error) {
 	return &stats, nil
 }
 
-func (manager *RoomManagerCtx) Start(id string) error {
-	_, err := manager.inspectContainer(id)
+func (manager *RoomManagerCtx) Start(ctx context.Context, id string) error {
+	_, err := manager.inspectContainer(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// Start the actual container
-	return manager.client.ContainerStart(context.Background(), id, dockerTypes.ContainerStartOptions{})
+	return manager.client.ContainerStart(ctx, id, dockerTypes.ContainerStartOptions{})
 }
 
-func (manager *RoomManagerCtx) Stop(id string) error {
-	_, err := manager.inspectContainer(id)
+func (manager *RoomManagerCtx) Stop(ctx context.Context, id string) error {
+	_, err := manager.inspectContainer(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// Stop the actual container
-	return manager.client.ContainerStop(context.Background(), id, container.StopOptions{})
+	return manager.client.ContainerStop(ctx, id, container.StopOptions{})
 }
 
-func (manager *RoomManagerCtx) Restart(id string) error {
-	_, err := manager.inspectContainer(id)
+func (manager *RoomManagerCtx) Restart(ctx context.Context, id string) error {
+	_, err := manager.inspectContainer(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	// Restart the actual container
-	return manager.client.ContainerRestart(context.Background(), id, container.StopOptions{})
+	return manager.client.ContainerRestart(ctx, id, container.StopOptions{})
 }

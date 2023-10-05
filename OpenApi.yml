@@ -56,6 +56,14 @@ paths:
         - rooms
       summary: Create new room
       operationId: roomCreate
+      parameters:
+        - in: query
+          name: start
+          required: false
+          schema:
+            type: boolean
+            default: true
+            description: Start room after creation
       requestBody:
         content:
           application/json:
@@ -257,6 +265,14 @@ paths:
           required: true
           schema:
             type: string
+        - in: query
+          name: start
+          required: false
+          schema:
+            type: boolean
+            description: |
+              Whether the room should be started or stopped after
+              recreation, default is the current state of the room.
       requestBody:
         content:
           application/json:
