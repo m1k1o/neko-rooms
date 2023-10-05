@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"errors"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -170,44 +172,69 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 		return next
 	}
 
-	// cache static file paths
-	staticFiles := map[string]struct{}{}
-	if config.Admin.Static != "" {
-		filepath.Walk(config.Admin.Static,
-			func(p string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-				staticFiles[path.Clean(p)] = struct{}{}
-				return nil
-			})
-	}
-
-	// serve static files
-	router.Use(func(next http.Handler) http.Handler {
-		// if static files are disabled
-		if config.Admin.Static == "" {
-			return next
+	// DEPRECATED: admin should not be served from the same path as rooms
+	if config.Admin.PathPrefix == "/" {
+		// cache static file paths
+		staticFiles := map[string]struct{}{}
+		if config.Admin.Static != "" {
+			filepath.Walk(config.Admin.Static,
+				func(p string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					staticFiles[path.Clean(p)] = struct{}{}
+					return nil
+				})
 		}
 
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			filePath := path.Join(config.Admin.Static, r.URL.Path)
-
-			// check if file exists to serve it
-			if _, ok := staticFiles[filePath]; ok {
-				// serve protected assets
-				protected(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					http.ServeFile(w, r, filePath)
-				})).ServeHTTP(w, r)
-				return
+		// serve static files
+		router.Use(func(next http.Handler) http.Handler {
+			// if static files are disabled
+			if config.Admin.Static == "" {
+				return next
 			}
 
-			next.ServeHTTP(w, r)
-		})
-	})
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				filePath := path.Join(config.Admin.Static, r.URL.Path)
 
-	// serve protected API
-	router.With(protected).Route("/api", ApiManager.Mount)
+				// check if file exists to serve it
+				if _, ok := staticFiles[filePath]; ok {
+					// serve protected assets
+					protected(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						http.ServeFile(w, r, filePath)
+					})).ServeHTTP(w, r)
+					return
+				}
+
+				next.ServeHTTP(w, r)
+			})
+		})
+
+		// serve protected API
+		router.With(protected).Route("/api", ApiManager.Mount)
+	} else {
+		router.With(protected).Route(config.Admin.PathPrefix+"/", func(r chi.Router) {
+			// serve protected API
+			r.Route("/api", ApiManager.Mount)
+
+			// serve static files
+			r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+				filePath := chi.URLParam(r, "*")
+				if filePath == "" {
+					filePath = "index.html"
+				}
+				filePath = filepath.Clean(filePath)
+				filePath = filepath.Join(config.Admin.Static, filePath)
+				if _, err := os.Stat(filePath); err == nil {
+					http.ServeFile(w, r, filePath)
+				} else if errors.Is(err, fs.ErrNotExist) {
+					http.NotFound(w, r)
+				} else {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			})
+		})
+	}
 
 	// handle all remaining paths with proxy
 	router.Handle("/*", proxyHandler)

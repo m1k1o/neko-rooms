@@ -1,15 +1,18 @@
 package config
 
 import (
+	"path"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 type Admin struct {
-	Static    string
-	ProxyAuth string
-	Username  string
-	Password  string
+	Static     string
+	PathPrefix string
+	ProxyAuth  string
+	Username   string
+	Password   string
 }
 
 type Server struct {
@@ -55,6 +58,11 @@ func (Server) Init(cmd *cobra.Command) error {
 		return err
 	}
 
+	cmd.PersistentFlags().String("admin.path_prefix", "/", "path prefix for admin client and API")
+	if err := viper.BindPFlag("admin.path_prefix", cmd.PersistentFlags().Lookup("admin.path_prefix")); err != nil {
+		return err
+	}
+
 	cmd.PersistentFlags().String("admin.proxy_auth", "", "require auth: proxy authentication URL, only allow if it returns 200")
 	if err := viper.BindPFlag("admin.proxy_auth", cmd.PersistentFlags().Lookup("admin.proxy_auth")); err != nil {
 		return err
@@ -81,6 +89,7 @@ func (s *Server) Set() {
 	s.PProf = viper.GetBool("pprof")
 
 	s.Admin.Static = viper.GetString("admin.static")
+	s.Admin.PathPrefix = path.Join("/", path.Clean(viper.GetString("admin.path_prefix")))
 	s.Admin.ProxyAuth = viper.GetString("admin.proxy_auth")
 	s.Admin.Username = viper.GetString("admin.username")
 	s.Admin.Password = viper.GetString("admin.password")
