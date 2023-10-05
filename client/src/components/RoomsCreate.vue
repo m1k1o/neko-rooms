@@ -524,12 +524,20 @@
         Close
       </v-btn>
       <v-btn
-        color="green"
+        color="blue"
         dark
-        @click="Create"
-        :loading="loading"
+        @click="Create(false)"
+        :loading="loading && !loadingWithStart"
       >
         Create
+      </v-btn>
+      <v-btn
+        color="green"
+        dark
+        @click="CreateAndStart()"
+        :loading="loadingWithStart"
+      >
+        Create and start
       </v-btn>
     </v-card-actions>
   </v-card>
@@ -574,6 +582,7 @@ export default class RoomsCreate extends Vue {
   public browserPolicyEnabled = false
 
   public loading = false
+  public loadingWithStart = false
   public data: RoomSettings = { ...this.$store.state.defaultRoomSettings }
   public browserPolicyContent: BrowserPolicyContent = { ...this.$store.state.defaultBrowserPolicyContent }
   public envList: { key: string; val: string }[] = []
@@ -704,7 +713,16 @@ export default class RoomsCreate extends Vue {
     Vue.delete(this.envList, index)
   }
 
-  async Create() {
+  async CreateAndStart() {
+    this.loadingWithStart = true
+    try {
+      await this.Create(true)
+    } finally {
+      this.loadingWithStart = false
+    }
+  }
+
+  async Create(start = false) {
     const valid = this._form.validate()
     if (!valid) return
 
@@ -713,7 +731,7 @@ export default class RoomsCreate extends Vue {
     try {
       const envs = this.envList.reduce((obj, { key, val }) => ({ ...obj, [key]: val, }), {})
 
-      await this.$store.dispatch('ROOMS_CREATE', {
+      await this.$store.dispatch(start ? 'ROOMS_CREATE_AND_START' : 'ROOMS_CREATE', {
         ...this.data,
         // eslint-disable-next-line
         user_pass: this.data.user_pass || randomPassword(),

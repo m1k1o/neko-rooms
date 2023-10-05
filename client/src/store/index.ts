@@ -85,6 +85,11 @@ export default new Vuex.Store({
       commit('ROOMS_SET', res.data);
     },
     async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
+      const res = await roomsApi.roomCreate(false, roomSettings)
+      commit('ROOMS_ADD', res.data);
+      return res.data
+    },
+    async ROOMS_CREATE_AND_START({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
       const res = await roomsApi.roomCreate(true, roomSettings)
       commit('ROOMS_ADD', res.data);
       return res.data
