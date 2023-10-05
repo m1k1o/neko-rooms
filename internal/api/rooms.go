@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -38,6 +39,16 @@ func (manager *ApiManagerCtx) roomsList(w http.ResponseWriter, r *http.Request) 
 }
 
 func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request) {
+	var start = true // default value
+	if s := r.URL.Query().Get("start"); s != "" {
+		var err error
+		start, err = strconv.ParseBool(s)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
+		}
+	}
+
 	// Default values
 	request := types.RoomSettings{
 		MaxConnections: 10,
@@ -58,10 +69,12 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := manager.rooms.Start(r.Context(), ID); err != nil {
-		manager.logger.Error().Err(err).Msg("create: failed to start room")
-		http.Error(w, err.Error(), 500)
-		return
+	if start {
+		if err := manager.rooms.Start(r.Context(), ID); err != nil {
+			manager.logger.Error().Err(err).Msg("create: failed to start room")
+			http.Error(w, err.Error(), 500)
+			return
+		}
 	}
 
 	response, err := manager.rooms.GetEntry(r.Context(), ID)
@@ -78,21 +91,37 @@ func (manager *ApiManagerCtx) roomCreate(w http.ResponseWriter, r *http.Request)
 func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Request) {
 	roomId := chi.URLParam(r, "roomId")
 
-	entry, err := manager.rooms.GetEntry(r.Context(), roomId)
-	if err != nil {
-		if errors.Is(err, types.ErrRoomNotFound) {
-			http.Error(w, err.Error(), 404)
-		} else {
-			manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
-			http.Error(w, err.Error(), 500)
+	var start bool
+	if s := r.URL.Query().Get("start"); s != "" {
+		var err error
+		start, err = strconv.ParseBool(s)
+		if err != nil {
+			http.Error(w, err.Error(), 400)
+			return
 		}
-		return
+	} else {
+		entry, err := manager.rooms.GetEntry(r.Context(), roomId)
+		if err != nil {
+			if errors.Is(err, types.ErrRoomNotFound) {
+				http.Error(w, err.Error(), 404)
+			} else {
+				manager.logger.Error().Err(err).Msg("recreate: failed to get room entry")
+				http.Error(w, err.Error(), 500)
+			}
+			return
+		}
+
+		start = entry.Running
 	}
 
 	settings, err := manager.rooms.GetSettings(r.Context(), roomId)
 	if err != nil {
-		manager.logger.Error().Err(err).Msg("recreate: failed to get room settings")
-		http.Error(w, err.Error(), 500)
+		if errors.Is(err, types.ErrRoomNotFound) {
+			http.Error(w, err.Error(), 404)
+		} else {
+			manager.logger.Error().Err(err).Msg("recreate: failed to get room settings")
+			http.Error(w, err.Error(), 500)
+		}
 		return
 	}
 
@@ -115,7 +144,7 @@ func (manager *ApiManagerCtx) roomRecreate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if entry.Running {
+	if start {
 		if err := manager.rooms.Start(r.Context(), ID); err != nil {
 			manager.logger.Error().Err(err).Msg("recreate: failed to start room")
 			http.Error(w, err.Error(), 500)
