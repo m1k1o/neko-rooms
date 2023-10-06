@@ -205,8 +205,16 @@ func (manager *RoomManagerCtx) ExportAsDockerCompose(ctx context.Context) ([]byt
 		}
 
 		// volumes
-		if len(containerJson.HostConfig.Binds) > 0 {
-			service["volumes"] = containerJson.HostConfig.Binds
+		volumes := []string{}
+		for _, mount := range container.Mounts {
+			if !mount.RW {
+				volumes = append(volumes, fmt.Sprintf("%s:%s:ro", mount.Source, mount.Destination))
+			} else {
+				volumes = append(volumes, fmt.Sprintf("%s:%s", mount.Source, mount.Destination))
+			}
+		}
+		if len(volumes) > 0 {
+			service["volumes"] = volumes
 		}
 
 		// devices
@@ -750,6 +758,8 @@ func (manager *RoomManagerCtx) GetSettings(ctx context.Context, id string) (*typ
 		} else if strings.HasPrefix(hostPath, templateStorageRoot) {
 			mountType = types.MountTemplate
 			hostPath = strings.TrimPrefix(hostPath, templateStorageRoot)
+		} else if !mount.RW {
+			mountType = types.MountProtected
 		}
 
 		mounts = append(mounts, types.RoomMount{
