@@ -142,11 +142,10 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 
 func (manager *RoomManagerCtx) serializeLabels(labels RoomLabels) map[string]string {
 	labelsMap := map[string]string{
-		"m1k1o.neko_rooms.name":        labels.Name,
-		"m1k1o.neko_rooms.url":         manager.config.GetRoomUrl(labels.Name),
-		"m1k1o.neko_rooms.instance":    manager.config.InstanceName,
-		"m1k1o.neko_rooms.neko_image":  labels.NekoImage,
-		"m1k1o.neko_rooms.api_version": fmt.Sprintf("%d", labels.ApiVersion),
+		"m1k1o.neko_rooms.name":       labels.Name,
+		"m1k1o.neko_rooms.url":        manager.config.GetRoomUrl(labels.Name),
+		"m1k1o.neko_rooms.instance":   manager.config.InstanceName,
+		"m1k1o.neko_rooms.neko_image": labels.NekoImage,
 	}
 
 	// api version 2 is currently default
