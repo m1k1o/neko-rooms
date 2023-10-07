@@ -53,6 +53,8 @@ type RoomResources struct {
 }
 
 type RoomSettings struct {
+	ApiVersion int `json:"api_version"`
+
 	Name           string `json:"name"`
 	NekoImage      string `json:"neko_image"`
 	MaxConnections uint16 `json:"max_connections"` // 0 when using mux
@@ -86,14 +88,14 @@ type RoomSettings struct {
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 
-func (settings *RoomSettings) ToEnv(apiVersion int, config *config.Room, ports PortSettings) ([]string, error) {
-	switch apiVersion {
+func (settings *RoomSettings) ToEnv(config *config.Room, ports PortSettings) ([]string, error) {
+	switch settings.ApiVersion {
 	case 2:
 		return settings.toEnvV2(config, ports), nil
 	case 3:
 		return settings.toEnvV3(config, ports), nil
 	default:
-		return nil, fmt.Errorf("unsupported API version: %d", apiVersion)
+		return nil, fmt.Errorf("unsupported API version: %d", settings.ApiVersion)
 	}
 }
 

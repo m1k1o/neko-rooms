@@ -396,6 +396,12 @@ export interface RoomResources {
 export interface RoomSettings {
     /**
      * 
+     * @type {number}
+     * @memberof RoomSettings
+     */
+    'api_version'?: number;
+    /**
+     * 
      * @type {string}
      * @memberof RoomSettings
      */

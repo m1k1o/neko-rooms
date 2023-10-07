@@ -22,8 +22,6 @@ type Traefik struct {
 }
 
 type Room struct {
-	ApiVersion int
-
 	Mux    bool
 	EprMin uint16
 	EprMax uint16
@@ -49,11 +47,6 @@ type Room struct {
 }
 
 func (Room) Init(cmd *cobra.Command) error {
-	cmd.PersistentFlags().Int("api_version", 0, "use a specific neko container api version to use for new rooms; when not set, will be used automatically from image labels")
-	if err := viper.BindPFlag("api_version", cmd.PersistentFlags().Lookup("api_version")); err != nil {
-		return err
-	}
-
 	cmd.PersistentFlags().Bool("mux", false, "use mux for connection - needs only one UDP and TCP port per room")
 	if err := viper.BindPFlag("mux", cmd.PersistentFlags().Lookup("mux")); err != nil {
 		return err
@@ -182,8 +175,6 @@ func (Room) Init(cmd *cobra.Command) error {
 }
 
 func (s *Room) Set() {
-	s.ApiVersion = viper.GetInt("api_version")
-
 	s.Mux = viper.GetBool("mux")
 
 	min := uint16(59000)

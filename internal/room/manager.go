@@ -249,10 +249,9 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	}
 
 	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
-	apiVersion := manager.config.ApiVersion
 
 	// if api version is not set, try to detect it
-	if manager.config.ApiVersion == 0 {
+	if settings.ApiVersion == 0 {
 		inspect, _, err := manager.client.ImageInspectWithRaw(ctx, settings.NekoImage)
 		if err != nil {
 			return "", err
@@ -261,7 +260,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		// based on image label
 		if val, ok := inspect.Config.Labels["m1k1o.neko_rooms.api_version"]; ok {
 			var err error
-			apiVersion, err = strconv.Atoi(val)
+			settings.ApiVersion, err = strconv.Atoi(val)
 			if err != nil {
 				return "", err
 			}
@@ -271,9 +270,9 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		if val, ok := inspect.Config.Labels["org.opencontainers.image.url"]; ok {
 			switch val {
 			case "https://github.com/m1k1o/neko":
-				apiVersion = 2
+				settings.ApiVersion = 2
 			case "https://github.com/demodesk/neko":
-				apiVersion = 3
+				settings.ApiVersion = 3
 			}
 		} else
 
@@ -281,7 +280,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		{
 			// TODO: this should be removed in future, but since we have a lot of v2 images, we need to support it
 			log.Warn().Str("image", settings.NekoImage).Msg("unable to detect api version, fallback to v2")
-			apiVersion = 2
+			settings.ApiVersion = 2
 		}
 	}
 
@@ -357,7 +356,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		Epr:  epr,
 
 		NekoImage:  settings.NekoImage,
-		ApiVersion: apiVersion,
+		ApiVersion: settings.ApiVersion,
 
 		BrowserPolicy: browserPolicyLabels,
 		UserDefined:   settings.Labels,
@@ -434,7 +433,6 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	//
 
 	env, err := settings.ToEnv(
-		apiVersion,
 		manager.config,
 		types.PortSettings{
 			FrontendPort: frontendPort,
@@ -968,7 +966,7 @@ func (manager *RoomManagerCtx) GetStats(ctx context.Context, id string) (*types.
 
 		// TODO: settings & host
 	default:
-		return nil, fmt.Errorf("unsupported API version: %d", manager.config.ApiVersion)
+		return nil, fmt.Errorf("unsupported API version: %d", labels.ApiVersion)
 	}
 
 	return &stats, nil
