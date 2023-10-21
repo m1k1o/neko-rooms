@@ -3,30 +3,10 @@ package types
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/m1k1o/neko-rooms/internal/config"
-	"github.com/m1k1o/neko-rooms/internal/utils"
 )
-
-var blacklistedEnvs = []string{
-	// ignore bunch of default envs
-	"DEBIAN_FRONTEND",
-	"PULSE_SERVER",
-	"DISPLAY",
-	"USER",
-	"PATH",
-
-	// ignore bunch of envs managed by neko-rooms
-	"NEKO_BIND",
-	"NEKO_EPR",
-	"NEKO_UDPMUX",
-	"NEKO_TCPMUX",
-	"NEKO_NAT1TO1",
-	"NEKO_ICELITE",
-}
 
 type RoomsConfig struct {
 	Connections    uint16   `json:"connections"`
@@ -73,6 +53,8 @@ type RoomResources struct {
 }
 
 type RoomSettings struct {
+	ApiVersion int `json:"api_version"`
+
 	Name           string `json:"name"`
 	NekoImage      string `json:"neko_image"`
 	MaxConnections uint16 `json:"max_connections"` // 0 when using mux
@@ -106,159 +88,31 @@ type RoomSettings struct {
 	BrowserPolicy *BrowserPolicy `json:"browser_policy,omitempty"`
 }
 
+func (settings *RoomSettings) ToEnv(config *config.Room, ports PortSettings) ([]string, error) {
+	switch settings.ApiVersion {
+	case 2:
+		return settings.toEnvV2(config, ports), nil
+	case 3:
+		return settings.toEnvV3(config, ports), nil
+	default:
+		return nil, fmt.Errorf("unsupported API version: %d", settings.ApiVersion)
+	}
+}
+
+func (settings *RoomSettings) FromEnv(apiVersion int, envs []string) error {
+	switch apiVersion {
+	case 2:
+		return settings.fromEnvV2(envs)
+	case 3:
+		return settings.fromEnvV3(envs)
+	default:
+		return fmt.Errorf("unsupported API version: %d", apiVersion)
+	}
+}
+
 type PortSettings struct {
 	FrontendPort   uint16
 	EprMin, EprMax uint16
-}
-
-func (settings *RoomSettings) ToEnv(config *config.Room, ports PortSettings) []string {
-	env := []string{
-		fmt.Sprintf("NEKO_BIND=:%d", ports.FrontendPort),
-		"NEKO_ICELITE=true",
-
-		// from settings
-		fmt.Sprintf("NEKO_PASSWORD=%s", settings.UserPass),
-		fmt.Sprintf("NEKO_PASSWORD_ADMIN=%s", settings.AdminPass),
-		fmt.Sprintf("NEKO_SCREEN=%s", settings.Screen),
-		fmt.Sprintf("NEKO_MAX_FPS=%d", settings.VideoMaxFPS),
-	}
-
-	if config.Mux {
-		env = append(env,
-			fmt.Sprintf("NEKO_UDPMUX=%d", ports.EprMin),
-			fmt.Sprintf("NEKO_TCPMUX=%d", ports.EprMin),
-		)
-	} else {
-		env = append(env,
-			fmt.Sprintf("NEKO_EPR=%d-%d", ports.EprMin, ports.EprMax),
-		)
-	}
-
-	// optional nat mapping
-	if len(config.NAT1To1IPs) > 0 {
-		env = append(env, fmt.Sprintf("NEKO_NAT1TO1=%s", strings.Join(config.NAT1To1IPs, ",")))
-	}
-
-	if settings.ControlProtection {
-		env = append(env, "NEKO_CONTROL_PROTECTION=true")
-	}
-
-	if settings.ImplicitControl {
-		env = append(env, "NEKO_IMPLICIT_CONTROL=true")
-	}
-
-	if settings.VideoCodec == "VP8" || settings.VideoCodec == "VP9" || settings.VideoCodec == "H264" {
-		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.VideoCodec)))
-	}
-
-	if settings.VideoBitrate != 0 {
-		env = append(env, fmt.Sprintf("NEKO_VIDEO_BITRATE=%d", settings.VideoBitrate))
-	}
-
-	if settings.VideoPipeline != "" {
-		env = append(env, fmt.Sprintf("NEKO_VIDEO=%s", settings.VideoPipeline))
-	}
-
-	if settings.AudioCodec == "OPUS" || settings.AudioCodec == "G722" || settings.AudioCodec == "PCMU" || settings.AudioCodec == "PCMA" {
-		env = append(env, fmt.Sprintf("NEKO_%s=true", strings.ToUpper(settings.AudioCodec)))
-	}
-
-	if settings.AudioBitrate != 0 {
-		env = append(env, fmt.Sprintf("NEKO_AUDIO_BITRATE=%d", settings.AudioBitrate))
-	}
-
-	if settings.AudioPipeline != "" {
-		env = append(env, fmt.Sprintf("NEKO_AUDIO=%s", settings.AudioPipeline))
-	}
-
-	if settings.BroadcastPipeline != "" {
-		env = append(env, fmt.Sprintf("NEKO_BROADCAST_PIPELINE=%s", settings.BroadcastPipeline))
-	}
-
-	for key, val := range settings.Envs {
-		if in, _ := utils.ArrayIn(key, blacklistedEnvs); !in {
-			env = append(env, fmt.Sprintf("%s=%s", key, val))
-		}
-	}
-
-	return env
-}
-
-func (settings *RoomSettings) FromEnv(envs []string) error {
-	settings.Envs = map[string]string{}
-
-	var err error
-	for _, env := range envs {
-		r := strings.SplitN(env, "=", 2)
-		key, val := r[0], r[1]
-
-		switch key {
-		case "NEKO_PASSWORD":
-			settings.UserPass = val
-		case "NEKO_PASSWORD_ADMIN":
-			settings.AdminPass = val
-		case "NEKO_CONTROL_PROTECTION":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.ControlProtection = true
-			}
-		case "NEKO_IMPLICIT_CONTROL":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.ImplicitControl = true
-			}
-		case "NEKO_SCREEN":
-			settings.Screen = val
-		case "NEKO_MAX_FPS":
-			settings.VideoMaxFPS, err = strconv.Atoi(val)
-		case "NEKO_BROADCAST_PIPELINE":
-			settings.BroadcastPipeline = val
-		case "NEKO_VP8":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.VideoCodec = "VP8"
-			}
-		case "NEKO_VP9":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.VideoCodec = "VP9"
-			}
-		case "NEKO_H264":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.VideoCodec = "H264"
-			}
-		case "NEKO_VIDEO_BITRATE":
-			settings.VideoBitrate, err = strconv.Atoi(val)
-		case "NEKO_VIDEO":
-			settings.VideoPipeline = val
-		case "NEKO_OPUS":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "OPUS"
-			}
-		case "NEKO_G722":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "G722"
-			}
-		case "NEKO_PCMU":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "PCMU"
-			}
-		case "NEKO_PCMA":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.AudioCodec = "PCMA"
-			}
-		case "NEKO_AUDIO_BITRATE":
-			settings.AudioBitrate, err = strconv.Atoi(val)
-		case "NEKO_AUDIO":
-			settings.AudioPipeline = val
-		default:
-			if in, _ := utils.ArrayIn(key, blacklistedEnvs); !in {
-				settings.Envs[key] = val
-			}
-		}
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 type RoomStats struct {

@@ -45,14 +45,18 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 	router.Use(middleware.Recoverer) // Recover from panics without crashing server
 
 	// Basic CORS
-	// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
-	router.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		AllowCredentials: true,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
+	if config.CORS {
+		// for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
+		router.Use(cors.Handler(cors.Options{
+			AllowOriginFunc: func(r *http.Request, origin string) bool {
+				return true
+			},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+			AllowCredentials: true,
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		}))
+	}
 
 	// mount pprof endpoint
 	if config.PProf {

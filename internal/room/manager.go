@@ -10,7 +10,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/docker/cli/opts"
 	dockerTypes "github.com/docker/docker/api/types"
@@ -248,6 +250,40 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 
 	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
 
+	// if api version is not set, try to detect it
+	if settings.ApiVersion == 0 {
+		inspect, _, err := manager.client.ImageInspectWithRaw(ctx, settings.NekoImage)
+		if err != nil {
+			return "", err
+		}
+
+		// based on image label
+		if val, ok := inspect.Config.Labels["m1k1o.neko_rooms.api_version"]; ok {
+			var err error
+			settings.ApiVersion, err = strconv.Atoi(val)
+			if err != nil {
+				return "", err
+			}
+		} else
+
+		// based on opencontainers image url label
+		if val, ok := inspect.Config.Labels["org.opencontainers.image.url"]; ok {
+			switch val {
+			case "https://github.com/m1k1o/neko":
+				settings.ApiVersion = 2
+			case "https://github.com/demodesk/neko":
+				settings.ApiVersion = 3
+			}
+		} else
+
+		// unable to detect api version
+		{
+			// TODO: this should be removed in future, but since we have a lot of v2 images, we need to support it
+			log.Warn().Str("image", settings.NekoImage).Msg("unable to detect api version, fallback to v2")
+			settings.ApiVersion = 2
+		}
+	}
+
 	// TODO: Check if path name exists.
 	roomName := settings.Name
 	if roomName == "" {
@@ -315,10 +351,12 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	}
 
 	labels := manager.serializeLabels(RoomLabels{
-		Name:      roomName,
-		Mux:       manager.config.Mux,
-		Epr:       epr,
-		NekoImage: settings.NekoImage,
+		Name: roomName,
+		Mux:  manager.config.Mux,
+		Epr:  epr,
+
+		NekoImage:  settings.NekoImage,
+		ApiVersion: settings.ApiVersion,
 
 		BrowserPolicy: browserPolicyLabels,
 		UserDefined:   settings.Labels,
@@ -394,11 +432,16 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	// Set environment variables
 	//
 
-	env := settings.ToEnv(manager.config, types.PortSettings{
-		FrontendPort: frontendPort,
-		EprMin:       epr.Min,
-		EprMax:       epr.Max,
-	})
+	env, err := settings.ToEnv(
+		manager.config,
+		types.PortSettings{
+			FrontendPort: frontendPort,
+			EprMin:       epr.Min,
+			EprMax:       epr.Max,
+		})
+	if err != nil {
+		return "", err
+	}
 
 	//
 	// Set browser policies
@@ -830,7 +873,7 @@ func (manager *RoomManagerCtx) GetSettings(ctx context.Context, id string) (*typ
 		settings.MaxConnections = 0
 	}
 
-	err = settings.FromEnv(container.Config.Env)
+	err = settings.FromEnv(labels.ApiVersion, container.Config.Env)
 	return &settings, err
 }
 
@@ -840,22 +883,90 @@ func (manager *RoomManagerCtx) GetStats(ctx context.Context, id string) (*types.
 		return nil, err
 	}
 
-	settings := types.RoomSettings{}
-	err = settings.FromEnv(container.Config.Env)
+	labels, err := manager.extractLabels(container.Config.Labels)
 	if err != nil {
 		return nil, err
 	}
 
-	output, err := manager.containerExec(ctx, id, []string{
-		"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + url.QueryEscape(settings.AdminPass),
-	})
+	settings := types.RoomSettings{}
+	err = settings.FromEnv(labels.ApiVersion, container.Config.Env)
 	if err != nil {
 		return nil, err
 	}
 
 	var stats types.RoomStats
-	if err := json.Unmarshal([]byte(output), &stats); err != nil {
-		return nil, err
+	switch labels.ApiVersion {
+	case 2:
+		output, err := manager.containerExec(ctx, id, []string{
+			"wget", "-q", "-O-", "http://127.0.0.1:8080/stats?pwd=" + url.QueryEscape(settings.AdminPass),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if err := json.Unmarshal([]byte(output), &stats); err != nil {
+			return nil, err
+		}
+	case 3:
+		output, err := manager.containerExec(ctx, id, []string{
+			"wget", "-q", "-O-", "http://127.0.0.1:8080/api/sessions?token=" + url.QueryEscape(settings.AdminPass),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		var sessions []struct {
+			ID      string `json:"id"`
+			Profile struct {
+				Name    string `json:"name"`
+				IsAdmin bool   `json:"is_admin"`
+			} `json:"profile"`
+			State struct {
+				IsConnected       bool       `json:"is_connected"`
+				NotConnectedSince *time.Time `json:"not_connected_since"`
+			} `json:"state"`
+		}
+
+		if err := json.Unmarshal([]byte(output), &sessions); err != nil {
+			return nil, err
+		}
+
+		// create empty array so that it's not null in json
+		stats.Members = []*types.RoomMember{}
+
+		for _, session := range sessions {
+			if session.State.IsConnected {
+				stats.Connections++
+				// append members
+				stats.Members = append(stats.Members, &types.RoomMember{
+					ID:    session.ID,
+					Name:  session.Profile.Name,
+					Admin: session.Profile.IsAdmin,
+					Muted: false, // not supported
+				})
+			} else if session.State.NotConnectedSince != nil {
+				// populate last admin left time
+				if session.Profile.IsAdmin && (stats.LastAdminLeftAt == nil || (*session.State.NotConnectedSince).After(*stats.LastAdminLeftAt)) {
+					stats.LastAdminLeftAt = session.State.NotConnectedSince
+				}
+				// populate last user left time
+				if !session.Profile.IsAdmin && (stats.LastUserLeftAt == nil || (*session.State.NotConnectedSince).After(*stats.LastUserLeftAt)) {
+					stats.LastUserLeftAt = session.State.NotConnectedSince
+				}
+			}
+		}
+
+		// parse started time
+		if container.State.StartedAt != "" {
+			stats.ServerStartedAt, err = time.Parse(time.RFC3339, container.State.StartedAt)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// TODO: settings & host
+	default:
+		return nil, fmt.Errorf("unsupported API version: %d", labels.ApiVersion)
 	}
 
 	return &stats, nil

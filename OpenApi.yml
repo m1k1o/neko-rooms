@@ -467,6 +467,9 @@ components:
     RoomSettings:
       type: object
       properties:
+        api_version:
+          type: number
+          description: if not set, version is taken from neko_image
         name:
           type: string
           example: foobar
