@@ -16,6 +16,8 @@ import (
 	dockerClient "github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/m1k1o/neko-rooms/pkg/prefix"
 )
 
 type entry struct {
@@ -41,7 +43,7 @@ type ProxyManagerCtx struct {
 
 	client       *dockerClient.Client
 	instanceName string
-	handlers     *prefixHandler[*entry]
+	handlers     prefix.Tree[*entry]
 }
 
 func New(client *dockerClient.Client, instanceName string, waitEnabled bool) *ProxyManagerCtx {
@@ -52,7 +54,7 @@ func New(client *dockerClient.Client, instanceName string, waitEnabled bool) *Pr
 		client:       client,
 		instanceName: instanceName,
 		waitEnabled:  waitEnabled,
-		handlers:     &prefixHandler[*entry]{},
+		handlers:     prefix.NewTree[*entry](),
 	}
 }
 
@@ -119,7 +121,7 @@ func (p *ProxyManagerCtx) Start() {
 				p.mu.Lock()
 				switch msg.Action {
 				case "create":
-					p.handlers.Set(path, &entry{
+					p.handlers.Insert(path, &entry{
 						id:      msg.ID,
 						running: false,
 					})
@@ -137,9 +139,9 @@ func (p *ProxyManagerCtx) Start() {
 						})
 					}
 
-					p.handlers.Set(path, e)
+					p.handlers.Insert(path, e)
 				case "stop":
-					p.handlers.Set(path, &entry{
+					p.handlers.Insert(path, &entry{
 						id:      msg.ID,
 						running: false,
 					})
@@ -172,7 +174,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 		return err
 	}
 
-	p.handlers = &prefixHandler[*entry]{}
+	p.handlers = prefix.NewTree[*entry]()
 
 	for _, cont := range containers {
 		enabled, path, port, ok := p.parseLabels(cont.Labels)
@@ -198,7 +200,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 			}
 		}
 
-		p.handlers.Set(path, entry)
+		p.handlers.Insert(path, entry)
 	}
 
 	return nil

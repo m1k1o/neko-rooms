@@ -1,22 +1,29 @@
-package proxy
+package prefix
 
 import (
 	"strings"
 )
 
-type prefixHandler[T any] struct {
+type Tree[T any] interface {
+	Insert(prefix string, value T)
+	Find(prefix string) (value T, ok bool)
+	Remove(prefix string)
+	Match(path string) (value T, prefix string, ok bool)
+}
+
+type tree[T any] struct {
 	Value    T
 	IsLeaf   bool
-	Children map[string]*prefixHandler[T]
+	Children map[string]*tree[T]
 }
 
-func NewPrefixHandler[T any]() *prefixHandler[T] {
-	return &prefixHandler[T]{}
+func NewTree[T any]() *tree[T] {
+	return &tree[T]{}
 }
 
-func (p *prefixHandler[T]) Set(prefix string, value T) {
+func (p *tree[T]) Insert(prefix string, value T) {
 	arr := strings.Split(prefix, "/")
-	len := len(arr)
+	l := len(arr)
 
 	for i, a := range arr {
 		if a == "" {
@@ -24,15 +31,15 @@ func (p *prefixHandler[T]) Set(prefix string, value T) {
 		}
 
 		if p.Children == nil {
-			p.Children = map[string]*prefixHandler[T]{}
+			p.Children = map[string]*tree[T]{}
 		}
 
 		dat, ok := p.Children[a]
 		if !ok {
-			dat = &prefixHandler[T]{}
+			dat = &tree[T]{}
 		}
 
-		if i == len-1 {
+		if i == l-1 {
 			dat.Value = value
 			dat.IsLeaf = true
 			dat.Children = nil
@@ -43,9 +50,9 @@ func (p *prefixHandler[T]) Set(prefix string, value T) {
 	}
 }
 
-func (p *prefixHandler[T]) Get(prefix string) (value T, ok bool) {
+func (p *tree[T]) Find(prefix string) (value T, ok bool) {
 	arr := strings.Split(prefix, "/")
-	len := len(arr)
+	l := len(arr)
 
 	for i, a := range arr {
 		if a == "" {
@@ -53,15 +60,15 @@ func (p *prefixHandler[T]) Get(prefix string) (value T, ok bool) {
 		}
 
 		if p.Children == nil {
-			p.Children = map[string]*prefixHandler[T]{}
+			p.Children = map[string]*tree[T]{}
 		}
 
 		dat, found := p.Children[a]
 		if !found {
-			dat = &prefixHandler[T]{}
+			dat = &tree[T]{}
 		}
 
-		if i == len-1 {
+		if i == l-1 {
 			value = dat.Value
 			ok = dat.IsLeaf
 			return
@@ -74,16 +81,17 @@ func (p *prefixHandler[T]) Get(prefix string) (value T, ok bool) {
 	return
 }
 
-func (p *prefixHandler[T]) Remove(prefix string) {
+func (p *tree[T]) Remove(prefix string) {
 	arr := strings.Split(prefix, "/")
-	len := len(arr)
+	l := len(arr)
 
+	ptrs := []*tree[T]{p}
 	for i, a := range arr {
 		if a == "" {
 			continue
 		}
 
-		if i == len-1 {
+		if i == l-1 {
 			delete(p.Children, a)
 		}
 
@@ -92,12 +100,23 @@ func (p *prefixHandler[T]) Remove(prefix string) {
 			break
 		}
 		p = dat
+		ptrs = append(ptrs, p)
 	}
 
-	// TODO: Remove all empty references.
+	// remove all empty references
+	rm := false
+	for i := len(ptrs) - 1; i >= 0; i-- {
+		if len(ptrs[i].Children) == 0 {
+			rm = true
+			continue
+		}
+		if rm {
+			ptrs[i].Children = nil
+		}
+	}
 }
 
-func (p *prefixHandler[T]) Match(path string) (value T, prefix string, ok bool) {
+func (p *tree[T]) Match(path string) (value T, prefix string, ok bool) {
 	arr := strings.Split(path, "/")
 	prefixArr := []string{}
 
