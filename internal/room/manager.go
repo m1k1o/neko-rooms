@@ -692,6 +692,12 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 }
 
 func (manager *RoomManagerCtx) GetEntry(ctx context.Context, id string) (*types.RoomEntry, error) {
+	// we don't support id shorter than 12 chars
+	// because they can be ambiguous
+	if len(id) < 12 {
+		return nil, types.ErrRoomNotFound
+	}
+
 	container, err := manager.containerById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -706,7 +712,18 @@ func (manager *RoomManagerCtx) GetEntryByName(ctx context.Context, name string) 
 		return nil, err
 	}
 
-	return manager.containerToEntry(*container)
+	roomEntry, err := manager.containerToEntry(*container)
+	if err != nil {
+		return nil, err
+	}
+
+	// we can match containers starting with given name
+	// but we want to match only exact name
+	if roomEntry.Name != name {
+		return nil, types.ErrRoomNotFound
+	}
+
+	return roomEntry, nil
 }
 
 func (manager *RoomManagerCtx) Remove(ctx context.Context, id string) error {
