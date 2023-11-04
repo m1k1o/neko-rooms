@@ -82,7 +82,7 @@ func (manager *RoomManagerCtx) containerById(ctx context.Context, id string) (*d
 
 func (manager *RoomManagerCtx) containerByName(ctx context.Context, name string) (*dockerTypes.Container, error) {
 	return manager.containerFilter(ctx, filters.NewArgs(
-		filters.Arg("name", manager.config.InstanceName+"-"+name),
+		filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.name=%s", name)),
 	))
 }
 

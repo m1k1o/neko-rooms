@@ -712,18 +712,7 @@ func (manager *RoomManagerCtx) GetEntryByName(ctx context.Context, name string) 
 		return nil, err
 	}
 
-	roomEntry, err := manager.containerToEntry(*container)
-	if err != nil {
-		return nil, err
-	}
-
-	// we can match containers starting with given name
-	// but we want to match only exact name
-	if roomEntry.Name != name {
-		return nil, types.ErrRoomNotFound
-	}
-
-	return roomEntry, nil
+	return manager.containerToEntry(*container)
 }
 
 func (manager *RoomManagerCtx) Remove(ctx context.Context, id string) error {
