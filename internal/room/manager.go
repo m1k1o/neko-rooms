@@ -864,6 +864,7 @@ func (manager *RoomManagerCtx) GetSettings(ctx context.Context, id string) (*typ
 	}
 
 	settings := types.RoomSettings{
+		ApiVersion:     labels.ApiVersion,
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
