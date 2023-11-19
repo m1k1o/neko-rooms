@@ -2,7 +2,7 @@ version: "3.5"
 
 networks:
   default:
-    attachable: "true"
+    attachable: true
     name: "neko-rooms-traefik"
 
 services:

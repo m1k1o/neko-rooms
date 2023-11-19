@@ -28,6 +28,7 @@ var blacklistedEnvsV3 = []string{
 
 	// ignore bunch of envs managed by neko-rooms
 	"NEKO_SERVER_BIND",
+	"NEKO_SERVER_PROXY",
 	"NEKO_SESSION_API_TOKEN",
 	"NEKO_MEMBER_PROVIDER",
 	"NEKO_WEBRTC_EPR",
@@ -41,6 +42,7 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 	env := []string{
 		fmt.Sprintf("NEKO_SERVER_BIND=:%d", ports.FrontendPort),
 		"NEKO_WEBRTC_ICELITE=true",
+		"NEKO_SERVER_PROXY=true",
 
 		// from settings
 		"NEKO_MEMBER_PROVIDER=multiuser",

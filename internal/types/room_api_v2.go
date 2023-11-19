@@ -29,12 +29,14 @@ var blacklistedEnvsV2 = []string{
 	"NEKO_TCPMUX",
 	"NEKO_NAT1TO1",
 	"NEKO_ICELITE",
+	"NEKO_PROXY",
 }
 
 func (settings *RoomSettings) toEnvV2(config *config.Room, ports PortSettings) []string {
 	env := []string{
 		fmt.Sprintf("NEKO_BIND=:%d", ports.FrontendPort),
 		"NEKO_ICELITE=true",
+		"NEKO_PROXY=true",
 
 		// from settings
 		fmt.Sprintf("NEKO_PASSWORD=%s", settings.UserPass),

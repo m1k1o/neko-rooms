@@ -18,7 +18,10 @@ services:
       - "--providers.docker.network=neko-rooms-traefik"
       - "--entrypoints.web.address=:8080"
     ports:
-      - "8080:8080"
+      - target: 8080
+        published: 8080
+        protocol: "tcp"
+        mode: "host"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       # OPTIONAL: Enable authentication.
