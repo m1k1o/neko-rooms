@@ -315,6 +315,8 @@ export const state = {
   defaultBrowserPolicyContent: {
     extensions: [],
     // eslint-disable-next-line
+    install_extensions: false,
+    // eslint-disable-next-line
     developer_tools: false,
     // eslint-disable-next-line
     persistent_data: false,

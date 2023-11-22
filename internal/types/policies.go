@@ -14,9 +14,10 @@ type BrowserPolicy struct {
 }
 
 type BrowserPolicyContent struct {
-	Extensions     []BrowserPolicyExtension `json:"extensions"`
-	DeveloperTools bool                     `json:"developer_tools"`
-	PersistentData bool                     `json:"persistent_data"`
+	Extensions        []BrowserPolicyExtension `json:"extensions"`
+	InstallExtensions bool                     `json:"install_extensions"`
+	DeveloperTools    bool                     `json:"developer_tools"`
+	PersistentData    bool                     `json:"persistent_data"`
 }
 
 type BrowserPolicyExtension struct {

@@ -213,6 +213,7 @@
                 <template v-slot:default>
                   <tbody>
                     <tr><th> Extensions </th><td>{{ BrowserExtensions(settings.browser_policy.content.extensions).join(', ') }}</td></tr>
+                    <tr><th> Install extensions </th><td>{{ settings.browser_policy.content.install_extensions }}</td></tr>
                     <tr><th> Developer tools </th><td>{{ settings.browser_policy.content.developer_tools }}</td></tr>
                     <tr><th> Persistent data </th><td>{{ settings.browser_policy.content.persistent_data }}</td></tr>
                   </tbody>

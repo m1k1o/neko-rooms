@@ -46,7 +46,14 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 
 	policiesTmpl["ExtensionInstallForcelist"] = ExtensionInstallForcelist
 	policiesTmpl["ExtensionInstallAllowlist"] = ExtensionInstallAllowlist
-	policiesTmpl["ExtensionInstallBlocklist"] = []interface{}{"*"}
+
+	if policies.InstallExtensions {
+		// Allow installation of extensions
+		policiesTmpl["ExtensionInstallBlocklist"] = []interface{}{}
+	} else {
+		// Disallow installation of extensions
+		policiesTmpl["ExtensionInstallBlocklist"] = []interface{}{"*"}
+	}
 
 	//
 	// Developer Tools

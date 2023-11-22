@@ -32,6 +32,13 @@ func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
 		policies.Extensions = []types.BrowserPolicyExtension{}
 		for id, val := range extensions.(map[string]interface{}) {
 			if id == "*" {
+				//
+				// Install Extensions
+				//
+
+				if val, ok := val.(map[string]interface{})["installation_mode"]; ok {
+					policies.InstallExtensions = val.(string) == "allowed"
+				}
 				continue
 			}
 
