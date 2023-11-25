@@ -12,7 +12,7 @@ import (
 func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
 	policies := types.BrowserPolicyContent{}
 
-	policiesTmpl := map[string]interface{}{}
+	policiesTmpl := map[string]any{}
 	if err := json.Unmarshal([]byte(policiesJson), &policiesTmpl); err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
 
 	if extensions, ok := policiesTmpl["ExtensionInstallForcelist"]; ok {
 		policies.Extensions = []types.BrowserPolicyExtension{}
-		for _, val := range extensions.([]interface{}) {
+		for _, val := range extensions.([]any) {
 			s := strings.Split(val.(string), ";")
 			url := ""
 			if len(s) > 1 {

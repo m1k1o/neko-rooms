@@ -13,7 +13,7 @@ func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
 	policies := types.BrowserPolicyContent{}
 
 	policiesTmpl := struct {
-		Policies map[string]interface{} `json:"policies"`
+		Policies map[string]any `json:"policies"`
 	}{}
 	if err := json.Unmarshal([]byte(policiesJson), &policiesTmpl); err != nil {
 		return nil, err
@@ -30,12 +30,12 @@ func Parse(policiesJson string) (*types.BrowserPolicyContent, error) {
 
 	if extensions, ok := policiesTmpl.Policies["ExtensionSettings"]; ok {
 		policies.Extensions = []types.BrowserPolicyExtension{}
-		for id, val := range extensions.(map[string]interface{}) {
+		for id, val := range extensions.(map[string]any) {
 			if id == "*" {
 				continue
 			}
 
-			data := val.(map[string]interface{})
+			data := val.(map[string]any)
 			url, _ := data["install_url"].(string)
 
 			policies.Extensions = append(

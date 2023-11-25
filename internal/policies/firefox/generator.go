@@ -14,7 +14,7 @@ var policiesJson string
 
 func Generate(policies types.BrowserPolicyContent) (string, error) {
 	policiesTmpl := struct {
-		Policies map[string]interface{} `json:"policies"`
+		Policies map[string]any `json:"policies"`
 	}{}
 	if err := json.Unmarshal([]byte(policiesJson), &policiesTmpl); err != nil {
 		return "", err
@@ -24,13 +24,13 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 	// Extensions
 	//
 
-	ExtensionSettings := map[string]interface{}{}
-	ExtensionSettings["*"] = map[string]interface{}{
+	ExtensionSettings := map[string]any{}
+	ExtensionSettings["*"] = map[string]any{
 		"installation_mode": "blocked",
 	}
 
 	for _, e := range policies.Extensions {
-		ExtensionSettings[e.ID] = map[string]interface{}{
+		ExtensionSettings[e.ID] = map[string]any{
 			"install_url":       e.URL,
 			"installation_mode": "force_installed",
 		}
@@ -48,18 +48,18 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 	// Persistent Data
 	//
 
-	Preferences := policiesTmpl.Policies["Preferences"].(map[string]interface{})
+	Preferences := policiesTmpl.Policies["Preferences"].(map[string]any)
 	Preferences["browser.urlbar.suggest.history"] = policies.PersistentData
 	Preferences["places.history.enabled"] = policies.PersistentData
 	policiesTmpl.Policies["Preferences"] = Preferences
 	policiesTmpl.Policies["SanitizeOnShutdown"] = !policies.PersistentData
 
 	if policies.PersistentData {
-		policiesTmpl.Policies["Homepage"] = map[string]interface{}{
+		policiesTmpl.Policies["Homepage"] = map[string]any{
 			"StartPage": "previous-session",
 		}
 	} else {
-		policiesTmpl.Policies["Homepage"] = map[string]interface{}{
+		policiesTmpl.Policies["Homepage"] = map[string]any{
 			"StartPage": "homepage",
 		}
 	}

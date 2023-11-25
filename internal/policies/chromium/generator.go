@@ -14,7 +14,7 @@ import (
 var policiesJson string
 
 func Generate(policies types.BrowserPolicyContent) (string, error) {
-	policiesTmpl := map[string]interface{}{}
+	policiesTmpl := map[string]any{}
 	if err := json.Unmarshal([]byte(policiesJson), &policiesTmpl); err != nil {
 		return "", err
 	}
@@ -23,7 +23,7 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 	// Extensions
 	//
 
-	ExtensionInstallForcelist := []interface{}{}
+	ExtensionInstallForcelist := []any{}
 	for _, e := range policies.Extensions {
 		URL := e.URL
 		if URL == "" {
@@ -36,7 +36,7 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 		)
 	}
 
-	ExtensionInstallAllowlist := []interface{}{}
+	ExtensionInstallAllowlist := []any{}
 	for _, e := range policies.Extensions {
 		ExtensionInstallAllowlist = append(
 			ExtensionInstallAllowlist,
@@ -46,7 +46,7 @@ func Generate(policies types.BrowserPolicyContent) (string, error) {
 
 	policiesTmpl["ExtensionInstallForcelist"] = ExtensionInstallForcelist
 	policiesTmpl["ExtensionInstallAllowlist"] = ExtensionInstallAllowlist
-	policiesTmpl["ExtensionInstallBlocklist"] = []interface{}{"*"}
+	policiesTmpl["ExtensionInstallBlocklist"] = []any{"*"}
 
 	//
 	// Developer Tools

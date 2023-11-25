@@ -17,7 +17,7 @@ func Swal2Response(w http.ResponseWriter, body string) {
 		http.Error(w, err.Error(), 500)
 	}
 
-	err = tmpl.Execute(w, map[string]interface{}{
+	err = tmpl.Execute(w, map[string]any{
 		"Body": template.HTML(body),
 	})
 

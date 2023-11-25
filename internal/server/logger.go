@@ -14,7 +14,7 @@ type logformatter struct {
 }
 
 func (l *logformatter) NewLogEntry(r *http.Request) middleware.LogEntry {
-	req := map[string]interface{}{}
+	req := map[string]any{}
 
 	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
 		req["id"] = reqID
@@ -32,7 +32,7 @@ func (l *logformatter) NewLogEntry(r *http.Request) middleware.LogEntry {
 	req["agent"] = r.UserAgent()
 	req["uri"] = fmt.Sprintf("%s://%s%s", scheme, r.Host, r.RequestURI)
 
-	fields := map[string]interface{}{}
+	fields := map[string]any{}
 	fields["req"] = req
 
 	return &logentry{
@@ -43,12 +43,12 @@ func (l *logformatter) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 type logentry struct {
 	logger zerolog.Logger
-	fields map[string]interface{}
-	errors []map[string]interface{}
+	fields map[string]any
+	errors []map[string]any
 }
 
-func (e *logentry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
-	res := map[string]interface{}{}
+func (e *logentry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra any) {
+	res := map[string]any{}
 	res["time"] = time.Now().UTC().Format(time.RFC1123)
 	res["status"] = status
 	res["bytes"] = bytes
@@ -65,8 +65,8 @@ func (e *logentry) Write(status, bytes int, header http.Header, elapsed time.Dur
 	}
 }
 
-func (e *logentry) Panic(v interface{}, stack []byte) {
-	err := map[string]interface{}{}
+func (e *logentry) Panic(v any, stack []byte) {
+	err := map[string]any{}
 	err["message"] = fmt.Sprintf("%+v", v)
 	err["stack"] = string(stack)
 
