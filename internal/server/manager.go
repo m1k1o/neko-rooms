@@ -58,12 +58,6 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 		}))
 	}
 
-	// mount pprof endpoint
-	if config.PProf {
-		withPProf(router)
-		logger.Info().Msgf("with pprof endpoint at %s", pprofPath)
-	}
-
 	//
 	// admin page
 	//
@@ -238,6 +232,12 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 				}
 			})
 		})
+	}
+
+	// mount pprof endpoint
+	if config.PProf {
+		router.Mount("/debug", middleware.Profiler())
+		logger.Info().Msgf("with pprof endpoint")
 	}
 
 	// handle all remaining paths with proxy
