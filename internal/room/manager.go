@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/docker/cli/opts"
@@ -55,6 +56,12 @@ type RoomManagerCtx struct {
 	logger zerolog.Logger
 	config *config.Room
 	client *dockerClient.Client
+
+	eventsMu         sync.Mutex
+	eventsWg         sync.WaitGroup
+	eventsListeners  []chan types.RoomEvent
+	eventsLoopCtx    context.Context
+	eventsLoopCancel context.CancelFunc
 }
 
 func (manager *RoomManagerCtx) Config() types.RoomsConfig {
