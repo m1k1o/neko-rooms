@@ -61,5 +61,6 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 		r.Post("/recreate", manager.roomRecreate)
 	})
 
+	r.Get("/events", manager.events)
 	r.Get("/docker-compose.yaml", manager.dockerCompose)
 }

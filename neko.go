@@ -131,6 +131,7 @@ func (main *MainCtx) Start() {
 		client,
 		main.Configs.Room,
 	)
+	main.roomManager.EventsLoopStart()
 
 	main.pullManager = pull.New(
 		client,
@@ -169,6 +170,9 @@ func (main *MainCtx) Shutdown() {
 
 	err = main.pullManager.Shutdown()
 	main.logger.Err(err).Msg("pull manager shutdown")
+
+	err = main.roomManager.EventsLoopStop()
+	main.logger.Err(err).Msg("room events loop shutdown")
 }
 
 func (main *MainCtx) ServeCommand(cmd *cobra.Command, args []string) {

@@ -138,6 +138,12 @@ type RoomMember struct {
 	Muted bool   `json:"muted"`
 }
 
+type RoomEvent struct {
+	ID     string            `json:"id"`
+	Action string            `json:"action"`
+	Labels map[string]string `json:"-"`
+}
+
 var ErrRoomNotFound = fmt.Errorf("room not found")
 
 type RoomManager interface {
@@ -155,4 +161,8 @@ type RoomManager interface {
 	Start(ctx context.Context, id string) error
 	Stop(ctx context.Context, id string) error
 	Restart(ctx context.Context, id string) error
+
+	EventsLoopStart()
+	EventsLoopStop() error
+	Events(ctx context.Context) (<-chan RoomEvent, <-chan error)
 }
