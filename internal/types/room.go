@@ -23,6 +23,7 @@ type RoomEntry struct {
 	IsOutdated     bool              `json:"is_outdated"`
 	MaxConnections uint16            `json:"max_connections"` // 0 when using mux
 	Running        bool              `json:"running"`
+	IsReady        bool              `json:"is_ready"`
 	Status         string            `json:"status"`
 	Created        time.Time         `json:"created"`
 	Labels         map[string]string `json:"labels,omitempty"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	dockerTypes "github.com/docker/docker/api/types"
@@ -19,14 +20,17 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		return nil, err
 	}
 
+	roomId := container.ID[:12]
+
 	entry := &types.RoomEntry{
-		ID:             container.ID[:12],
+		ID:             roomId,
 		URL:            labels.URL,
 		Name:           labels.Name,
 		NekoImage:      labels.NekoImage,
 		IsOutdated:     labels.NekoImage != container.Image,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Running:        container.State == "running",
+		IsReady:        manager.events.IsRoomReady(roomId) || strings.Contains(container.Status, "healthy"),
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),
 		Labels:         labels.UserDefined,
