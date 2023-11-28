@@ -411,6 +411,9 @@ components:
         running:
           type: boolean
           example: true
+        is_ready:
+          type: boolean
+          example: true
         status:
           type: string
           example: Up 2 seconds

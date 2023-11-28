@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/docker/cli/opts"
@@ -49,6 +48,7 @@ func New(client *dockerClient.Client, config *config.Room) *RoomManagerCtx {
 		logger: logger,
 		config: config,
 		client: client,
+		events: newEvents(config, client),
 	}
 }
 
@@ -56,12 +56,7 @@ type RoomManagerCtx struct {
 	logger zerolog.Logger
 	config *config.Room
 	client *dockerClient.Client
-
-	eventsMu         sync.Mutex
-	eventsWg         sync.WaitGroup
-	eventsListeners  []chan types.RoomEvent
-	eventsLoopCtx    context.Context
-	eventsLoopCancel context.CancelFunc
+	events *events
 }
 
 func (manager *RoomManagerCtx) Config() types.RoomsConfig {
@@ -1014,4 +1009,18 @@ func (manager *RoomManagerCtx) Restart(ctx context.Context, id string) error {
 
 	// Restart the actual container
 	return manager.client.ContainerRestart(ctx, id, container.StopOptions{})
+}
+
+// events
+
+func (manager *RoomManagerCtx) EventsLoopStart() {
+	manager.events.Start()
+}
+
+func (manager *RoomManagerCtx) EventsLoopStop() error {
+	return manager.events.Shutdown()
+}
+
+func (manager *RoomManagerCtx) Events(ctx context.Context) (<-chan types.RoomEvent, <-chan error) {
+	return manager.events.Events(ctx)
 }
