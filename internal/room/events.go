@@ -17,6 +17,11 @@ import (
 	dockerClient "github.com/docker/docker/client"
 )
 
+type roomReady struct {
+	id     string
+	labels map[string]string
+}
+
 type events struct {
 	wg sync.WaitGroup
 
@@ -24,7 +29,7 @@ type events struct {
 	config *config.Room
 	client *dockerClient.Client
 
-	roomsReadyCh chan string
+	roomsReadyCh chan roomReady
 	roomsReadyMu sync.Mutex
 	roomsReady   map[string]struct{}
 
@@ -41,17 +46,15 @@ func newEvents(config *config.Room, client *dockerClient.Client) *events {
 		config: config,
 		client: client,
 
-		roomsReadyCh: make(chan string),
+		roomsReadyCh: make(chan roomReady),
 		roomsReady:   make(map[string]struct{}),
 	}
 }
 
 func (e *events) Start() {
-	ctx, cancel := context.WithCancel(context.Background())
-	e.ctx = ctx
-	e.cancel = cancel
+	e.ctx, e.cancel = context.WithCancel(context.Background())
 
-	msgs, errs := e.client.Events(ctx, dockerTypes.EventsOptions{
+	msgs, errs := e.client.Events(e.ctx, dockerTypes.EventsOptions{
 		Filters: filters.NewArgs(
 			filters.Arg("type", "container"),
 			filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", e.config.InstanceName)),
@@ -69,6 +72,9 @@ func (e *events) Start() {
 
 		for {
 			select {
+			case <-e.ctx.Done():
+				e.logger.Info().Msg("docker event context closed")
+				return
 			case err, ok := <-errs:
 				if !ok {
 					e.logger.Error().Msg("docker event error channel closed")
@@ -77,25 +83,22 @@ func (e *events) Start() {
 
 				e.logger.Err(err).Msg("got docker event error")
 				return
-			case roomId := <-e.roomsReadyCh:
-				e.logger.Info().Str("id", roomId).Msg("room ready")
+			case room := <-e.roomsReadyCh:
+				e.logger.Info().Str("id", room.id).Msg("room ready")
 
 				// ignore if room was already ready
-				if !e.setRoomReady(roomId) {
+				if !e.setRoomReady(room.id) {
 					continue
 				}
 
 				e.broadcast(types.RoomEvent{
-					ID:     roomId,
+					ID:     room.id,
 					Action: "ready",
+					Labels: room.labels,
 				})
-			case msg, ok := <-msgs:
-				if !ok {
-					e.logger.Error().Msg("docker event message channel closed")
-					return
-				}
-
+			case msg := <-msgs:
 				roomId := msg.Actor.ID[:12]
+				labels := msg.Actor.Attributes
 
 				e.logger.Info().
 					Str("id", roomId).
@@ -108,7 +111,7 @@ func (e *events) Start() {
 					action = "created"
 				case "start":
 					action = "started"
-					e.waitForRoomReady(roomId)
+					e.waitForRoomReady(roomId, labels)
 				case "health_status: healthy":
 					action = "ready"
 					// ignore if room was already ready
@@ -125,7 +128,7 @@ func (e *events) Start() {
 				e.broadcast(types.RoomEvent{
 					ID:     roomId,
 					Action: action,
-					Labels: msg.Actor.Attributes,
+					Labels: labels,
 				})
 			}
 		}
@@ -143,7 +146,7 @@ func (e *events) Shutdown() error {
 // room ready
 //
 
-func (e *events) waitForRoomReady(roomId string) {
+func (e *events) waitForRoomReady(roomId string, labels map[string]string) {
 	e.wg.Add(1)
 	go func() {
 		defer e.wg.Done()
@@ -153,7 +156,7 @@ func (e *events) waitForRoomReady(roomId string) {
 			AttachStdout: true,
 			Cmd: []string{
 				"/bin/bash", "-c",
-				"for ((a=1; a<=5; a++)); do (echo > /dev/tcp/localhost/8080) >/dev/null && echo -n OK && exit; sleep 1; done; exit",
+				fmt.Sprintf(`for ((a=1; a<=5; a++)); do (echo > /dev/tcp/localhost/%d) >/dev/null && echo -n OK && exit; sleep 1; done; exit`, frontendPort),
 			},
 		})
 		if err != nil {
@@ -176,7 +179,10 @@ func (e *events) waitForRoomReady(roomId string) {
 
 		if strings.HasSuffix(string(data), "OK") {
 			e.logger.Info().Str("id", roomId).Msg("room ready")
-			e.roomsReadyCh <- roomId
+			e.roomsReadyCh <- roomReady{
+				id:     roomId,
+				labels: labels,
+			}
 			return
 		}
 
