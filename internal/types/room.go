@@ -27,6 +27,8 @@ type RoomEntry struct {
 	Status         string            `json:"status"`
 	Created        time.Time         `json:"created"`
 	Labels         map[string]string `json:"labels,omitempty"`
+
+	ContainerLabels map[string]string `json:"-"` // for internal use
 }
 
 type MountType string
@@ -139,10 +141,21 @@ type RoomMember struct {
 	Muted bool   `json:"muted"`
 }
 
+type RoomEventAction string
+
+const (
+	RoomEventCreated   RoomEventAction = "created"
+	RoomEventStarted   RoomEventAction = "started"
+	RoomEventReady     RoomEventAction = "ready"
+	RoomEventStopped   RoomEventAction = "stopped"
+	RoomEventDestroyed RoomEventAction = "destroyed"
+)
+
 type RoomEvent struct {
-	ID     string            `json:"id"`
-	Action string            `json:"action"`
-	Labels map[string]string `json:"-"`
+	ID     string          `json:"id"`
+	Action RoomEventAction `json:"action"`
+
+	ContainerLabels map[string]string `json:"-"` // for internal use
 }
 
 var ErrRoomNotFound = fmt.Errorf("room not found")

@@ -93,8 +93,9 @@ func (e *events) Start() {
 
 				e.broadcast(types.RoomEvent{
 					ID:     room.id,
-					Action: "ready",
-					Labels: room.labels,
+					Action: types.RoomEventReady,
+
+					ContainerLabels: room.labels,
 				})
 			case msg := <-msgs:
 				roomId := msg.Actor.ID[:12]
@@ -105,30 +106,31 @@ func (e *events) Start() {
 					Str("action", msg.Action).
 					Msg("got docker event")
 
-				action := ""
+				var action types.RoomEventAction
 				switch msg.Action {
 				case "create":
-					action = "created"
+					action = types.RoomEventCreated
 				case "start":
-					action = "started"
+					action = types.RoomEventStarted
 					e.waitForRoomReady(roomId, labels)
 				case "health_status: healthy":
-					action = "ready"
+					action = types.RoomEventReady
 					// ignore if room was already ready
 					if !e.setRoomReady(roomId) {
 						continue
 					}
 				case "stop":
-					action = "stopped"
+					action = types.RoomEventStopped
 					e.setRoomNotReady(roomId)
 				case "destroy":
-					action = "destroyed"
+					action = types.RoomEventDestroyed
 				}
 
 				e.broadcast(types.RoomEvent{
 					ID:     roomId,
 					Action: action,
-					Labels: labels,
+
+					ContainerLabels: labels,
 				})
 			}
 		}
