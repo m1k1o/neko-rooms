@@ -22,7 +22,7 @@ type entry struct {
 	id      string
 	running bool
 	ready   bool
-	handler *httputil.ReverseProxy
+	handler http.Handler
 }
 
 type wait struct {
@@ -121,10 +121,7 @@ func (p *ProxyManagerCtx) Start() {
 
 					// if proxying is disabled
 					if enabled {
-						e.handler = httputil.NewSingleHostReverseProxy(&url.URL{
-							Scheme: "http",
-							Host:   host,
-						})
+						e.handler = p.newProxyHandler(path, host)
 					}
 
 					p.handlers.Insert(path, e)
@@ -174,10 +171,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 
 		// if proxying is enabled and room is ready
 		if enabled && room.IsReady {
-			entry.handler = httputil.NewSingleHostReverseProxy(&url.URL{
-				Scheme: "http",
-				Host:   host,
-			})
+			entry.handler = p.newProxyHandler(path, host)
 		}
 
 		p.handlers.Insert(path, entry)
@@ -203,6 +197,18 @@ func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, p
 
 	port, ok = labels["m1k1o.neko_rooms.proxy.port"]
 	return
+}
+
+func (p *ProxyManagerCtx) newProxyHandler(prefix, host string) http.Handler {
+	handler := httputil.NewSingleHostReverseProxy(&url.URL{
+		Scheme: "http",
+		Host:   host,
+	})
+	handler.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		p.logger.Err(err).Str("prefix", prefix).Msg("proxy error")
+		http.Error(w, "unable to connect to room", http.StatusBadGateway)
+	}
+	return http.StripPrefix(prefix, handler)
 }
 
 func (p *ProxyManagerCtx) waitForPath(w http.ResponseWriter, r *http.Request, path string) {
@@ -247,15 +253,21 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proxy, prefix, ok := p.handlers.Match(cleanPath)
 	p.mu.RUnlock()
 
-	// if room not found
-	if !ok {
-		// blocking until room is created
+	// if room is not ready
+	if !ok || !proxy.running || !proxy.ready {
+		// blocking until room is ready
 		if r.URL.Query().Has("wait") && p.waitEnabled {
 			p.waitForPath(w, r, cleanPath)
 			return
 		}
 
-		RoomNotFound(w, r, p.waitEnabled)
+		if !ok {
+			RoomNotFound(w, r, p.waitEnabled)
+		} else if !proxy.running {
+			RoomNotRunning(w, r, p.waitEnabled)
+		} else {
+			RoomNotReady(w, r, p.waitEnabled)
+		}
 		return
 	}
 
@@ -266,37 +278,12 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if room not running
-	if !proxy.running || !proxy.ready {
-		// blocking until room is ready
-		if r.URL.Query().Has("wait") && p.waitEnabled {
-			p.waitForPath(w, r, cleanPath)
-			return
-		}
-
-		if !proxy.running {
-			RoomNotRunning(w, r, p.waitEnabled)
-		} else {
-			RoomNotReady(w, r, p.waitEnabled)
-		}
-		return
-	}
-
 	// if not proxying, just return room ready
 	if proxy.handler == nil {
 		RoomReady(w, r)
 		return
 	}
 
-	// handle not ready room
-	proxy.handler.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		p.logger.Err(err).Str("prefix", prefix).Msg("proxying error")
-		http.Error(w, "unable to connect to room", http.StatusBadGateway)
-	}
-
-	// strip prefix from proxy
-	handler := http.StripPrefix(prefix, proxy.handler)
-
 	// handle by proxy
-	handler.ServeHTTP(w, r)
+	proxy.handler.ServeHTTP(w, r)
 }
