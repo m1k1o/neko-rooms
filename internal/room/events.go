@@ -84,8 +84,6 @@ func (e *events) Start() {
 				e.logger.Err(err).Msg("got docker event error")
 				return
 			case room := <-e.roomsReadyCh:
-				e.logger.Info().Str("id", room.id).Msg("room ready")
-
 				// ignore if room was already ready
 				if !e.setRoomReady(room.id) {
 					continue
