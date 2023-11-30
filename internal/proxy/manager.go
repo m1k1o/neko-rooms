@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -11,18 +10,18 @@ import (
 	"strings"
 	"sync"
 
-	dockerTypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	dockerClient "github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/m1k1o/neko-rooms/internal/room"
+	"github.com/m1k1o/neko-rooms/internal/types"
 	"github.com/m1k1o/neko-rooms/pkg/prefix"
 )
 
 type entry struct {
 	id      string
 	running bool
+	ready   bool
 	handler *httputil.ReverseProxy
 }
 
@@ -41,20 +40,18 @@ type ProxyManagerCtx struct {
 	waitChans   map[string]*wait
 	waitEnabled bool
 
-	client       *dockerClient.Client
-	instanceName string
-	handlers     prefix.Tree[*entry]
+	rooms    *room.RoomManagerCtx
+	handlers prefix.Tree[*entry]
 }
 
-func New(client *dockerClient.Client, instanceName string, waitEnabled bool) *ProxyManagerCtx {
+func New(rooms *room.RoomManagerCtx, waitEnabled bool) *ProxyManagerCtx {
 	return &ProxyManagerCtx{
 		logger:    log.With().Str("module", "proxy").Logger(),
 		waitChans: map[string]*wait{},
 
-		client:       client,
-		instanceName: instanceName,
-		waitEnabled:  waitEnabled,
-		handlers:     prefix.NewTree[*entry](),
+		rooms:       rooms,
+		waitEnabled: waitEnabled,
+		handlers:    prefix.NewTree[*entry](),
 	}
 }
 
@@ -67,47 +64,31 @@ func (p *ProxyManagerCtx) Start() {
 			p.logger.Err(err).Msg("unable to refresh containers")
 		}
 
-		msgs, errs := p.client.Events(p.ctx, dockerTypes.EventsOptions{
-			Filters: filters.NewArgs(
-				filters.Arg("type", "container"),
-				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.instanceName)),
-				filters.Arg("event", "create"),
-				filters.Arg("event", "start"),
-				//filters.Arg("event", "health_status"),
-				filters.Arg("event", "stop"),
-				filters.Arg("event", "destroy"),
-			),
-		})
+		msgs, errs := p.rooms.Events(p.ctx)
 
 		for {
 			select {
 			case err, ok := <-errs:
 				if !ok {
-					p.logger.Fatal().Msg("docker event error channel closed")
 					return
 				}
 
-				p.logger.Err(err).Msg("got docker event error")
+				p.logger.Err(err).Msg("room event error")
 			case msg, ok := <-msgs:
-				if !ok {
-					p.logger.Fatal().Msg("docker event channel closed")
-					return
-				}
-
-				enabled, path, port, ok := p.parseLabels(msg.Actor.Attributes)
+				enabled, path, port, ok := p.parseLabels(msg.ContainerLabels)
 				if !ok {
 					break
 				}
 
-				host := msg.ID[:12] + ":" + port
+				host := msg.ID + ":" + port
 
 				p.logger.Info().
-					Str("action", msg.Action).
+					Str("action", string(msg.Action)).
 					Str("path", path).
 					Str("host", host).
-					Msg("got docker event")
+					Msg("got room event")
 
-				// terminate waiting for any events
+				// terminate waiting for any event
 				if p.waitEnabled {
 					p.waitMu.Lock()
 					ch, ok := p.waitChans[path]
@@ -120,15 +101,22 @@ func (p *ProxyManagerCtx) Start() {
 
 				p.mu.Lock()
 				switch msg.Action {
-				case "create":
+				case types.RoomEventCreated:
 					p.handlers.Insert(path, &entry{
 						id:      msg.ID,
 						running: false,
 					})
-				case "start":
+				case types.RoomEventStarted:
+					p.handlers.Insert(path, &entry{
+						id:      msg.ID,
+						running: true,
+						ready:   false,
+					})
+				case types.RoomEventReady:
 					e := &entry{
 						id:      msg.ID,
 						running: true,
+						ready:   true,
 					}
 
 					// if proxying is disabled
@@ -140,12 +128,12 @@ func (p *ProxyManagerCtx) Start() {
 					}
 
 					p.handlers.Insert(path, e)
-				case "stop":
+				case types.RoomEventStopped:
 					p.handlers.Insert(path, &entry{
 						id:      msg.ID,
 						running: false,
 					})
-				case "destroy":
+				case types.RoomEventDestroyed:
 					p.handlers.Remove(path)
 				}
 				p.mu.Unlock()
@@ -163,41 +151,33 @@ func (p *ProxyManagerCtx) Refresh() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	containers, err := p.client.ContainerList(p.ctx, dockerTypes.ContainerListOptions{
-		All: true,
-		Filters: filters.NewArgs(
-			filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.instanceName)),
-		),
-	})
-
+	rooms, err := p.rooms.List(p.ctx, nil)
 	if err != nil {
 		return err
 	}
 
 	p.handlers = prefix.NewTree[*entry]()
 
-	for _, cont := range containers {
-		enabled, path, port, ok := p.parseLabels(cont.Labels)
+	for _, room := range rooms {
+		enabled, path, port, ok := p.parseLabels(room.ContainerLabels)
 		if !ok {
 			continue
 		}
 
-		host := cont.ID[:12] + ":" + port
+		host := room.ID + ":" + port
 
 		entry := &entry{
-			id: cont.ID,
+			id:      room.ID,
+			running: room.Running,
+			ready:   room.IsReady,
 		}
 
-		if cont.State == "running" {
-			entry.running = true
-
-			// if proxying is disabled
-			if enabled {
-				entry.handler = httputil.NewSingleHostReverseProxy(&url.URL{
-					Scheme: "http",
-					Host:   host,
-				})
-			}
+		// if proxying is enabled and room is ready
+		if enabled && room.IsReady {
+			entry.handler = httputil.NewSingleHostReverseProxy(&url.URL{
+				Scheme: "http",
+				Host:   host,
+			})
 		}
 
 		p.handlers.Insert(path, entry)
@@ -207,41 +187,9 @@ func (p *ProxyManagerCtx) Refresh() error {
 }
 
 func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, path string, port string, ok bool) {
-	enabledStr, found := labels["m1k1o.neko_rooms.proxy.enabled"]
-	if !found {
-		//
-		// workaround for legacy traefik labels
-		//
-
-		// get room name
-		var roomName string
-		roomName, ok = labels["m1k1o.neko_rooms.name"]
-		if !ok {
-			return
-		}
-
-		// get container name
-		containerName := p.instanceName + "-" + roomName
-
-		// get path
-		path, ok = labels["traefik.http.middlewares."+containerName+"-prf.stripprefix.prefixes"]
-		if !ok {
-			return
-		}
-
-		// remove last /
-		path = strings.TrimSuffix(path, "/")
-
-		// get port
-		port, ok = labels["traefik.http.services."+containerName+"-frontend.loadbalancer.server.port"]
-		if !ok {
-			return
-		}
-
-		//
-		// workaround for legacy traefik labels
-		//
-
+	var enabledStr string
+	enabledStr, ok = labels["m1k1o.neko_rooms.proxy.enabled"]
+	if !ok {
 		return
 	}
 
@@ -319,50 +267,31 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if room not running
-	if !proxy.running {
-		// blocking until room is running
+	if !proxy.running || !proxy.ready {
+		// blocking until room is ready
 		if r.URL.Query().Has("wait") && p.waitEnabled {
 			p.waitForPath(w, r, cleanPath)
 			return
 		}
 
-		RoomNotRunning(w, r, p.waitEnabled)
+		if !proxy.running {
+			RoomNotRunning(w, r, p.waitEnabled)
+		} else {
+			RoomNotReady(w, r, p.waitEnabled)
+		}
 		return
 	}
 
-	// if not proxying, check for container readiness status
+	// if not proxying, just return room ready
 	if proxy.handler == nil {
-		containers, err := p.client.ContainerList(p.ctx, dockerTypes.ContainerListOptions{
-			All: true,
-			Filters: filters.NewArgs(
-				filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", p.instanceName)),
-				filters.Arg("id", proxy.id),
-			),
-		})
-
-		if err != nil || len(containers) != 1 {
-			p.logger.Err(err).Msg("error while getting container ready status")
-			RoomNotReady(w, r)
-			return
-		}
-
-		container := containers[0]
-		if strings.Contains(container.Status, "starting") {
-			RoomNotReady(w, r)
-		} else {
-			RoomReady(w, r)
-		}
-
+		RoomReady(w, r)
 		return
 	}
 
 	// handle not ready room
 	proxy.handler.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		if r.URL.Path == "/" {
-			RoomNotReady(w, r)
-		}
-
 		p.logger.Err(err).Str("prefix", prefix).Msg("proxying error")
+		http.Error(w, "unable to connect to room", http.StatusBadGateway)
 	}
 
 	// strip prefix from proxy

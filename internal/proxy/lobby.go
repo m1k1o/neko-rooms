@@ -59,6 +59,8 @@ func RoomNotFound(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 
 	if waitEnabled {
 		roomWait(w, r)
+	} else {
+		w.Write([]byte(`<meta http-equiv="refresh" content="60">`))
 	}
 }
 
@@ -81,10 +83,12 @@ func RoomNotRunning(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 
 	if waitEnabled {
 		roomWait(w, r)
+	} else {
+		w.Write([]byte(`<meta http-equiv="refresh" content="10">`))
 	}
 }
 
-func RoomNotReady(w http.ResponseWriter, r *http.Request) {
+func RoomNotReady(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 	utils.Swal2Response(w, `
 		<meta http-equiv="refresh" content="2">
 
@@ -102,6 +106,12 @@ func RoomNotReady(w http.ResponseWriter, r *http.Request) {
 			<button type="button" onclick="location = location" class="swal2-confirm swal2-styled" style="margin-top: 1.25em">Reload</button>
 		</div>
 	`)
+
+	if waitEnabled {
+		roomWait(w, r)
+	} else {
+		w.Write([]byte(`<meta http-equiv="refresh" content="2">`))
+	}
 }
 
 func RoomReady(w http.ResponseWriter, r *http.Request) {
