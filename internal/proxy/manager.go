@@ -88,8 +88,8 @@ func (p *ProxyManagerCtx) Start() {
 					Str("host", host).
 					Msg("got room event")
 
-				// terminate waiting for any event
-				if p.waitEnabled {
+				// terminate waiting for room ready event
+				if p.waitEnabled && msg.Action == types.RoomEventReady {
 					p.waitMu.Lock()
 					ch, ok := p.waitChans[path]
 					if ok {
