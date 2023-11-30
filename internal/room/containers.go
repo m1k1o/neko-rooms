@@ -34,6 +34,8 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),
 		Labels:         labels.UserDefined,
+
+		ContainerLabels: container.Labels,
 	}
 
 	if labels.Mux {
