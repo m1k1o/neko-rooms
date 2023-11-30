@@ -99,7 +99,7 @@ func (e *events) Start() {
 				roomId := msg.Actor.ID[:12]
 				labels := msg.Actor.Attributes
 
-				e.logger.Info().
+				e.logger.Debug().
 					Str("id", roomId).
 					Str("action", msg.Action).
 					Msg("got docker event")
@@ -178,7 +178,7 @@ func (e *events) waitForRoomReady(roomId string, labels map[string]string) {
 		}
 
 		if strings.HasSuffix(string(data), "OK") {
-			e.logger.Info().Str("id", roomId).Msg("room ready")
+			e.logger.Debug().Str("id", roomId).Msg("room ready")
 			e.roomsReadyCh <- roomReady{
 				id:     roomId,
 				labels: labels,
@@ -186,7 +186,7 @@ func (e *events) waitForRoomReady(roomId string, labels map[string]string) {
 			return
 		}
 
-		e.logger.Info().Str("id", roomId).Str("data", string(data)).Msg("room not ready")
+		e.logger.Warn().Str("id", roomId).Str("data", string(data)).Msg("room not ready")
 	}()
 }
 
