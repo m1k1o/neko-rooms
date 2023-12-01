@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -248,49 +247,6 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(ctx context.Context,
 		}
 
 		w.WriteHeader(http.StatusNoContent)
-	}
-}
-
-func (manager *ApiManagerCtx) events(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-
-	sse := r.URL.Query().Has("sse")
-	if sse {
-		w.Header().Set("Content-Type", "text/event-stream")
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-	}
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "Connection does not support streaming", http.StatusBadRequest)
-		return
-	}
-
-	events, errs := manager.rooms.Events(r.Context())
-	for {
-		select {
-		case _, ok := <-errs:
-			if !ok {
-				manager.logger.Debug().Msg("sse channel closed")
-			}
-			return
-		case e := <-events:
-			jsonData, err := json.Marshal(e)
-			if err != nil {
-				http.Error(w, err.Error(), 500)
-				return
-			}
-
-			if sse {
-				fmt.Fprintf(w, "data: %s\n\n", jsonData)
-			} else {
-				fmt.Fprintf(w, "%s\n", jsonData)
-			}
-
-			flusher.Flush()
-		}
 	}
 }
 
