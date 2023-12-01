@@ -252,9 +252,15 @@ func (manager *ApiManagerCtx) roomGenericAction(action func(ctx context.Context,
 }
 
 func (manager *ApiManagerCtx) events(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+
+	sse := r.URL.Query().Has("sse")
+	if sse {
+		w.Header().Set("Content-Type", "text/event-stream")
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+	}
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -277,7 +283,12 @@ func (manager *ApiManagerCtx) events(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			fmt.Fprintf(w, "data: %s\n\n", jsonData)
+			if sse {
+				fmt.Fprintf(w, "data: %s\n\n", jsonData)
+			} else {
+				fmt.Fprintf(w, "%s\n", jsonData)
+			}
+
 			flusher.Flush()
 		}
 	}
