@@ -153,6 +153,12 @@ export default new Vuex.Store({
       const res = await defaultApi.pullStop()
       return res.data
     },
+
+    async EVENTS_SSE(): Promise<EventSource> {
+      return new EventSource(configuration.basePath + '/api/events?sse', {
+        withCredentials: true,
+      })
+    },
   },
   modules: {
   }
