@@ -83,9 +83,10 @@ export default class Home extends Vue {
   public dialog = false
 
   public interval!: number
-  public autoRefresh = 10
+  public autoRefresh = 0
   public autoRefreshItems = [
-    { text: 'Off', value: 0 },
+    { text: 'Off', value: -1 },
+    { text: 'Live', value: 0 },
     { text: '5s', value: 5 },
     { text: '10s', value: 10 },
     { text: '30s', value: 30 },
@@ -127,8 +128,11 @@ export default class Home extends Vue {
       window.clearInterval(this.interval)
     }
   
-    if (this.autoRefresh) {
+    if (this.autoRefresh > 0) {
+      this.sseClose()
       this.interval = window.setInterval(this.LoadRooms, this.autoRefresh * 1000)
+    } else if (this.autoRefresh == 0) {
+      this.sseStart()
     }
   }
 
@@ -148,7 +152,62 @@ export default class Home extends Vue {
   }
 
   beforeDestroy() {
-    this.autoRefresh = 0
+    this.autoRefresh = -1
+  }
+
+  sse: EventSource | null = null
+  sseIsOpen = false
+  sseReconnBackoff = 1000
+  sseReconnRetries = 0
+  
+  async sseStart(reconnect = false) {
+    if (!reconnect) {
+      this.sseIsOpen = true
+    }
+
+    if (this.sse) {
+      this.sse.close()
+    }
+
+    this.sse = await this.$store.dispatch('EVENTS_SSE') as EventSource
+    this.sseReconnRetries++
+
+    this.sse.addEventListener('rooms', (e) => {
+      console.log('SSE rooms', e)
+      this.LoadRooms()
+    })
+  
+    this.sse.addEventListener('error', (e: Event) => {
+      console.log('SSE error', e)
+
+      // if is closed, don't try to reconnect
+      if (!this.sseIsOpen) return
+
+      const wait = this.sseReconnBackoff + 100 * this.sseReconnRetries
+
+      // try to reconnect
+      setTimeout(() => {
+        this.sseStart(true)
+      }, wait)
+
+      console.log('SSE error, trying to reconnect in ' + wait + 'ms')
+    })
+
+    this.sse.addEventListener('message', (e: Event) => {
+      console.log('SSE message', e)
+    })
+
+    this.sse.addEventListener('open', (e: Event) => {
+      console.log('SSE opened', e)
+    })
+  }
+
+  sseClose() {
+    if (this.sse) {
+      this.sse.close()
+    }
+    this.sse = null
+    this.sseIsOpen = false
   }
 }
 </script>
