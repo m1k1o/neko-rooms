@@ -32,6 +32,7 @@ type Room struct {
 	PathPrefix           string
 	Labels               []string
 	WaitEnabled          bool
+	StopTimeoutSec       int
 
 	StorageEnabled  bool
 	StorageInternal string
@@ -97,6 +98,11 @@ func (Room) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().Bool("wait_enabled", true, "enable active waiting for the room")
 	if err := viper.BindPFlag("wait_enabled", cmd.PersistentFlags().Lookup("wait_enabled")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().Int("stop_timeout", 10, "timeout in seconds for stopping the room with SIGTERM, after that SIGKILL is used (0 to disable, -1 to wait forever)")
+	if err := viper.BindPFlag("stop_timeout", cmd.PersistentFlags().Lookup("stop_timeout")); err != nil {
 		return err
 	}
 
@@ -207,6 +213,7 @@ func (s *Room) Set() {
 	s.PathPrefix = path.Join("/", path.Clean(viper.GetString("path_prefix")))
 	s.Labels = viper.GetStringSlice("labels")
 	s.WaitEnabled = viper.GetBool("wait_enabled")
+	s.StopTimeoutSec = viper.GetInt("stop_timeout")
 
 	s.StorageEnabled = viper.GetBool("storage.enabled")
 	s.StorageInternal = viper.GetString("storage.internal")

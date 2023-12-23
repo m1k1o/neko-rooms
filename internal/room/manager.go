@@ -724,7 +724,10 @@ func (manager *RoomManagerCtx) Remove(ctx context.Context, id string) error {
 	}
 
 	// Stop the actual container
-	err = manager.client.ContainerStop(ctx, id, container.StopOptions{})
+	err = manager.client.ContainerStop(ctx, id, container.StopOptions{
+		Signal:  "SIGTERM",
+		Timeout: &manager.config.StopTimeoutSec,
+	})
 
 	if err != nil {
 		return err
@@ -998,7 +1001,10 @@ func (manager *RoomManagerCtx) Stop(ctx context.Context, id string) error {
 	}
 
 	// Stop the actual container
-	return manager.client.ContainerStop(ctx, id, container.StopOptions{})
+	return manager.client.ContainerStop(ctx, id, container.StopOptions{
+		Signal:  "SIGTERM",
+		Timeout: &manager.config.StopTimeoutSec,
+	})
 }
 
 func (manager *RoomManagerCtx) Restart(ctx context.Context, id string) error {
@@ -1008,7 +1014,10 @@ func (manager *RoomManagerCtx) Restart(ctx context.Context, id string) error {
 	}
 
 	// Restart the actual container
-	return manager.client.ContainerRestart(ctx, id, container.StopOptions{})
+	return manager.client.ContainerRestart(ctx, id, container.StopOptions{
+		Signal:  "SIGTERM",
+		Timeout: &manager.config.StopTimeoutSec,
+	})
 }
 
 // events
