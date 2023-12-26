@@ -9,6 +9,8 @@ import (
 
 	"github.com/m1k1o/neko-rooms/internal/config"
 	"github.com/m1k1o/neko-rooms/internal/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -38,6 +40,9 @@ type events struct {
 
 	listeners   []chan types.RoomEvent
 	listenersMu sync.Mutex
+
+	runningRooms prometheus.Gauge
+	totalRooms   prometheus.Counter
 }
 
 func newEvents(config *config.Room, client *dockerClient.Client) *events {
@@ -48,6 +53,18 @@ func newEvents(config *config.Room, client *dockerClient.Client) *events {
 
 		roomsReadyCh: make(chan roomReady),
 		roomsReady:   make(map[string]struct{}),
+
+		// metrics
+		runningRooms: promauto.NewGauge(prometheus.GaugeOpts{
+			Name:      "running_rooms",
+			Namespace: "neko_rooms",
+			Help:      "Number of currently running rooms.",
+		}),
+		totalRooms: promauto.NewCounter(prometheus.CounterOpts{
+			Name:      "total_rooms",
+			Namespace: "neko_rooms",
+			Help:      "Total number of rooms created since start.",
+		}),
 	}
 }
 
@@ -108,9 +125,11 @@ func (e *events) Start() {
 				switch msg.Action {
 				case "create":
 					action = types.RoomEventCreated
+					e.totalRooms.Inc()
 				case "start":
 					action = types.RoomEventStarted
 					e.waitForRoomReady(roomId, labels)
+					e.runningRooms.Inc()
 				case "health_status: healthy":
 					action = types.RoomEventReady
 					// ignore if room was already ready
@@ -120,6 +139,7 @@ func (e *events) Start() {
 				case "stop":
 					action = types.RoomEventStopped
 					e.setRoomNotReady(roomId)
+					e.runningRooms.Dec()
 				case "destroy":
 					action = types.RoomEventDestroyed
 				}
