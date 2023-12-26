@@ -69,6 +69,8 @@ func newEvents(config *config.Room, client *dockerClient.Client) *events {
 }
 
 func (e *events) Start() {
+	e.ctx, e.cancel = context.WithCancel(context.Background())
+
 	// load initial metrics
 	containers, err := e.client.ContainerList(e.ctx, dockerTypes.ContainerListOptions{
 		Filters: filters.NewArgs(
@@ -85,8 +87,6 @@ func (e *events) Start() {
 			e.runningRooms.Inc()
 		}
 	}
-
-	e.ctx, e.cancel = context.WithCancel(context.Background())
 
 	msgs, errs := e.client.Events(e.ctx, dockerTypes.EventsOptions{
 		Filters: filters.NewArgs(
