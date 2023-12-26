@@ -69,6 +69,23 @@ func newEvents(config *config.Room, client *dockerClient.Client) *events {
 }
 
 func (e *events) Start() {
+	// load initial metrics
+	containers, err := e.client.ContainerList(e.ctx, dockerTypes.ContainerListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", e.config.InstanceName)),
+		),
+	})
+	if err != nil {
+		e.logger.Err(err).Msg("failed to list containers")
+		return
+	}
+	for _, container := range containers {
+		e.totalRooms.Inc()
+		if container.State == "running" {
+			e.runningRooms.Inc()
+		}
+	}
+
 	e.ctx, e.cancel = context.WithCancel(context.Background())
 
 	msgs, errs := e.client.Events(e.ctx, dockerTypes.EventsOptions{
