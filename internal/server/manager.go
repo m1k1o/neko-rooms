@@ -15,6 +15,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -238,6 +240,12 @@ func New(ApiManager types.ApiManager, roomConfig *config.Room, config *config.Se
 	if config.PProf {
 		router.Mount("/debug", middleware.Profiler())
 		logger.Info().Msgf("with pprof endpoint")
+	}
+
+	// mount metrics prometheus endpoint
+	if config.Metrics {
+		router.Mount("/metrics", promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}))
+		logger.Info().Msgf("with metrics endpoint")
 	}
 
 	// handle all remaining paths with proxy

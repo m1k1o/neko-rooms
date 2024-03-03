@@ -16,12 +16,13 @@ type Admin struct {
 }
 
 type Server struct {
-	Cert  string
-	Key   string
-	Bind  string
-	Proxy bool
-	CORS  bool
-	PProf bool
+	Cert    string
+	Key     string
+	Bind    string
+	Proxy   bool
+	CORS    bool
+	PProf   bool
+	Metrics bool
 
 	Admin Admin
 }
@@ -54,6 +55,11 @@ func (Server) Init(cmd *cobra.Command) error {
 
 	cmd.PersistentFlags().Bool("pprof", false, "enable pprof endpoint available at /debug/pprof")
 	if err := viper.BindPFlag("pprof", cmd.PersistentFlags().Lookup("pprof")); err != nil {
+		return err
+	}
+
+	cmd.PersistentFlags().Bool("metrics", false, "enable metrics endpoint available at /metrics")
+	if err := viper.BindPFlag("metrics", cmd.PersistentFlags().Lookup("metrics")); err != nil {
 		return err
 	}
 
@@ -94,6 +100,7 @@ func (s *Server) Set() {
 	s.Proxy = viper.GetBool("proxy")
 	s.CORS = viper.GetBool("cors")
 	s.PProf = viper.GetBool("pprof")
+	s.Metrics = viper.GetBool("metrics")
 
 	s.Admin.Static = viper.GetString("admin.static")
 	s.Admin.PathPrefix = path.Join("/", path.Clean(viper.GetString("admin.path_prefix")))
