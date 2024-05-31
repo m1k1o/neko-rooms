@@ -113,7 +113,7 @@ if ! dockerd --help > /dev/null 2>&1; then
         $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
   apt-get update
-  apt-get install -y containerd.io docker-ce docker-ce-cli
+  apt-get install -y containerd.io docker-ce docker-ce-cli docker-buildx-plugin docker-compose-plugin
 fi
 
 echo "[Y] Docker is installed..."
@@ -123,7 +123,7 @@ echo "[Y] Docker is installed..."
 #
 
 apt-get update
-apt-get install -y apache2-utils docker-compose sed
+apt-get install -y apache2-utils sed
 
 echo "[Y] Dependencies are installed..."
 
@@ -245,8 +245,13 @@ for NEKO_IMAGE in "${NEKO_IMAGES[@]}"; do
   docker pull "${NEKO_IMAGE}"
 done
 
-# Start
-docker-compose pull
-docker-compose up -d
+# docker-compose was renamed to docker compose, support both
+if docker-compose --version > /dev/null 2>&1; then
+  docker-compose pull
+  docker-compose up -d
+else
+  docker compose pull
+  docker compose up -d
+fi
 
 echo "[Y] Finished! You can now visit https://${NEKO_ROOMS_TRAEFIK_DOMAIN}/"
