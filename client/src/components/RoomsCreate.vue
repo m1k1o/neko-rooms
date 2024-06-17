@@ -225,7 +225,7 @@
             <h2> Environment variables </h2>
             <v-btn @click="addEnv" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
-          <v-row align="center" v-for="({ key, val }, index) in envList" :key="index">
+          <v-row align="center" v-for="({ key, val }, index) in envList" :key="'env-'+index">
             <v-col class="py-0">
               <v-text-field
                 label="Key"
@@ -251,7 +251,7 @@
               <h2> Mounts </h2>
               <v-btn @click="addMount" icon color="green"><v-icon>mdi-plus</v-icon></v-btn>
           </v-row>
-          <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="index">
+          <v-row align="center" class="mb-2" v-for="({ type, host_path, container_path }, index) in data.mounts" :key="'mount-'+index">
             <v-col class="py-0" cols="2">
               <v-select
                 label="Type"
@@ -726,13 +726,13 @@ export default class RoomsCreate extends Vue {
     } else {
       mounts[index] = data
     }
-    Vue.set(this.data, 'mounts', mounts)
+    Vue.set(this.data, 'mounts', [ ...mounts])
   }
 
   delMount(index: number) {
     const mounts = this.data.mounts || []
     mounts.splice(index, 1)
-    Vue.set(this.data, 'mounts', mounts)
+    Vue.set(this.data, 'mounts', [ ...mounts])
   }
 
   async CreateAndStart() {
