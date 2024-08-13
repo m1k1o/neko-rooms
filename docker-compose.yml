@@ -18,6 +18,7 @@ services:
       - "NEKO_ROOMS_INSTANCE_NETWORK=neko-rooms-net"
       - "NEKO_ROOMS_TRAEFIK_ENABLED=false"
       - "NEKO_ROOMS_PATH_PREFIX=/room/"
+      - "NEKO_ROOMS_COTESTER_PATH_PREFIX=/cotester/"
     ports:
       - "8080:8080"
     volumes:

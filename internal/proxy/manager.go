@@ -75,12 +75,13 @@ func (p *ProxyManagerCtx) Start() {
 
 				p.logger.Err(err).Msg("room event error")
 			case msg, ok := <-msgs:
-				enabled, path, port, ok := p.parseLabels(msg.ContainerLabels)
+				enabled, path, port, cotesterPath, cotesterPort, ok := p.parseLabels(msg.ContainerLabels)
 				if !ok {
 					break
 				}
 
 				host := msg.ID + ":" + port
+				cotesterHost := msg.ID + ":" + cotesterPort
 
 				p.logger.Info().
 					Str("action", string(msg.Action)).
@@ -106,14 +107,32 @@ func (p *ProxyManagerCtx) Start() {
 						id:      msg.ID,
 						running: false,
 					})
+					if cotesterPath != "" {
+						p.handlers.Insert(cotesterPath, &entry{
+							id:      msg.ID,
+							running: false,
+						})
+					}
 				case types.RoomEventStarted:
 					p.handlers.Insert(path, &entry{
 						id:      msg.ID,
 						running: true,
 						ready:   false,
 					})
+					if cotesterPath != "" {
+						p.handlers.Insert(cotesterPath, &entry{
+							id:      msg.ID,
+							running: true,
+							ready:   false,
+						})
+					}
 				case types.RoomEventReady:
 					e := &entry{
+						id:      msg.ID,
+						running: true,
+						ready:   true,
+					}
+					cotesterEntry := &entry{
 						id:      msg.ID,
 						running: true,
 						ready:   true,
@@ -122,16 +141,28 @@ func (p *ProxyManagerCtx) Start() {
 					// if proxying is disabled
 					if enabled {
 						e.handler = p.newProxyHandler(path, host)
+						cotesterEntry.handler = p.newProxyHandler(cotesterPath, cotesterHost)
 					}
 
 					p.handlers.Insert(path, e)
+					p.handlers.Insert(cotesterPath, cotesterEntry)
 				case types.RoomEventStopped:
 					p.handlers.Insert(path, &entry{
 						id:      msg.ID,
 						running: false,
 					})
+					if cotesterPath != "" {
+						p.handlers.Insert(cotesterPath, &entry{
+							id:      msg.ID,
+							running: false,
+						})
+					}
 				case types.RoomEventDestroyed:
 					p.handlers.Remove(path)
+					if cotesterPath != "" {
+						p.handlers.Remove(cotesterPath)
+
+					}
 				}
 				p.mu.Unlock()
 			}
@@ -156,14 +187,20 @@ func (p *ProxyManagerCtx) Refresh() error {
 	p.handlers = prefix.NewTree[*entry]()
 
 	for _, room := range rooms {
-		enabled, path, port, ok := p.parseLabels(room.ContainerLabels)
+		enabled, path, port, cotesterPath, cotesterPort, ok := p.parseLabels(room.ContainerLabels)
 		if !ok {
 			continue
 		}
 
 		host := room.ID + ":" + port
+		cotesterHost := room.ID + ":" + cotesterPort
 
-		entry := &entry{
+		e := &entry{
+			id:      room.ID,
+			running: room.Running,
+			ready:   room.IsReady,
+		}
+		cotesterEntry := &entry{
 			id:      room.ID,
 			running: room.Running,
 			ready:   room.IsReady,
@@ -171,16 +208,17 @@ func (p *ProxyManagerCtx) Refresh() error {
 
 		// if proxying is enabled and room is ready
 		if enabled && room.IsReady {
-			entry.handler = p.newProxyHandler(path, host)
+			e.handler = p.newProxyHandler(path, host)
+			cotesterEntry.handler = p.newProxyHandler(cotesterPath, cotesterHost)
 		}
 
-		p.handlers.Insert(path, entry)
+		p.handlers.Insert(path, e)
 	}
 
 	return nil
 }
 
-func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, path string, port string, ok bool) {
+func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, path, port, webSocketPort, webSocketPath string, ok bool) {
 	var enabledStr string
 	enabledStr, ok = labels["m1k1o.neko_rooms.proxy.enabled"]
 	if !ok {
@@ -196,6 +234,20 @@ func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, p
 	}
 
 	port, ok = labels["m1k1o.neko_rooms.proxy.port"]
+	if !ok {
+		return
+	}
+
+	webSocketPort, ok = labels["cotester.vb-orchestrator.proxy.websocket_port"]
+	if !ok {
+		return
+	}
+
+	webSocketPath, ok = labels["cotester.vb-orchestrator.proxy.websocket_path"]
+	if !ok {
+		return
+	}
+
 	return
 }
 

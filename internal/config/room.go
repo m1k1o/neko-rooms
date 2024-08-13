@@ -30,6 +30,7 @@ type Room struct {
 	NekoImages           []string
 	NekoPrivilegedImages []string
 	PathPrefix           string
+	CotesterPathPrefix   string
 	Labels               []string
 	WaitEnabled          bool
 	StopTimeoutSec       int
@@ -211,6 +212,7 @@ func (s *Room) Set() {
 	s.NekoImages = viper.GetStringSlice("neko_images")
 	s.NekoPrivilegedImages = viper.GetStringSlice("neko_privileged_images")
 	s.PathPrefix = path.Join("/", path.Clean(viper.GetString("path_prefix")))
+	s.CotesterPathPrefix = path.Join("/", path.Clean(viper.GetString("cotester_path_prefix")))
 	s.Labels = viper.GetStringSlice("labels")
 	s.WaitEnabled = viper.GetBool("wait_enabled")
 	s.StopTimeoutSec = viper.GetInt("stop_timeout")

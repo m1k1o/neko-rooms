@@ -35,6 +35,7 @@ import (
 
 const (
 	frontendPort        = 8080
+	cotesterPort        = 3001
 	templateStoragePath = "./templates"
 	privateStoragePath  = "./rooms"
 	privateStorageUid   = 1000
@@ -334,6 +335,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 
 	exposedPorts := nat.PortSet{
 		nat.Port(fmt.Sprintf("%d/tcp", frontendPort)): struct{}{},
+		nat.Port(fmt.Sprintf("%d/tcp", cotesterPort)): struct{}{},
 	}
 
 	for port := range portBindings {
@@ -369,6 +371,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	//
 
 	pathPrefix := path.Join("/", manager.config.PathPrefix, roomName)
+	cotesterPathPrefix := path.Join("/", manager.config.CotesterPathPrefix, roomName)
 
 	if t := manager.config.Traefik; t.Enabled {
 		// create traefik rule
@@ -407,6 +410,8 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		labels["m1k1o.neko_rooms.proxy.enabled"] = "true"
 		labels["m1k1o.neko_rooms.proxy.path"] = pathPrefix
 		labels["m1k1o.neko_rooms.proxy.port"] = fmt.Sprintf("%d", frontendPort)
+		labels["cotester.vb-orchestrator.proxy.websocket_port"] = fmt.Sprintf("%d", cotesterPort)
+		labels["cotester.vb-orchestrator.proxy.websocket_path"] = cotesterPathPrefix
 	}
 
 	// add custom labels
