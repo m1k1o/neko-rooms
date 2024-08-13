@@ -303,6 +303,7 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// get proxy by room name
 	p.mu.RLock()
 	proxy, prefix, ok := p.handlers.Match(cleanPath)
+	p.logger.Info().Str("cleanPath", cleanPath).Msg("could not match path")
 	p.mu.RUnlock()
 
 	// if room is not ready
