@@ -218,7 +218,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 	return nil
 }
 
-func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, path, port, webSocketPort, webSocketPath string, ok bool) {
+func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, path, port, cotesterPath, cotesterPort string, ok bool) {
 	var enabledStr string
 	enabledStr, ok = labels["m1k1o.neko_rooms.proxy.enabled"]
 	if !ok {
@@ -238,12 +238,12 @@ func (p *ProxyManagerCtx) parseLabels(labels map[string]string) (enabled bool, p
 		return
 	}
 
-	webSocketPort, ok = labels["cotester.vb-orchestrator.proxy.websocket_port"]
+	cotesterPath, ok = labels["cotester.vb-orchestrator.proxy.websocket_path"]
 	if !ok {
 		return
 	}
 
-	webSocketPath, ok = labels["cotester.vb-orchestrator.proxy.websocket_path"]
+	cotesterPort, ok = labels["cotester.vb-orchestrator.proxy.websocket_port"]
 	if !ok {
 		return
 	}
