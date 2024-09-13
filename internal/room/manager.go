@@ -270,16 +270,17 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 
 		// based on opencontainers image url label
 		if val, ok := inspect.Config.Labels["org.opencontainers.image.url"]; ok {
+			// TODO: this should be removed in future, but since we have a lot of legacy images, we need to support it
 			switch val {
 			case "https://github.com/m1k1o/neko":
 				settings.ApiVersion = 2
 			case "https://github.com/demodesk/neko":
 				settings.ApiVersion = 3
 			}
-		} else
+		}
 
-		// unable to detect api version
-		{
+		// still unable to detect api version
+		if settings.ApiVersion == 0 {
 			// TODO: this should be removed in future, but since we have a lot of v2 images, we need to support it
 			log.Warn().Str("image", settings.NekoImage).Msg("unable to detect api version, fallback to v2")
 			settings.ApiVersion = 2
