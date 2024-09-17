@@ -18,6 +18,10 @@ if [ -z $NEKO_ROOMS_NAT1TO1 ]; then
     done
 
     if [ -z $NEKO_ROOMS_NAT1TO1 ]; then
+        NEKO_ROOMS_NAT1TO1=$(hostname -I 2>/dev/null | awk '{print $1}')
+    fi
+
+    if [ -z $NEKO_ROOMS_NAT1TO1 ]; then
         NEKO_ROOMS_NAT1TO1=$(hostname -i 2>/dev/null)
     fi
 fi
