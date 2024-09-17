@@ -81,6 +81,7 @@ func (e *events) Start() {
 		e.logger.Err(err).Msg("failed to list containers")
 		return
 	}
+
 	for _, container := range containers {
 		e.totalRooms.Inc()
 		if container.State == "running" {
@@ -103,6 +104,9 @@ func (e *events) Start() {
 	e.wg.Add(1)
 	go func() {
 		defer e.wg.Done()
+
+		e.logger.Info().Msg("docker event listener started")
+		defer e.logger.Info().Msg("docker event listener stopped")
 
 		for {
 			select {
