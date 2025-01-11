@@ -1,7 +1,7 @@
 #
 # STAGE 1: build static web files
 #
-FROM node:20-bookworm-slim as frontend
+FROM node:20-bookworm-slim AS frontend
 WORKDIR /src
 
 #
@@ -17,7 +17,7 @@ RUN npm run build
 #
 # STAGE 2: build executable binary
 #
-FROM golang:1.21-bullseye as builder
+FROM golang:1.21-bullseye AS builder
 WORKDIR /app
 
 COPY . .
