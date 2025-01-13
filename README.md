@@ -26,8 +26,22 @@ If you don't have any clue about docker and stuff but only want to have fun with
 - Secure using HTTPs thanks to Let's Encrypt and Traefik.
 
 ```bash
-wget -O neko-rooms.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/install
-sudo bash neko-rooms.sh
+wget -O neko-rooms-traefik.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/install
+sudo bash neko-rooms-traefik.sh
+```
+
+## Zero-knowledge installation (with HTTPS and NGINX)
+
+If you don't have any clue about Docker and stuff but only want to have fun with friends in a shared browser, we got you covered!
+
+- Rent a VPS with a public IP and an OS like Ubuntu or Debian.
+- Get a domain name pointing to your IP (you can even get some for free).
+- Run the install script and follow the instructions.
+- Secure using HTTPS thanks to Let's Encrypt and NGINX.
+
+```bash
+wget -O neko-rooms-nginx.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/nginx/install
+sudo bash neko-rooms-nginx.sh
 ```
 
 ## How to start
