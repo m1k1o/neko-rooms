@@ -82,7 +82,23 @@ rollback() {
 
 # Function to get all server IPs
 get_server_ips() {
-  hostname -I | awk '{for (i=1; i<=NF; i++) if ($i !~ /^172\./ && $i !~ /^10\./ && $i !~ /^192\.168\./) print $i}' | tr '\n' ', ' | sed 's/, $//'
+  local ip_list
+
+  ip_list=$(hostname -I | awk '{for (i=1; i<=NF; i++) if ($i !~ /^172\./ && $i !~ /^10\./ && $i !~ /^192\.168\./) print $i}' | tr '\n' ', ' | sed 's/, $//')
+
+  # If the hostname command fails, use the following methods
+  if [ -z "$ip_list" ]; then
+    ip_list=$(dig +short myip.opendns.com @resolver1.opendns.com 2>/dev/null)
+    if [ $? -ne 0 ]; then
+      echo "dig command failed, falling back to ifconfig.me" >&2
+    fi
+  fi
+
+  if [ -z "$ip_list" ]; then
+    ip_list=$(curl -s checkip.amazonaws.com)
+  fi
+
+  echo "$ip_list"
 }
 
 # Get all server IPs
@@ -263,6 +279,17 @@ validate_and_get_domain() {
         echo -e "${YELLOW}Your Server IPs: $SERVER_IPS${NC}"
         echo -e "${YELLOW}Please update the domain's A record to point to one of the server's IPs and try again.${NC}"
         echo -e ""
+
+        # Ask the user if they want to continue with the domain anyway
+        while true; do
+          echo -e "${YELLOW}Do you want to continue with this domain anyway? (yes/no)${NC}"
+          read -r response
+          case "$response" in
+            [Yy]* ) echo -e "${YELLOW}Continuing with domain $DOMAIN despite the IP mismatch.${NC}"; break 2 ;;
+            [Nn]* ) echo -e "${RED}Please update the domain's A record and try again.${NC}"; break ;;
+            * ) echo -e "${RED}Invalid input. Please answer yes or no.${NC}" ;;
+          esac
+        done
       fi
     else
       echo -e "${RED}Invalid domain name. Please enter a valid domain.${NC}"
