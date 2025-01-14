@@ -16,18 +16,25 @@ Simple room management system for [n.eko](https://github.com/m1k1o/neko). Self h
   <img src="https://github.com/m1k1o/neko-rooms/raw/master/docs/neko.gif" alt="n.eko">
 </div>
 
-## Zero-knowledge installation (with HTTPS and Traefik)
+## Zero-knowledge installation (with HTTPS)
 
-If you don't have any clue about docker and stuff but only want to have fun with friends in a shared browser, we got you covered!
+No experience with Docker and reverse proxy? No problem! Follow these steps to set up your Neko Rooms quickly and securely:
 
 - Rent a VPS with public IP and OS Ubuntu.
 - Get a domain name pointing to your IP (you can even get some for free).
 - Run install script and follow instructions.
-- Secure using HTTPs thanks to Let's Encrypt and Traefik.
+- Secure using HTTPs thanks to Let's Encrypt and Traefik or NGINX.
 
+### Traefik version
 ```bash
-wget -O neko-rooms.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/install
-sudo bash neko-rooms.sh
+wget -O neko-rooms-traefik.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/install
+sudo bash neko-rooms-traefik.sh
+```
+
+### NGINX version
+```bash
+wget -O neko-rooms-nginx.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/nginx/install
+sudo bash neko-rooms-nginx.sh
 ```
 
 ## How to start
