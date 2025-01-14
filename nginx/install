@@ -83,6 +83,7 @@ rollback() {
 # Function to get all server IPs
 get_server_ips() {
   local ip_list
+  local fallback_ip_service="checkip.amazonaws.com"
 
   ip_list=$(hostname -I | awk '{for (i=1; i<=NF; i++) if ($i !~ /^172\./ && $i !~ /^10\./ && $i !~ /^192\.168\./) print $i}' | tr '\n' ', ' | sed 's/, $//')
 
@@ -90,12 +91,12 @@ get_server_ips() {
   if [ -z "$ip_list" ]; then
     ip_list=$(dig +short myip.opendns.com @resolver1.opendns.com 2>/dev/null)
     if [ $? -ne 0 ]; then
-      echo "dig command failed, falling back to ifconfig.me" >&2
+      echo "dig command failed, falling back to $fallback_ip_service" >&2
     fi
   fi
 
   if [ -z "$ip_list" ]; then
-    ip_list=$(curl -s checkip.amazonaws.com)
+    ip_list=$(curl -s $fallback_ip_service)
   fi
 
   echo "$ip_list"
