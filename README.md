@@ -37,6 +37,9 @@ wget -O neko-rooms-nginx.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/m
 sudo bash neko-rooms-nginx.sh
 ```
 
+### Community Installation Scripts
+For non-Ubuntu systems, we have community-contributed installation scripts available. Check out our [community installation guides](./community/README.md) for instructions on installing neko-rooms on various Linux distributions. These scripts are maintained by the community and support different Linux distributions like Arch Linux, Fedora, and more.
+
 ## How to start
 
 If you want to use Traefik as reverse proxy, visit [installation guide for traefik as reverse proxy](./traefik/).
