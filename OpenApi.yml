@@ -65,6 +65,7 @@ paths:
             default: true
             description: Start room after creation
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -274,6 +275,7 @@ paths:
               Whether the room should be started or stopped after
               recreation, default is the current state of the room.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -324,6 +326,7 @@ paths:
       summary: Start new pull
       operationId: pullStart
       requestBody:
+        required: true
         content:
           application/json:
             schema:
