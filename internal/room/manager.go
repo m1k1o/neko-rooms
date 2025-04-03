@@ -259,8 +259,8 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 			return "", err
 		}
 
-		// based on image label
-		if val, ok := inspect.Config.Labels["m1k1o.neko_rooms.api_version"]; ok {
+		// based on image label (preferred)
+		if val, ok := inspect.Config.Labels["net.m1k1o.neko.api-version"]; ok {
 			var err error
 			settings.ApiVersion, err = strconv.Atoi(val)
 			if err != nil {
@@ -272,7 +272,8 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		if val, ok := inspect.Config.Labels["org.opencontainers.image.url"]; ok {
 			// TODO: this should be removed in future, but since we have a lot of legacy images, we need to support it
 			switch val {
-			case "https://github.com/m1k1o/neko":
+			case "https://github.com/m1k1o/neko",
+				"https://github.com/m1k1o/neko-apps":
 				settings.ApiVersion = 2
 			case "https://github.com/demodesk/neko":
 				settings.ApiVersion = 3
