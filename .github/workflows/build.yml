@@ -7,100 +7,73 @@ on:
     tags:
       - 'v*'
 
-env:
-  IMAGE_NAME: m1k1o/neko-rooms
-
 jobs:
   build-client:
-    runs-on: ubuntu-latest
-    #
-    # do not run on forks
-    #
-    if: github.repository_owner == 'm1k1o'
-    steps:
-      - 
-        name: Checkout
-        uses: actions/checkout@v4
-      - 
-        name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: ./client/package-lock.json
-      - 
-        name: Install dependencies
-        run: cd ./client && npm install
-      - 
-        name: Build
-        run: cd ./client && npm run build
-      - 
-        name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: client
-          path: ./client/dist
+    name: Build Client Artifacts
+    uses: ./.github/workflows/client_build.yml
 
-  build-docker:
-    needs: build-client
+  build-and-push:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    #
-    # do not run on forks
-    #
-    if: github.repository_owner == 'm1k1o'
+    needs: build-client
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
-      - 
-        name: Download client artifact
+        with:
+          fetch-depth: 0
+
+      - name: Download client dist
         uses: actions/download-artifact@v4
         with:
           name: client
-          path: ./client/dist
-      - 
-        name: Remove client stage from Dockerfile
-        # Change dockerfile: remove first stage - everything between # STAGE 1 and # STAGE 2
-        # Replace "--from=frontend /src/dist/" with "./client/dist/"
-        run: |
-          sed -i '/# STAGE 1/,/# STAGE 2/d' ./Dockerfile
-          sed -i 's/--from=frontend \/src\/dist\//.\/client\/dist\//g' ./Dockerfile
-      -
-        name: Set up QEMU
+          path: client/dist
+
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
-        id: buildx
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      -
-        name: Available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-      - 
-        name: Extract metadata (tags, labels) for Docker
+
+      - name: Extract metadata (tags, labels) for Docker
         uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: |
+            docker.io/${{ github.repository }}
+            ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-      - 
-        name: Log in to the Container registry
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.DOCKER_TOKEN }}
-      - 
-        name: Build and push
+      
+      - name: Log in to GCR
+        uses: docker/login-action@v3
+        with:
+          registry: gcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_ACCESS_TOKEN }}
+
+      - name: Remove client stage from Dockerfile
+        # Change dockerfile: remove first stage - everything between # STAGE 1 and # STAGE 2
+        # Replace "--from=frontend /src/dist/" with "./client/dist/"
+        run: |
+          sed -i '/# STAGE 1/,/# STAGE 2/d' ./Dockerfile
+          sed -i 's/--from=frontend \/src\/dist\//.\/client\/dist\//g' ./Dockerfile
+
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          # Turns out the build-push-action runs in a "GitHub" context by default.
-          # At the very least, it means pulling down your repository as part of pre-Dockerfile command.
-          # You can change it to the "file" context by using:
-          context: .
+          context: ./
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
