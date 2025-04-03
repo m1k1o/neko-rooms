@@ -381,7 +381,7 @@ components:
           type: array
           items:
             type: string
-            example: m1k1o/neko:latest
+            example: ghcr.io/m1k1o/neko/firefox:latest
         storage_enabled:
           type: boolean
           example: true
@@ -403,7 +403,7 @@ components:
           example: foobar
         neko_image:
           type: string
-          example: m1k1o/neko:latest
+          example: ghcr.io/m1k1o/neko/firefox:latest
         is_outdated:
           type: boolean
           example: true
@@ -481,7 +481,7 @@ components:
           example: foobar
         neko_image:
           type: string
-          example: m1k1o/neko:latest
+          example: ghcr.io/m1k1o/neko/firefox:latest
         max_connections:
           type: number
           default: 10
@@ -653,7 +653,7 @@ components:
       properties:
         neko_image:
           type: string
-          example: m1k1o/neko:latest
+          example: ghcr.io/m1k1o/neko/firefox:latest
         registry_user:
           type: string
         registry_pass:
@@ -664,7 +664,7 @@ components:
       properties:
         status:
           type: string
-          example: m1k1o/neko:latest
+          example: ghcr.io/m1k1o/neko/firefox:latest
         progressDetail:
           type: object
           properties:

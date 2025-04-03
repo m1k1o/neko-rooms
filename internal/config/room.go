@@ -64,18 +64,20 @@ func (Room) Init(cmd *cobra.Command) error {
 	}
 
 	cmd.PersistentFlags().StringSlice("neko_images", []string{
-		"m1k1o/neko:firefox",
-		"m1k1o/neko:chromium",
-		"m1k1o/neko:google-chrome",
-		"m1k1o/neko:ungoogled-chromium",
-		"m1k1o/neko:microsoft-edge",
-		"m1k1o/neko:brave",
-		"m1k1o/neko:vivaldi",
-		"m1k1o/neko:tor-browser",
-		"m1k1o/neko:vlc",
-		"m1k1o/neko:remmina",
-		"m1k1o/neko:xfce",
-		"m1k1o/neko:kde",
+		"ghcr.io/m1k1o/neko/firefox",
+		"ghcr.io/m1k1o/neko/waterfox",
+		"ghcr.io/m1k1o/neko/tor-browser",
+		"ghcr.io/m1k1o/neko/chromium",
+		"ghcr.io/m1k1o/neko/google-chrome",
+		"ghcr.io/m1k1o/neko/ungoogled-chromium",
+		"ghcr.io/m1k1o/neko/microsoft-edge",
+		"ghcr.io/m1k1o/neko/brave",
+		"ghcr.io/m1k1o/neko/vivaldi",
+		"ghcr.io/m1k1o/neko/opera",
+		"ghcr.io/m1k1o/neko/remmina",
+		"ghcr.io/m1k1o/neko/vlc",
+		"ghcr.io/m1k1o/neko/xfce",
+		"ghcr.io/m1k1o/neko/kde",
 	}, "neko images to be used")
 	if err := viper.BindPFlag("neko_images", cmd.PersistentFlags().Lookup("neko_images")); err != nil {
 		return err

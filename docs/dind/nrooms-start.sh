@@ -37,8 +37,8 @@ docker run -d \
       --entrypoints.web.address=:80;
 
 # pull some neko images...
-docker pull m1k1o/neko:firefox
-docker pull m1k1o/neko:chromium
+docker pull ghcr.io/m1k1o/neko/firefox
+docker pull ghcr.io/m1k1o/neko/chromium
 
 #
 # (re)start neko-rooms

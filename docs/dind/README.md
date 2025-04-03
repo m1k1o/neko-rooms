@@ -14,5 +14,5 @@ However, there are some usecases, when this might come in handy:
 In order to pull new images run:
 
 ```sh
-docker-compose exec neko-rooms docker pull m1k1o/neko:chromium
+docker-compose exec neko-rooms docker pull ghcr.io/m1k1o/neko/chromium
 ```

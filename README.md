@@ -51,8 +51,8 @@ Otherwise modify variables in `docker-compose.yml` and just run `docker-compose 
 You need to pull all your images, that you want to use with neko-room. Otherwise, you might get this error: `Error response from daemon: No such image:` (see issue #1).
 
 ```sh
-docker pull m1k1o/neko:firefox
-docker pull m1k1o/neko:chromium
+docker pull ghcr.io/m1k1o/neko/firefox
+docker pull ghcr.io/m1k1o/neko/chromium
 # etc...
 ```
 
