@@ -25,20 +25,14 @@ No experience with Docker and reverse proxy? No problem! Follow these steps to s
 - Run install script and follow instructions.
 - Secure using HTTPs thanks to Let's Encrypt and Traefik or NGINX.
 
-### Traefik version
 ```bash
 wget -O neko-rooms-traefik.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/traefik/install
 sudo bash neko-rooms-traefik.sh
 ```
 
-### NGINX version
-```bash
-wget -O neko-rooms-nginx.sh https://raw.githubusercontent.com/m1k1o/neko-rooms/master/nginx/install
-sudo bash neko-rooms-nginx.sh
-```
-
 ### Community Installation Scripts
-For non-Ubuntu systems, we have community-contributed installation scripts available. Check out our [community installation guides](./community/README.md) for instructions on installing neko-rooms on various Linux distributions. These scripts are maintained by the community and support different Linux distributions like Arch Linux, Fedora, and more.
+
+We have community-contributed installation scripts available. Check out our [community installation guides](./community/README.md) for instructions on installing neko-rooms on various Linux distributions. These scripts are maintained by the community and support different Linux distributions like Arch Linux, Fedora, and more.
 
 ## How to start
 
