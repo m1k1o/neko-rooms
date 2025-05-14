@@ -84,17 +84,17 @@ export default new Vuex.Store({
       const res = await roomsApi.roomsList()
       commit('ROOMS_SET', res.data);
     },
-    async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
+    async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry> {
       const res = await roomsApi.roomCreate(false, roomSettings)
       commit('ROOMS_ADD', res.data);
       return res.data
     },
-    async ROOMS_CREATE_AND_START({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
+    async ROOMS_CREATE_AND_START({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry> {
       const res = await roomsApi.roomCreate(true, roomSettings)
       commit('ROOMS_ADD', res.data);
       return res.data
     },
-    async ROOMS_GET({ commit }: ActionContext<State, State>, roomId: string)  {
+    async ROOMS_GET({ commit }: ActionContext<State, State>, roomId: string) {
       const res = await roomsApi.roomGet(roomId)
       commit('ROOMS_PUT', res.data);
       return res.data
@@ -125,6 +125,22 @@ export default new Vuex.Store({
         id: roomId,
         running: false,
         status: 'Exited',
+      });
+    },
+    async ROOMS_PAUSE({ commit }: ActionContext<State, State>, roomId: string) {
+      await roomsApi.roomPause(roomId)
+      commit('ROOMS_PUT', {
+        id: roomId,
+        running: true,
+        status: 'Paused',
+      });
+    },
+    async ROOMS_UNPAUSE({ commit }: ActionContext<State, State>, roomId: string) {
+      await roomsApi.roomUnpause(roomId)
+      commit('ROOMS_PUT', {
+        id: roomId,
+        running: true,
+        status: 'Up',
       });
     },
     async ROOMS_RESTART(_: ActionContext<State, State>, roomId: string) {

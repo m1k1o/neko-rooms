@@ -1022,6 +1022,26 @@ func (manager *RoomManagerCtx) Restart(ctx context.Context, id string) error {
 	})
 }
 
+func (manager *RoomManagerCtx) Pause(ctx context.Context, id string) error {
+	_, err := manager.inspectContainer(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Pause the actual container
+	return manager.client.ContainerPause(ctx, id)
+}
+
+func (manager *RoomManagerCtx) Unpause(ctx context.Context, id string) error {
+	_, err := manager.inspectContainer(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Unpause the actual container
+	return manager.client.ContainerUnpause(ctx, id)
+}
+
 // events
 
 func (manager *RoomManagerCtx) EventsLoopStart() {
