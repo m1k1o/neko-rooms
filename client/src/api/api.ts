@@ -1460,7 +1460,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
         roomPause: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomPause', 'roomId', roomId)
-            const localVarPath = `/rooms/{roomId}/pause`
+            const localVarPath = `/api/rooms/{roomId}/pause`
                 .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1492,7 +1492,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
         roomUnpause: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomUnpause', 'roomId', roomId)
-            const localVarPath = `/rooms/{roomId}/unpause`
+            const localVarPath = `/api/rooms/{roomId}/unpause`
                 .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
