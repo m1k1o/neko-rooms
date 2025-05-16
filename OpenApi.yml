@@ -433,6 +433,9 @@ components:
         running:
           type: boolean
           example: true
+        paused:
+          type: boolean
+          example: false
         is_ready:
           type: boolean
           example: true
