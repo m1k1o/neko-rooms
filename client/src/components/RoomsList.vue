@@ -41,9 +41,8 @@
       </template>
       <template v-slot:[`item.actions`]="{ item }">
         <RoomActionBtn action="start" :roomId="item.id" :disabled="item.running" />
-        <RoomActionBtn action="stop" :roomId="item.id" :disabled="!item.running" />
-        <RoomActionBtn action="pause" :roomId="item.id" :disabled="!item.running || item.status === 'Paused'" />
-        <RoomActionBtn action="unpause" :roomId="item.id" :disabled="!item.running || item.status !== 'Paused'" />
+        <RoomActionBtn action="stop" :roomId="item.id" :disabled="!item.running && !item.paused" />
+        <RoomActionBtn action="pause" :roomId="item.id" :disabled="!item.running" />
         <RoomActionBtn action="restart" :roomId="item.id" :disabled="!item.running" />
       </template>
       <template v-slot:[`item.destroy`]="{ item }">

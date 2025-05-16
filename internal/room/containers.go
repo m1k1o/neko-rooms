@@ -30,6 +30,7 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 		IsOutdated:     labels.NekoImage != container.Image,
 		MaxConnections: labels.Epr.Max - labels.Epr.Min + 1,
 		Running:        container.State == "running",
+		Paused:         container.State == "paused",
 		IsReady:        manager.events.IsRoomReady(roomId) || strings.Contains(container.Status, "healthy"),
 		Status:         container.Status,
 		Created:        time.Unix(container.Created, 0),

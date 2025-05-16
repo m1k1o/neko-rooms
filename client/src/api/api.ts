@@ -262,6 +262,12 @@ export interface RoomEntry {
     'running'?: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof RoomEntry
+     */
+    'paused'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof RoomEntry
      */
@@ -1482,38 +1488,6 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * 
-         * @summary Unpause room
-         * @param {string} roomId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        roomUnpause: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'roomId' is not null or undefined
-            assertParamExists('roomUnpause', 'roomId', roomId)
-            const localVarPath = `/api/rooms/{roomId}/unpause`
-                .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers };
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -1669,17 +1643,6 @@ export const RoomsApiFp = function (configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomPause(roomId, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
-        /**
-         * 
-         * @summary Unpause room
-         * @param {string} roomId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async roomUnpause(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.roomUnpause(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
-        },
     }
 };
 
@@ -1821,16 +1784,6 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          */
         roomPause(roomId: string, options?: any): AxiosPromise<void> {
             return localVarFp.roomPause(roomId, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * 
-         * @summary Unpause room
-         * @param {string} roomId 
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        roomUnpause(roomId: string, options?: any): AxiosPromise<void> {
-            return localVarFp.roomUnpause(roomId, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -1998,18 +1951,6 @@ export class RoomsApi extends BaseAPI {
      */
     public roomPause(roomId: string, options?: AxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomPause(roomId, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * 
-     * @summary Unpause room
-     * @param {string} roomId 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof RoomsApi
-     */
-    public roomUnpause(roomId: string, options?: AxiosRequestConfig) {
-        return RoomsApiFp(this.configuration).roomUnpause(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

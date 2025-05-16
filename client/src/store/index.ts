@@ -116,6 +116,7 @@ export default new Vuex.Store({
       commit('ROOMS_PUT', {
         id: roomId,
         running: true,
+        paused: false,
         status: 'Up',
       });
     },
@@ -124,6 +125,7 @@ export default new Vuex.Store({
       commit('ROOMS_PUT', {
         id: roomId,
         running: false,
+        paused: false,
         status: 'Exited',
       });
     },
@@ -131,16 +133,9 @@ export default new Vuex.Store({
       await roomsApi.roomPause(roomId)
       commit('ROOMS_PUT', {
         id: roomId,
-        running: true,
+        running: false,
+        paused: true,
         status: 'Paused',
-      });
-    },
-    async ROOMS_UNPAUSE({ commit }: ActionContext<State, State>, roomId: string) {
-      await roomsApi.roomUnpause(roomId)
-      commit('ROOMS_PUT', {
-        id: roomId,
-        running: true,
-        status: 'Up',
       });
     },
     async ROOMS_RESTART(_: ActionContext<State, State>, roomId: string) {

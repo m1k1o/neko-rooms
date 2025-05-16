@@ -59,7 +59,6 @@ func (manager *ApiManagerCtx) Mount(r chi.Router) {
 		r.Post("/stop", manager.roomGenericAction(manager.rooms.Stop))
 		r.Post("/restart", manager.roomGenericAction(manager.rooms.Restart))
 		r.Post("/pause", manager.roomGenericAction(manager.rooms.Pause))
-		r.Post("/unpause", manager.roomGenericAction(manager.rooms.Unpause))
 		r.Post("/recreate", manager.roomRecreate)
 	})
 

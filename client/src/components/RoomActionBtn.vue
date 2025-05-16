@@ -45,15 +45,7 @@ export default class RoomActionBtn extends Vue {
           msg: 'Room paused!',
           tooltip: 'Pause',
           color: 'orange',
-          icon: 'mdi-snowflake',
-        }
-      case 'unpause':
-        return {
-          dispatch: 'ROOMS_UNPAUSE',
-          msg: 'Room unpaused!',
-          tooltip: 'Unpause',
-          color: 'teal',
-          icon: 'mdi-snowflake-off',
+          icon: 'mdi-pause-circle-outline',
         }
       case 'restart':
         return {
