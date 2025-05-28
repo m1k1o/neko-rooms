@@ -22,6 +22,7 @@ type entry struct {
 	id      string
 	running bool
 	ready   bool
+	paused  bool
 	handler http.Handler
 }
 
@@ -130,6 +131,12 @@ func (p *ProxyManagerCtx) Start() {
 						id:      msg.ID,
 						running: false,
 					})
+				case types.RoomEventPaused:
+					p.handlers.Insert(path, &entry{
+						id:      msg.ID,
+						running: false,
+						paused:  true,
+					})
 				case types.RoomEventDestroyed:
 					p.handlers.Remove(path)
 				}
@@ -167,6 +174,7 @@ func (p *ProxyManagerCtx) Refresh() error {
 			id:      room.ID,
 			running: room.Running,
 			ready:   room.IsReady,
+			paused:  room.Paused,
 		}
 
 		// if proxying is enabled and room is ready
@@ -263,6 +271,8 @@ func (p *ProxyManagerCtx) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if !ok {
 			RoomNotFound(w, r, p.waitEnabled)
+		} else if proxy.paused {
+			RoomPaused(w, r, p.waitEnabled)
 		} else if !proxy.running {
 			RoomNotRunning(w, r, p.waitEnabled)
 		} else {
