@@ -142,7 +142,7 @@ export default new Vuex.Store({
       await roomsApi.roomRestart(roomId)
     },
     async ROOMS_RECREATE({ commit }: ActionContext<State, State>, roomId: string) {
-      const res = await roomsApi.roomRecreate(roomId)
+      const res = await roomsApi.roomRecreate(roomId, {} as RoomSettings)
       commit('ROOMS_DEL', roomId)
       commit('ROOMS_PUT', res.data)
       return res.data
