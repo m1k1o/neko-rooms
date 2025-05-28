@@ -987,9 +987,18 @@ func (manager *RoomManagerCtx) GetStats(ctx context.Context, id string) (*types.
 }
 
 func (manager *RoomManagerCtx) Start(ctx context.Context, id string) error {
-	_, err := manager.inspectContainer(ctx, id)
+	container, err := manager.inspectContainer(ctx, id)
 	if err != nil {
 		return err
+	}
+
+	// If paused, we need to unpause the container
+	if container.State.Paused {
+		if err := manager.client.ContainerUnpause(ctx, id); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	// Start the actual container
@@ -1020,6 +1029,16 @@ func (manager *RoomManagerCtx) Restart(ctx context.Context, id string) error {
 		Signal:  "SIGTERM",
 		Timeout: &manager.config.StopTimeoutSec,
 	})
+}
+
+func (manager *RoomManagerCtx) Pause(ctx context.Context, id string) error {
+	_, err := manager.inspectContainer(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Pause the actual container
+	return manager.client.ContainerPause(ctx, id)
 }
 
 // events

@@ -98,6 +98,8 @@ func (e *events) Start() {
 			filters.Arg("event", "health_status"),
 			filters.Arg("event", "stop"),
 			filters.Arg("event", "destroy"),
+			filters.Arg("event", "pause"),
+			filters.Arg("event", "unpause"),
 		),
 	})
 
@@ -163,6 +165,14 @@ func (e *events) Start() {
 					e.runningRooms.Dec()
 				case "destroy":
 					action = types.RoomEventDestroyed
+				case "pause":
+					action = types.RoomEventPaused
+					e.setRoomNotReady(roomId)
+					e.runningRooms.Dec()
+				case "unpause":
+					action = types.RoomEventStarted
+					e.waitForRoomReady(roomId, labels)
+					e.runningRooms.Inc()
 				}
 
 				e.broadcast(types.RoomEvent{

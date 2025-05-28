@@ -84,17 +84,17 @@ export default new Vuex.Store({
       const res = await roomsApi.roomsList()
       commit('ROOMS_SET', res.data);
     },
-    async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
-      const res = await roomsApi.roomCreate(false, roomSettings)
+    async ROOMS_CREATE({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry> {
+      const res = await roomsApi.roomCreate(roomSettings, false)
       commit('ROOMS_ADD', res.data);
       return res.data
     },
-    async ROOMS_CREATE_AND_START({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry>  {
-      const res = await roomsApi.roomCreate(true, roomSettings)
+    async ROOMS_CREATE_AND_START({ commit }: ActionContext<State, State>, roomSettings: RoomSettings): Promise<RoomEntry> {
+      const res = await roomsApi.roomCreate(roomSettings, true)
       commit('ROOMS_ADD', res.data);
       return res.data
     },
-    async ROOMS_GET({ commit }: ActionContext<State, State>, roomId: string)  {
+    async ROOMS_GET({ commit }: ActionContext<State, State>, roomId: string) {
       const res = await roomsApi.roomGet(roomId)
       commit('ROOMS_PUT', res.data);
       return res.data
@@ -116,6 +116,7 @@ export default new Vuex.Store({
       commit('ROOMS_PUT', {
         id: roomId,
         running: true,
+        paused: false,
         status: 'Up',
       });
     },
@@ -124,14 +125,24 @@ export default new Vuex.Store({
       commit('ROOMS_PUT', {
         id: roomId,
         running: false,
+        paused: false,
         status: 'Exited',
+      });
+    },
+    async ROOMS_PAUSE({ commit }: ActionContext<State, State>, roomId: string) {
+      await roomsApi.roomPause(roomId)
+      commit('ROOMS_PUT', {
+        id: roomId,
+        running: false,
+        paused: true,
+        status: 'Paused',
       });
     },
     async ROOMS_RESTART(_: ActionContext<State, State>, roomId: string) {
       await roomsApi.roomRestart(roomId)
     },
     async ROOMS_RECREATE({ commit }: ActionContext<State, State>, roomId: string) {
-      const res = await roomsApi.roomRecreate(roomId)
+      const res = await roomsApi.roomRecreate(roomId, {} as RoomSettings)
       commit('ROOMS_DEL', roomId)
       commit('ROOMS_PUT', res.data)
       return res.data

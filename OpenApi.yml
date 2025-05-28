@@ -254,6 +254,25 @@ paths:
           description: Room not found
         '500':
           description: Internal server error
+  /api/rooms/{roomId}/pause:
+    post:
+      tags:
+        - rooms
+      summary: Pause room
+      operationId: roomPause
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: OK
+        '404':
+          description: Room not found
+        '500':
+          description: Internal server error
   /api/rooms/{roomId}/recreate:
     post:
       tags:
@@ -414,6 +433,9 @@ components:
         running:
           type: boolean
           example: true
+        paused:
+          type: boolean
+          example: false
         is_ready:
           type: boolean
           example: true

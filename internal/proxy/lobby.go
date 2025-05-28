@@ -87,6 +87,30 @@ func RoomNotRunning(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 		w.Write([]byte(`<meta http-equiv="refresh" content="10">`))
 	}
 }
+func RoomPaused(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
+	utils.Swal2Response(w, `
+		<div class="swal2-header">
+			<div class="swal2-icon swal2-warning">
+				<div class="swal2-icon-content">!</div>
+			</div>
+			<h2 class="swal2-title">Room is paused!</h2>
+		</div>
+		<div class="swal2-content">
+			<div>The room you are trying to join is paused.</div>
+			<div>You can wait on this page until it will be unpaused.</div>
+		</div>
+		<div class="swal2-actions">
+			<div class="swal2-loader" style="display:none;"></div>
+			<button type="button" onclick="location = location" class="swal2-confirm swal2-styled" style="margin-top: 1.25em">Reload</button>
+		</div>
+	`)
+
+	if waitEnabled {
+		roomWait(w, r)
+	} else {
+		w.Write([]byte(`<meta http-equiv="refresh" content="2">`))
+	}
+}
 
 func RoomNotReady(w http.ResponseWriter, r *http.Request, waitEnabled bool) {
 	utils.Swal2Response(w, `

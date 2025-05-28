@@ -1,7 +1,8 @@
 <template>
   <v-tooltip bottom v-if="tmpl" open-delay="300">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn v-bind="attrs" v-on="on" @click="Action" :color="tmpl.color" :disabled="disabled" :loading="loading" icon><v-icon>{{ tmpl.icon }}</v-icon></v-btn>
+      <v-btn v-bind="attrs" v-on="on" @click="Action" :color="tmpl.color" :disabled="disabled" :loading="loading"
+        icon><v-icon>{{ tmpl.icon }}</v-icon></v-btn>
     </template>
     <span>{{ tmpl.tooltip }}</span>
   </v-tooltip>
@@ -37,6 +38,14 @@ export default class RoomActionBtn extends Vue {
           tooltip: 'Stop',
           color: 'warning',
           icon: 'mdi-stop-circle-outline',
+        }
+      case 'pause':
+        return {
+          dispatch: 'ROOMS_PAUSE',
+          msg: 'Room paused!',
+          tooltip: 'Pause',
+          color: 'orange',
+          icon: 'mdi-pause-circle-outline',
         }
       case 'restart':
         return {
@@ -95,14 +104,14 @@ export default class RoomActionBtn extends Vue {
     }
 
     this.loading = true
-  
+
     try {
       await this.$store.dispatch(this.tmpl.dispatch, this.roomId)
       this.$swal({
         title: this.tmpl.msg,
         icon: 'success',
       })
-    } catch(e) {
+    } catch (e) {
       const response = (e as AxiosError).response
       if (response) {
         this.$swal({

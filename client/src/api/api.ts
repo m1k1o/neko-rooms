@@ -14,14 +14,14 @@
 
 
 import type { Configuration } from './configuration';
-import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common';
 import type { RequestArgs } from './base';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
+import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
 /**
  * 
@@ -262,6 +262,18 @@ export interface RoomEntry {
     'running'?: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof RoomEntry
+     */
+    'paused'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RoomEntry
+     */
+    'is_ready'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof RoomEntry
      */
@@ -395,7 +407,7 @@ export interface RoomResources {
  */
 export interface RoomSettings {
     /**
-     * 
+     * if not set, version is taken from neko_image
      * @type {number}
      * @memberof RoomSettings
      */
@@ -650,7 +662,7 @@ export const ConfigApiAxiosParamCreator = function (configuration?: Configuratio
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomsConfig: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomsConfig: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/config/rooms`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -690,9 +702,11 @@ export const ConfigApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomsConfig(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomsConfig>> {
+        async roomsConfig(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomsConfig>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomsConfig(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ConfigApi.roomsConfig']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
@@ -710,7 +724,7 @@ export const ConfigApiFactory = function (configuration?: Configuration, basePat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomsConfig(options?: any): AxiosPromise<RoomsConfig> {
+        roomsConfig(options?: RawAxiosRequestConfig): AxiosPromise<RoomsConfig> {
             return localVarFp.roomsConfig(options).then((request) => request(axios, basePath));
         },
     };
@@ -730,7 +744,7 @@ export class ConfigApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof ConfigApi
      */
-    public roomsConfig(options?: AxiosRequestConfig) {
+    public roomsConfig(options?: RawAxiosRequestConfig) {
         return ConfigApiFp(this.configuration).roomsConfig(options).then((request) => request(this.axios, this.basePath));
     }
 }
@@ -746,11 +760,13 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Start new pull
-         * @param {PullStart} [pullStart] 
+         * @param {PullStart} pullStart 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStart: async (pullStart?: PullStart, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        pullStart: async (pullStart: PullStart, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'pullStart' is not null or undefined
+            assertParamExists('pullStart', 'pullStart', pullStart)
             const localVarPath = `/api/pull`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -783,7 +799,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStatus: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        pullStatus: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/pull`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -813,7 +829,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStatusSSE: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        pullStatusSSE: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/pull/sse`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -843,7 +859,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStop: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        pullStop: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/pull`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -880,13 +896,15 @@ export const DefaultApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Start new pull
-         * @param {PullStart} [pullStart] 
+         * @param {PullStart} pullStart 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async pullStart(pullStart?: PullStart, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PullStatus>> {
+        async pullStart(pullStart: PullStart, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PullStatus>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.pullStart(pullStart, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.pullStart']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -894,9 +912,11 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async pullStatus(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PullStatus>> {
+        async pullStatus(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PullStatus>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.pullStatus(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.pullStatus']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -904,9 +924,11 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async pullStatusSSE(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<PullLayer>>> {
+        async pullStatusSSE(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<PullLayer>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.pullStatusSSE(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.pullStatusSSE']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -914,9 +936,11 @@ export const DefaultApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async pullStop(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async pullStop(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.pullStop(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.pullStop']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
@@ -931,11 +955,11 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
         /**
          * 
          * @summary Start new pull
-         * @param {PullStart} [pullStart] 
+         * @param {PullStart} pullStart 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStart(pullStart?: PullStart, options?: any): AxiosPromise<PullStatus> {
+        pullStart(pullStart: PullStart, options?: RawAxiosRequestConfig): AxiosPromise<PullStatus> {
             return localVarFp.pullStart(pullStart, options).then((request) => request(axios, basePath));
         },
         /**
@@ -944,7 +968,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStatus(options?: any): AxiosPromise<PullStatus> {
+        pullStatus(options?: RawAxiosRequestConfig): AxiosPromise<PullStatus> {
             return localVarFp.pullStatus(options).then((request) => request(axios, basePath));
         },
         /**
@@ -953,7 +977,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStatusSSE(options?: any): AxiosPromise<Array<PullLayer>> {
+        pullStatusSSE(options?: RawAxiosRequestConfig): AxiosPromise<Array<PullLayer>> {
             return localVarFp.pullStatusSSE(options).then((request) => request(axios, basePath));
         },
         /**
@@ -962,7 +986,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        pullStop(options?: any): AxiosPromise<void> {
+        pullStop(options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.pullStop(options).then((request) => request(axios, basePath));
         },
     };
@@ -978,12 +1002,12 @@ export class DefaultApi extends BaseAPI {
     /**
      * 
      * @summary Start new pull
-     * @param {PullStart} [pullStart] 
+     * @param {PullStart} pullStart 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public pullStart(pullStart?: PullStart, options?: AxiosRequestConfig) {
+    public pullStart(pullStart: PullStart, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).pullStart(pullStart, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -994,7 +1018,7 @@ export class DefaultApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public pullStatus(options?: AxiosRequestConfig) {
+    public pullStatus(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).pullStatus(options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1005,7 +1029,7 @@ export class DefaultApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public pullStatusSSE(options?: AxiosRequestConfig) {
+    public pullStatusSSE(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).pullStatusSSE(options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1016,7 +1040,7 @@ export class DefaultApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof DefaultApi
      */
-    public pullStop(options?: AxiosRequestConfig) {
+    public pullStop(options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).pullStop(options).then((request) => request(this.axios, this.basePath));
     }
 }
@@ -1035,7 +1059,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        exportAsDockerCompose: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        exportAsDockerCompose: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/docker-compose.yaml`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1062,12 +1086,14 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create new room
+         * @param {RoomSettings} roomSettings 
          * @param {boolean} [start] 
-         * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomCreate: async (start?: boolean, roomSettings?: RoomSettings, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomCreate: async (roomSettings: RoomSettings, start?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'roomSettings' is not null or undefined
+            assertParamExists('roomCreate', 'roomSettings', roomSettings)
             const localVarPath = `/api/rooms`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1105,7 +1131,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomGet: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomGet: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomGet', 'roomId', roomId)
             const localVarPath = `/api/rooms/{roomId}`
@@ -1139,7 +1165,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomGetByName: async (roomName: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomGetByName: async (roomName: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomName' is not null or undefined
             assertParamExists('roomGetByName', 'roomName', roomName)
             const localVarPath = `/api/rooms/{roomName}/by-name`
@@ -1168,16 +1194,52 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Recreate room
+         * @summary Pause room
          * @param {string} roomId 
-         * @param {boolean} [start] 
-         * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomRecreate: async (roomId: string, start?: boolean, roomSettings?: RoomSettings, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomPause: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'roomId' is not null or undefined
+            assertParamExists('roomPause', 'roomId', roomId)
+            const localVarPath = `/api/rooms/{roomId}/pause`
+                .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Recreate room
+         * @param {string} roomId 
+         * @param {RoomSettings} roomSettings 
+         * @param {boolean} [start] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        roomRecreate: async (roomId: string, roomSettings: RoomSettings, start?: boolean, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomRecreate', 'roomId', roomId)
+            // verify required parameter 'roomSettings' is not null or undefined
+            assertParamExists('roomRecreate', 'roomSettings', roomSettings)
             const localVarPath = `/api/rooms/{roomId}/recreate`
                 .replace(`{${"roomId"}}`, encodeURIComponent(String(roomId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -1216,7 +1278,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomRemove: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomRemove: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomRemove', 'roomId', roomId)
             const localVarPath = `/api/rooms/{roomId}`
@@ -1250,7 +1312,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomRestart: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomRestart: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomRestart', 'roomId', roomId)
             const localVarPath = `/api/rooms/{roomId}/restart`
@@ -1284,7 +1346,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomSettings: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomSettings: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomSettings', 'roomId', roomId)
             const localVarPath = `/api/rooms/{roomId}/settings`
@@ -1318,7 +1380,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomStart: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomStart: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomStart', 'roomId', roomId)
             const localVarPath = `/api/rooms/{roomId}/start`
@@ -1352,7 +1414,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomStats: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomStats: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomStats', 'roomId', roomId)
             const localVarPath = `/api/rooms/{roomId}/stats`
@@ -1386,7 +1448,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomStop: async (roomId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomStop: async (roomId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'roomId' is not null or undefined
             assertParamExists('roomStop', 'roomId', roomId)
             const localVarPath = `/api/rooms/{roomId}/stop`
@@ -1420,7 +1482,7 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomsList: async (labels?: { [key: string]: string; }, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        roomsList: async (labels?: { [key: string]: string; }, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/rooms`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1434,8 +1496,8 @@ export const RoomsApiAxiosParamCreator = function (configuration?: Configuration
             const localVarQueryParameter = {} as any;
 
             if (labels !== undefined) {
-                for (let param of Object.keys(labels)) {
-                    localVarQueryParameter[param] = labels?.[param];
+                for (const [key, value] of Object.entries(labels)) {
+                    localVarQueryParameter[key] = value;
                 }
             }
 
@@ -1466,21 +1528,25 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async exportAsDockerCompose(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async exportAsDockerCompose(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.exportAsDockerCompose(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.exportAsDockerCompose']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
          * @summary Create new room
+         * @param {RoomSettings} roomSettings 
          * @param {boolean} [start] 
-         * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomCreate(start?: boolean, roomSettings?: RoomSettings, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.roomCreate(start, roomSettings, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        async roomCreate(roomSettings: RoomSettings, start?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.roomCreate(roomSettings, start, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomCreate']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1489,9 +1555,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomGet(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
+        async roomGet(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomGet(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1500,22 +1568,39 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomGetByName(roomName: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
+        async roomGetByName(roomName: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomGetByName(roomName, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomGetByName']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @summary Pause room
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async roomPause(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.roomPause(roomId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomPause']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
          * @summary Recreate room
          * @param {string} roomId 
+         * @param {RoomSettings} roomSettings 
          * @param {boolean} [start] 
-         * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomRecreate(roomId: string, start?: boolean, roomSettings?: RoomSettings, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.roomRecreate(roomId, start, roomSettings, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        async roomRecreate(roomId: string, roomSettings: RoomSettings, start?: boolean, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomEntry>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.roomRecreate(roomId, roomSettings, start, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomRecreate']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1524,9 +1609,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomRemove(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async roomRemove(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomRemove(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomRemove']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1535,9 +1622,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomRestart(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async roomRestart(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomRestart(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomRestart']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1546,9 +1635,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomSettings(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomSettings>> {
+        async roomSettings(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomSettings>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomSettings(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomSettings']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1557,9 +1648,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomStart(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async roomStart(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomStart(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomStart']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1568,9 +1661,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomStats(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomStats>> {
+        async roomStats(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RoomStats>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomStats(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomStats']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1579,9 +1674,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomStop(roomId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async roomStop(roomId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomStop(roomId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomStop']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1590,9 +1687,11 @@ export const RoomsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async roomsList(labels?: { [key: string]: string; }, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<RoomEntry>>> {
+        async roomsList(labels?: { [key: string]: string; }, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<RoomEntry>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.roomsList(labels, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RoomsApi.roomsList']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
@@ -1610,19 +1709,19 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        exportAsDockerCompose(options?: any): AxiosPromise<void> {
+        exportAsDockerCompose(options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.exportAsDockerCompose(options).then((request) => request(axios, basePath));
         },
         /**
          * 
          * @summary Create new room
+         * @param {RoomSettings} roomSettings 
          * @param {boolean} [start] 
-         * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomCreate(start?: boolean, roomSettings?: RoomSettings, options?: any): AxiosPromise<RoomEntry> {
-            return localVarFp.roomCreate(start, roomSettings, options).then((request) => request(axios, basePath));
+        roomCreate(roomSettings: RoomSettings, start?: boolean, options?: RawAxiosRequestConfig): AxiosPromise<RoomEntry> {
+            return localVarFp.roomCreate(roomSettings, start, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1631,7 +1730,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomGet(roomId: string, options?: any): AxiosPromise<RoomEntry> {
+        roomGet(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<RoomEntry> {
             return localVarFp.roomGet(roomId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1641,20 +1740,30 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomGetByName(roomName: string, options?: any): AxiosPromise<RoomEntry> {
+        roomGetByName(roomName: string, options?: RawAxiosRequestConfig): AxiosPromise<RoomEntry> {
             return localVarFp.roomGetByName(roomName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Pause room
+         * @param {string} roomId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        roomPause(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.roomPause(roomId, options).then((request) => request(axios, basePath));
         },
         /**
          * 
          * @summary Recreate room
          * @param {string} roomId 
+         * @param {RoomSettings} roomSettings 
          * @param {boolean} [start] 
-         * @param {RoomSettings} [roomSettings] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomRecreate(roomId: string, start?: boolean, roomSettings?: RoomSettings, options?: any): AxiosPromise<RoomEntry> {
-            return localVarFp.roomRecreate(roomId, start, roomSettings, options).then((request) => request(axios, basePath));
+        roomRecreate(roomId: string, roomSettings: RoomSettings, start?: boolean, options?: RawAxiosRequestConfig): AxiosPromise<RoomEntry> {
+            return localVarFp.roomRecreate(roomId, roomSettings, start, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1663,7 +1772,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomRemove(roomId: string, options?: any): AxiosPromise<void> {
+        roomRemove(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.roomRemove(roomId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1673,7 +1782,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomRestart(roomId: string, options?: any): AxiosPromise<void> {
+        roomRestart(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.roomRestart(roomId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1683,7 +1792,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomSettings(roomId: string, options?: any): AxiosPromise<RoomSettings> {
+        roomSettings(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<RoomSettings> {
             return localVarFp.roomSettings(roomId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1693,7 +1802,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomStart(roomId: string, options?: any): AxiosPromise<void> {
+        roomStart(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.roomStart(roomId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1703,7 +1812,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomStats(roomId: string, options?: any): AxiosPromise<RoomStats> {
+        roomStats(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<RoomStats> {
             return localVarFp.roomStats(roomId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1713,7 +1822,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomStop(roomId: string, options?: any): AxiosPromise<void> {
+        roomStop(roomId: string, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.roomStop(roomId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1723,7 +1832,7 @@ export const RoomsApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        roomsList(labels?: { [key: string]: string; }, options?: any): AxiosPromise<Array<RoomEntry>> {
+        roomsList(labels?: { [key: string]: string; }, options?: RawAxiosRequestConfig): AxiosPromise<Array<RoomEntry>> {
             return localVarFp.roomsList(labels, options).then((request) => request(axios, basePath));
         },
     };
@@ -1743,21 +1852,21 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public exportAsDockerCompose(options?: AxiosRequestConfig) {
+    public exportAsDockerCompose(options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).exportAsDockerCompose(options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * 
      * @summary Create new room
+     * @param {RoomSettings} roomSettings 
      * @param {boolean} [start] 
-     * @param {RoomSettings} [roomSettings] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomCreate(start?: boolean, roomSettings?: RoomSettings, options?: AxiosRequestConfig) {
-        return RoomsApiFp(this.configuration).roomCreate(start, roomSettings, options).then((request) => request(this.axios, this.basePath));
+    public roomCreate(roomSettings: RoomSettings, start?: boolean, options?: RawAxiosRequestConfig) {
+        return RoomsApiFp(this.configuration).roomCreate(roomSettings, start, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1768,7 +1877,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomGet(roomId: string, options?: AxiosRequestConfig) {
+    public roomGet(roomId: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomGet(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1780,22 +1889,34 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomGetByName(roomName: string, options?: AxiosRequestConfig) {
+    public roomGetByName(roomName: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomGetByName(roomName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Pause room
+     * @param {string} roomId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof RoomsApi
+     */
+    public roomPause(roomId: string, options?: RawAxiosRequestConfig) {
+        return RoomsApiFp(this.configuration).roomPause(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * 
      * @summary Recreate room
      * @param {string} roomId 
+     * @param {RoomSettings} roomSettings 
      * @param {boolean} [start] 
-     * @param {RoomSettings} [roomSettings] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomRecreate(roomId: string, start?: boolean, roomSettings?: RoomSettings, options?: AxiosRequestConfig) {
-        return RoomsApiFp(this.configuration).roomRecreate(roomId, start, roomSettings, options).then((request) => request(this.axios, this.basePath));
+    public roomRecreate(roomId: string, roomSettings: RoomSettings, start?: boolean, options?: RawAxiosRequestConfig) {
+        return RoomsApiFp(this.configuration).roomRecreate(roomId, roomSettings, start, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1806,7 +1927,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomRemove(roomId: string, options?: AxiosRequestConfig) {
+    public roomRemove(roomId: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomRemove(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1818,7 +1939,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomRestart(roomId: string, options?: AxiosRequestConfig) {
+    public roomRestart(roomId: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomRestart(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1830,7 +1951,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomSettings(roomId: string, options?: AxiosRequestConfig) {
+    public roomSettings(roomId: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomSettings(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1842,7 +1963,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomStart(roomId: string, options?: AxiosRequestConfig) {
+    public roomStart(roomId: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomStart(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1854,7 +1975,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomStats(roomId: string, options?: AxiosRequestConfig) {
+    public roomStats(roomId: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomStats(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1866,7 +1987,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomStop(roomId: string, options?: AxiosRequestConfig) {
+    public roomStop(roomId: string, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomStop(roomId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1878,7 +1999,7 @@ export class RoomsApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof RoomsApi
      */
-    public roomsList(labels?: { [key: string]: string; }, options?: AxiosRequestConfig) {
+    public roomsList(labels?: { [key: string]: string; }, options?: RawAxiosRequestConfig) {
         return RoomsApiFp(this.configuration).roomsList(labels, options).then((request) => request(this.axios, this.basePath));
     }
 }

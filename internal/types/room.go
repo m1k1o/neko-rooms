@@ -23,6 +23,7 @@ type RoomEntry struct {
 	IsOutdated     bool              `json:"is_outdated"`
 	MaxConnections uint16            `json:"max_connections"` // 0 when using mux
 	Running        bool              `json:"running"`
+	Paused         bool              `json:"paused"`
 	IsReady        bool              `json:"is_ready"`
 	Status         string            `json:"status"`
 	Created        time.Time         `json:"created"`
@@ -149,6 +150,7 @@ const (
 	RoomEventReady     RoomEventAction = "ready"
 	RoomEventStopped   RoomEventAction = "stopped"
 	RoomEventDestroyed RoomEventAction = "destroyed"
+	RoomEventPaused    RoomEventAction = "paused"
 )
 
 type RoomEvent struct {
@@ -175,6 +177,7 @@ type RoomManager interface {
 	Start(ctx context.Context, id string) error
 	Stop(ctx context.Context, id string) error
 	Restart(ctx context.Context, id string) error
+	Pause(ctx context.Context, id string) error
 
 	EventsLoopStart()
 	EventsLoopStop() error

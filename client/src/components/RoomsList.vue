@@ -1,23 +1,19 @@
 <template>
   <div>
-    <v-data-table
-      :headers="headers"
-      :items="rooms"
-      class="elevation-1"
-      :loading="loading"
-      loading-text="Loading... Please wait"
-      hide-default-footer
-    >
+    <v-data-table :headers="headers" :items="rooms" class="elevation-1" :loading="loading"
+      loading-text="Loading... Please wait" hide-default-footer>
       <template v-slot:[`item.url`]="{ item }">
         <v-tooltip bottom open-delay="300">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-bind="attrs" v-on="on" @click="roomId = item.id; dialog = true" color="blue" small class="mr-2"> <v-icon small>mdi-information-outline</v-icon></v-btn>
+            <v-btn v-bind="attrs" v-on="on" @click="roomId = item.id; dialog = true" color="blue" small class="mr-2">
+              <v-icon small>mdi-information-outline</v-icon></v-btn>
           </template>
           <span>View more information</span>
         </v-tooltip>
         <v-tooltip bottom open-delay="300">
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-bind="attrs" v-on="on" :disabled="!item.running" :href="item.url" target="_blank" small> <v-icon small>mdi-open-in-new</v-icon></v-btn>
+            <v-btn v-bind="attrs" v-on="on" :disabled="!item.running" :href="item.url" target="_blank" small> <v-icon
+                small>mdi-open-in-new</v-icon></v-btn>
           </template>
           <span>Link to deployment</span>
         </v-tooltip>
@@ -37,14 +33,16 @@
         <i v-else>uses mux</i>
       </template>
       <template v-slot:[`item.status`]="{ item }">
-        <v-chip :color="item.running ? (item.status.includes('unhealthy') ? 'warning' : 'green') : 'red'" dark small> {{ item.status }} </v-chip>
+        <v-chip :color="item.running ? (item.status.includes('unhealthy') ? 'warning' : 'green') : 'red'" dark small> {{
+          item.status }} </v-chip>
       </template>
       <template v-slot:[`item.created`]="{ item }">
         {{ item.created | timeago }}
       </template>
       <template v-slot:[`item.actions`]="{ item }">
         <RoomActionBtn action="start" :roomId="item.id" :disabled="item.running" />
-        <RoomActionBtn action="stop" :roomId="item.id" :disabled="!item.running" />
+        <RoomActionBtn action="stop" :roomId="item.id" :disabled="!item.running && !item.paused" />
+        <RoomActionBtn action="pause" :roomId="item.id" :disabled="!item.running" />
         <RoomActionBtn action="restart" :roomId="item.id" :disabled="!item.running" />
       </template>
       <template v-slot:[`item.destroy`]="{ item }">
