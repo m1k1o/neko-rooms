@@ -69,9 +69,9 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 		env = append(env, fmt.Sprintf("NEKO_WEBRTC_NAT1TO1=%s", strings.Join(config.NAT1To1IPs, ",")))
 	}
 
-	//if settings.ControlProtection {
-	//	env = append(env, "NEKO_CONTROL_PROTECTION=true") // TODO: not supported yet
-	//}
+	if settings.ControlProtection {
+		env = append(env, "NEKO_SESSION_CONTROL_PROTECTION=true")
+	}
 
 	// implicit control - enabled by default
 	if !settings.ImplicitControl {
@@ -132,10 +132,10 @@ func (settings *RoomSettings) fromEnvV3(envs []string) error {
 			settings.UserPass = val
 		case "NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD":
 			settings.AdminPass = val
-		//case "NEKO_CONTROL_PROTECTION": // TODO: not supported yet
-		//	if ok, _ := strconv.ParseBool(val); ok {
-		//		settings.ControlProtection = true
-		//	}
+		case "NEKO_SESSION_CONTROL_PROTECTION":
+			if ok, _ := strconv.ParseBool(val); ok {
+				settings.ControlProtection = true
+			}
 		case "NEKO_SESSION_IMPLICIT_HOSTING":
 			if ok, _ := strconv.ParseBool(val); !ok {
 				settings.ImplicitControl = false
