@@ -122,13 +122,9 @@ func (settings *RoomSettings) fromEnvV2(envs []string) error {
 		case "NEKO_PASSWORD_ADMIN":
 			settings.AdminPass = val
 		case "NEKO_CONTROL_PROTECTION":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.ControlProtection = true
-			}
+			settings.ControlProtection, err = strconv.ParseBool(val)
 		case "NEKO_IMPLICIT_CONTROL":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.ImplicitControl = true
-			}
+			settings.ImplicitControl, err = strconv.ParseBool(val)
 		case "NEKO_SCREEN":
 			settings.Screen = val
 		case "NEKO_MAX_FPS":

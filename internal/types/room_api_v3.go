@@ -133,13 +133,9 @@ func (settings *RoomSettings) fromEnvV3(envs []string) error {
 		case "NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD":
 			settings.AdminPass = val
 		case "NEKO_SESSION_CONTROL_PROTECTION":
-			if ok, _ := strconv.ParseBool(val); ok {
-				settings.ControlProtection = true
-			}
+			settings.ControlProtection, err = strconv.ParseBool(val)
 		case "NEKO_SESSION_IMPLICIT_HOSTING":
-			if ok, _ := strconv.ParseBool(val); !ok {
-				settings.ImplicitControl = false
-			}
+			settings.ImplicitControl, err = strconv.ParseBool(val)
 		case "NEKO_DESKTOP_SCREEN":
 			settings.Screen = val
 		//case "NEKO_MAX_FPS": // TODO: not supported yet
