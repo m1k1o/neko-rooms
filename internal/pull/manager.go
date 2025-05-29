@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
-	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
 type PullManagerCtx struct {
@@ -75,7 +75,7 @@ func (manager *PullManagerCtx) setDone() {
 }
 
 func (manager *PullManagerCtx) Start(request types.PullStart) error {
-	if in, _ := utils.ArrayIn(request.NekoImage, manager.images); !in {
+	if !slices.Contains(manager.images, request.NekoImage) {
 		return fmt.Errorf("unknown neko image")
 	}
 

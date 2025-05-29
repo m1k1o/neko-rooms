@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -246,11 +247,9 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		return "", fmt.Errorf("invalid container name, must match %s", dockerNames.RestrictedNameChars)
 	}
 
-	if in, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoImages); !in {
+	if !slices.Contains(manager.config.NekoImages, settings.NekoImage) {
 		return "", fmt.Errorf("invalid neko image")
 	}
-
-	isPrivilegedImage, _ := utils.ArrayIn(settings.NekoImage, manager.config.NekoPrivilegedImages)
 
 	// if api version is not set, try to detect it
 	if settings.ApiVersion == 0 {
@@ -669,7 +668,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		// DNS
 		DNS: settings.DNS,
 		// Privileged
-		Privileged: isPrivilegedImage,
+		Privileged: slices.Contains(manager.config.NekoPrivilegedImages, settings.NekoImage),
 	}
 
 	networkingConfig := &network.NetworkingConfig{

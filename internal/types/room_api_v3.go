@@ -2,11 +2,11 @@ package types
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/m1k1o/neko-rooms/internal/config"
-	"github.com/m1k1o/neko-rooms/internal/utils"
 )
 
 //
@@ -107,7 +107,7 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 	}
 
 	for key, val := range settings.Envs {
-		if in, _ := utils.ArrayIn(key, blacklistedEnvsV3); !in {
+		if !slices.Contains(blacklistedEnvsV3, key) {
 			env = append(env, fmt.Sprintf("%s=%s", key, val))
 		}
 	}
@@ -159,7 +159,7 @@ func (settings *RoomSettings) fromEnvV3(envs []string) error {
 		case "NEKO_CAPTURE_AUDIO_PIPELINE":
 			settings.AudioPipeline = val
 		default:
-			if in, _ := utils.ArrayIn(key, blacklistedEnvsV3); !in {
+			if !slices.Contains(blacklistedEnvsV3, key) {
 				settings.Envs[key] = val
 			}
 		}
