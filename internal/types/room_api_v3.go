@@ -73,9 +73,12 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 		env = append(env, "NEKO_SESSION_CONTROL_PROTECTION=true")
 	}
 
-	// implicit control - enabled by default
+	// implicit control - enabled by default but in legacy mode disabled by default
+	// so we need to set it explicitly until legacy mode is removed
 	if !settings.ImplicitControl {
 		env = append(env, "NEKO_SESSION_IMPLICIT_HOSTING=false")
+	} else {
+		env = append(env, "NEKO_SESSION_IMPLICIT_HOSTING=true")
 	}
 
 	if settings.VideoCodec != "VP8" { // VP8 is default
