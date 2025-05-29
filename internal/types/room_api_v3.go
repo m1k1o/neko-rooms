@@ -87,7 +87,7 @@ func (settings *RoomSettings) toEnvV3(config *config.Room, ports PortSettings) [
 	//}
 
 	if settings.VideoPipeline != "" {
-		env = append(env, fmt.Sprintf("NEKO_CAPTURE_VIDEO_PIPELINES=%s", settings.VideoPipeline)) // TOOD: multiple pipelines, as JSON
+		env = append(env, fmt.Sprintf("NEKO_CAPTURE_VIDEO_PIPELINE=%s", settings.VideoPipeline)) // TOOD: allow simulcast pipelines
 	}
 
 	if settings.AudioCodec != "OPUS" { // OPUS is default
@@ -146,7 +146,7 @@ func (settings *RoomSettings) fromEnvV3(envs []string) error {
 			settings.VideoCodec = strings.ToUpper(val)
 		//case "NEKO_VIDEO_BITRATE": // TODO: not supported yet
 		//	settings.VideoBitrate, err = strconv.Atoi(val)
-		case "NEKO_CAPTURE_VIDEO_PIPELINES": // TOOD: multiple pipelines, as JSON
+		case "NEKO_CAPTURE_VIDEO_PIPELINE": // TOOD: allow simulcast pipelines
 			settings.VideoPipeline = val
 		case "NEKO_CAPTURE_AUDIO_CODEC":
 			settings.AudioCodec = strings.ToUpper(val)
