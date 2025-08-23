@@ -2,13 +2,14 @@
 
 echo "
 ---------------------------------------------------------------
-               __                                              
-   ____  ___  / /______        _________  ____  ____ ___  _____
-  / __ \/ _ \/ //_/ __ \      / ___/ __ \/ __ \/ __ '__ \/ ___/
- / / / /  __/ ,< / /_/ /_____/ /  / /_/ / /_/ / / / / / (__  ) 
-/_/ /_/\___/_/|_|\____/_____/_/   \____/\____/_/ /_/ /_/____/  
-                                                               
-                 Automatic installer by m1k1o                  
+                                                                
+    ____  ___  / /______         _________  ____  ____ ___  _____
+   / __ \/ _ \/ //_/ __ \       / ___/ __ \/ __ \/ __ '__ \/ ___/
+  / / / /  __/ ,< / /_/ /_____/ /  / /_/ / /_/ / / / / / (__  ) 
+ /_/ /_/\___/_/|_|\____/_____/_/   \____/\____/_/ /_/ /_/____/   
+                                                                
+                                                                
+                  Automatic installer by m1k1o                    
 ---------------------------------------------------------------
 
 You need to have:
@@ -166,6 +167,12 @@ while true; do
   break
 done
 
+PUBLIC_IP=$(curl -s https://ipinfo.io/ip)
+read -rp "Enter your server's public IP address (autodetected: ${PUBLIC_IP}): " NEKO_NAT1TO1
+if [[ -z "${NEKO_NAT1TO1}" ]]; then
+  NEKO_NAT1TO1="${PUBLIC_IP}"
+fi
+
 touch "./usersfile"
 
 # Users
@@ -209,6 +216,7 @@ echo "[Y] Got all settings..."
   echo "NEKO_ROOMS_TRAEFIK_ENTRYPOINT=websecure"
   echo "NEKO_ROOMS_TRAEFIK_NETWORK=neko-rooms-traefik"
   echo "NEKO_ROOMS_TRAEFIK_CERTRESOLVER=lets-encrypt"
+  echo "NEKO_NAT1TO1=${NEKO_NAT1TO1}"
 } > .env
 
 echo "[Y] Creating env..."
