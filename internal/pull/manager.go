@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	dockerTypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/registry"
+	dockerImage "github.com/docker/docker/api/types/image"
+	dockerRegistry "github.com/docker/docker/api/types/registry"
 	dockerClient "github.com/docker/docker/client"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -85,9 +85,9 @@ func (manager *PullManagerCtx) Start(request types.PullStart) error {
 	}
 
 	// handle registry auth
-	var opts dockerTypes.ImagePullOptions
+	var opts dockerImage.PullOptions
 	if request.RegistryUser != "" && request.RegistryPass != "" {
-		authConfig := registry.AuthConfig{
+		authConfig := dockerRegistry.AuthConfig{
 			Username: request.RegistryUser,
 			Password: request.RegistryPass,
 		}
@@ -97,7 +97,7 @@ func (manager *PullManagerCtx) Start(request types.PullStart) error {
 			return err
 		}
 
-		opts = dockerTypes.ImagePullOptions{
+		opts = dockerImage.PullOptions{
 			RegistryAuth: base64.URLEncoding.EncodeToString(encodedJSON),
 		}
 	}

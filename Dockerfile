@@ -17,7 +17,7 @@ RUN npm run build
 #
 # STAGE 2: build executable binary
 #
-FROM golang:1.21-bullseye AS builder
+FROM golang:1.24-bookworm AS builder
 WORKDIR /app
 
 COPY . .
