@@ -375,11 +375,11 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		traefikRule := "PathPrefix(`" + pathPrefix + "`)"
 		if t.Domain != "" && t.Domain != "*" {
 			// match *.domain.tld as subdomain
-			if strings.HasPrefix(t.Domain, "*.") {
+			if after, ok := strings.CutPrefix(t.Domain, "*."); ok {
 				traefikRule = fmt.Sprintf(
 					"Host(`%s.%s`)",
 					roomName,
-					strings.TrimPrefix(t.Domain, "*."),
+					after,
 				)
 			} else {
 				traefikRule += " && Host(`" + t.Domain + "`)"
@@ -412,12 +412,12 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	// add custom labels
 	for _, label := range manager.config.Labels {
 		// replace dynamic values in labels
-		label = strings.Replace(label, "{containerName}", containerName, -1)
-		label = strings.Replace(label, "{roomName}", roomName, -1)
+		label = strings.ReplaceAll(label, "{containerName}", containerName)
+		label = strings.ReplaceAll(label, "{roomName}", roomName)
 
 		if t := manager.config.Traefik; t.Enabled {
-			label = strings.Replace(label, "{traefikEntrypoint}", t.Entrypoint, -1)
-			label = strings.Replace(label, "{traefikCertresolver}", t.Certresolver, -1)
+			label = strings.ReplaceAll(label, "{traefikEntrypoint}", t.Entrypoint)
+			label = strings.ReplaceAll(label, "{traefikCertresolver}", t.Certresolver)
 		}
 
 		v := strings.SplitN(label, "=", 2)

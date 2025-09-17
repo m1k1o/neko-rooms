@@ -319,8 +319,8 @@ func (s *Room) GetInstanceUrl() url.URL {
 func (s *Room) GetRoomUrl(roomName string) string {
 	instanceUrl := s.GetInstanceUrl()
 
-	if strings.HasPrefix(instanceUrl.Host, "*.") {
-		instanceUrl.Host = roomName + "." + strings.TrimPrefix(instanceUrl.Host, "*.")
+	if after, ok := strings.CutPrefix(instanceUrl.Host, "*."); ok {
+		instanceUrl.Host = roomName + "." + after
 	} else {
 		instanceUrl.Path = path.Join(instanceUrl.Path, s.PathPrefix, roomName) + "/"
 	}

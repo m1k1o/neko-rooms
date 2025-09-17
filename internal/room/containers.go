@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containerd/errdefs"
 	dockerContainer "github.com/docker/docker/api/types/container"
 	dockerFilters "github.com/docker/docker/api/types/filters"
-	dockerClient "github.com/docker/docker/client"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
 )
@@ -96,7 +96,7 @@ func (manager *RoomManagerCtx) containerByName(ctx context.Context, name string)
 func (manager *RoomManagerCtx) inspectContainer(ctx context.Context, id string) (*dockerContainer.InspectResponse, error) {
 	container, err := manager.client.ContainerInspect(ctx, id)
 	if err != nil {
-		if dockerClient.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return nil, types.ErrRoomNotFound
 		}
 		return nil, err
@@ -120,7 +120,7 @@ func (manager *RoomManagerCtx) containerExec(ctx context.Context, id string, cmd
 		Detach:       false,
 	})
 	if err != nil {
-		if dockerClient.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return "", types.ErrRoomNotFound
 		}
 		return "", err
