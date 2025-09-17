@@ -575,29 +575,30 @@ server {
     listen 80;
     server_name ${DOMAIN};
 
-    # Public rooms: no authentication
-    location ~ ^/${PATH_PREFIX}/.*$ {
+    location / {
         proxy_pass http://127.0.0.1:${DOCKER_PORT};
+        proxy_set_header Host \$host;
         proxy_http_version 1.1;
+
+        # WebSocket headers
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
+
+        # Forwarding headers for reverse proxy
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+
         proxy_cache_bypass \$http_upgrade;
+        proxy_buffering off;
+        proxy_read_timeout 900s;
     }
 
     # Admin Panel Restricted Access
-    location / {
+    location ~ ^/$ {
         auth_basic "Restricted Access";
         auth_basic_user_file /etc/nginx/.htpasswd;
-
-        error_log /var/log/nginx/auth_error.log warn;
-
         proxy_pass http://127.0.0.1:${DOCKER_PORT};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
     }
 }
 EOF
@@ -667,8 +668,8 @@ usage() {
     echo -e "${YELLOW}Usage:${NC} $0 {add|remove|list|change-password} [username]"
     echo -e "${YELLOW}Commands:${NC}"
     echo -e "  ${GREEN}add${NC}            Add a new user or update an existing user's password"
-    echo -e "  ${GREEN}remove${NC}         Remove a user"
-    echo -e "  ${GREEN}list${NC}           List all users"
+    echo -e "  ${GREEN}remove${NC}          Remove a user"
+    echo -e "  ${GREEN}list${NC}            List all users"
     echo -e "  ${GREEN}change-password${NC} Change the password of an existing user"
     exit 1
 }
@@ -799,4 +800,3 @@ echo -e "${AQUA}\n==================================================${NC}"
 
 # Final message
 echo -e "${GREEN}Installation complete! Access your Neko Rooms at https://${DOMAIN}${NC}"
-
