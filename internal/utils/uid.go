@@ -34,7 +34,7 @@ func initMasks(params ...int) []uint {
 }
 
 func getMask(alphabet string, masks []uint) int {
-	for i := 0; i < len(masks); i++ {
+	for i := range masks {
 		curr := int(masks[i])
 		if curr >= len(alphabet)-1 {
 			return curr

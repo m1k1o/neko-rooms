@@ -16,11 +16,10 @@ import (
 	"time"
 
 	"github.com/docker/cli/opts"
-	dockerTypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
+	dockerContainer "github.com/docker/docker/api/types/container"
 	dockerMount "github.com/docker/docker/api/types/mount"
-	network "github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/strslice"
+	dockerNetwork "github.com/docker/docker/api/types/network"
+	dockerStrslice "github.com/docker/docker/api/types/strslice"
 	dockerClient "github.com/docker/docker/client"
 	dockerNames "github.com/docker/docker/daemon/names"
 	"github.com/docker/go-connections/nat"
@@ -253,7 +252,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 
 	// if api version is not set, try to detect it
 	if settings.ApiVersion == 0 {
-		inspect, _, err := manager.client.ImageInspectWithRaw(ctx, settings.NekoImage)
+		inspect, err := manager.client.ImageInspect(ctx, settings.NekoImage)
 		if err != nil {
 			return "", err
 		}
@@ -376,11 +375,11 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		traefikRule := "PathPrefix(`" + pathPrefix + "`)"
 		if t.Domain != "" && t.Domain != "*" {
 			// match *.domain.tld as subdomain
-			if strings.HasPrefix(t.Domain, "*.") {
+			if after, ok := strings.CutPrefix(t.Domain, "*."); ok {
 				traefikRule = fmt.Sprintf(
 					"Host(`%s.%s`)",
 					roomName,
-					strings.TrimPrefix(t.Domain, "*."),
+					after,
 				)
 			} else {
 				traefikRule += " && Host(`" + t.Domain + "`)"
@@ -413,12 +412,12 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	// add custom labels
 	for _, label := range manager.config.Labels {
 		// replace dynamic values in labels
-		label = strings.Replace(label, "{containerName}", containerName, -1)
-		label = strings.Replace(label, "{roomName}", roomName, -1)
+		label = strings.ReplaceAll(label, "{containerName}", containerName)
+		label = strings.ReplaceAll(label, "{roomName}", roomName)
 
 		if t := manager.config.Traefik; t.Enabled {
-			label = strings.Replace(label, "{traefikEntrypoint}", t.Entrypoint, -1)
-			label = strings.Replace(label, "{traefikCertresolver}", t.Certresolver, -1)
+			label = strings.ReplaceAll(label, "{traefikEntrypoint}", t.Entrypoint)
+			label = strings.ReplaceAll(label, "{traefikCertresolver}", t.Certresolver)
 		}
 
 		v := strings.SplitN(label, "=", 2)
@@ -578,7 +577,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	// Set container device requests
 	//
 
-	var deviceRequests []container.DeviceRequest
+	var deviceRequests []dockerContainer.DeviceRequest
 
 	if len(settings.Resources.Gpus) > 0 {
 		gpuOpts := opts.GpuOpts{}
@@ -603,9 +602,9 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 	// Set container devices
 	//
 
-	var devices []container.DeviceMapping
+	var devices []dockerContainer.DeviceMapping
 	for _, device := range settings.Resources.Devices {
-		devices = append(devices, container.DeviceMapping{
+		devices = append(devices, dockerContainer.DeviceMapping{
 			PathOnHost:        device,
 			PathInContainer:   device,
 			CgroupPermissions: "rwm",
@@ -621,7 +620,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		hostname = settings.Hostname
 	}
 
-	config := &container.Config{
+	config := &dockerContainer.Config{
 		// Hostname
 		Hostname: hostname,
 		// Domainname is preventing from running container on LXC (Proxmox)
@@ -637,20 +636,20 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		Labels: labels,
 	}
 
-	hostConfig := &container.HostConfig{
+	hostConfig := &dockerContainer.HostConfig{
 		// Port mapping between the exposed port (container) and the host
 		PortBindings: portBindings,
 		// Configuration of the logs for this container
-		LogConfig: container.LogConfig{
+		LogConfig: dockerContainer.LogConfig{
 			Type:   "json-file",
 			Config: map[string]string{},
 		},
 		// Restart policy to be used for the container
-		RestartPolicy: container.RestartPolicy{
+		RestartPolicy: dockerContainer.RestartPolicy{
 			Name: "unless-stopped",
 		},
 		// List of kernel capabilities to add to the container
-		CapAdd: strslice.StrSlice{
+		CapAdd: dockerStrslice.StrSlice{
 			"SYS_ADMIN",
 		},
 		// Total shm memory usage
@@ -658,7 +657,7 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		// Mounts specs used by the container
 		Mounts: mounts,
 		// Resources contains container's resources (cgroups config, ulimits...)
-		Resources: container.Resources{
+		Resources: dockerContainer.Resources{
 			CPUShares:      settings.Resources.CPUShares,
 			NanoCPUs:       settings.Resources.NanoCPUs,
 			Memory:         settings.Resources.Memory,
@@ -671,8 +670,8 @@ func (manager *RoomManagerCtx) Create(ctx context.Context, settings types.RoomSe
 		Privileged: slices.Contains(manager.config.NekoPrivilegedImages, settings.NekoImage),
 	}
 
-	networkingConfig := &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
+	networkingConfig := &dockerNetwork.NetworkingConfig{
+		EndpointsConfig: map[string]*dockerNetwork.EndpointSettings{
 			manager.config.InstanceNetwork: {},
 		},
 	}
@@ -725,7 +724,7 @@ func (manager *RoomManagerCtx) Remove(ctx context.Context, id string) error {
 	}
 
 	// Stop the actual container
-	err = manager.client.ContainerStop(ctx, id, container.StopOptions{
+	err = manager.client.ContainerStop(ctx, id, dockerContainer.StopOptions{
 		Signal:  "SIGTERM",
 		Timeout: &manager.config.StopTimeoutSec,
 	})
@@ -735,7 +734,7 @@ func (manager *RoomManagerCtx) Remove(ctx context.Context, id string) error {
 	}
 
 	// Remove the actual container
-	err = manager.client.ContainerRemove(ctx, id, dockerTypes.ContainerRemoveOptions{
+	err = manager.client.ContainerRemove(ctx, id, dockerContainer.RemoveOptions{
 		RemoveVolumes: true,
 		Force:         true,
 	})
@@ -1001,7 +1000,7 @@ func (manager *RoomManagerCtx) Start(ctx context.Context, id string) error {
 	}
 
 	// Start the actual container
-	return manager.client.ContainerStart(ctx, id, dockerTypes.ContainerStartOptions{})
+	return manager.client.ContainerStart(ctx, id, dockerContainer.StartOptions{})
 }
 
 func (manager *RoomManagerCtx) Stop(ctx context.Context, id string) error {
@@ -1011,7 +1010,7 @@ func (manager *RoomManagerCtx) Stop(ctx context.Context, id string) error {
 	}
 
 	// Stop the actual container
-	return manager.client.ContainerStop(ctx, id, container.StopOptions{
+	return manager.client.ContainerStop(ctx, id, dockerContainer.StopOptions{
 		Signal:  "SIGTERM",
 		Timeout: &manager.config.StopTimeoutSec,
 	})
@@ -1024,7 +1023,7 @@ func (manager *RoomManagerCtx) Restart(ctx context.Context, id string) error {
 	}
 
 	// Restart the actual container
-	return manager.client.ContainerRestart(ctx, id, container.StopOptions{
+	return manager.client.ContainerRestart(ctx, id, dockerContainer.StopOptions{
 		Signal:  "SIGTERM",
 		Timeout: &manager.config.StopTimeoutSec,
 	})

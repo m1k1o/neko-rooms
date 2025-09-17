@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	dockerTypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	dockerClient "github.com/docker/docker/client"
+	"github.com/containerd/errdefs"
+	dockerContainer "github.com/docker/docker/api/types/container"
+	dockerFilters "github.com/docker/docker/api/types/filters"
 
 	"github.com/m1k1o/neko-rooms/internal/types"
 )
 
-func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container) (*types.RoomEntry, error) {
+func (manager *RoomManagerCtx) containerToEntry(container dockerContainer.Summary) (*types.RoomEntry, error) {
 	labels, err := manager.extractLabels(container.Labels)
 	if err != nil {
 		return nil, err
@@ -46,25 +46,25 @@ func (manager *RoomManagerCtx) containerToEntry(container dockerTypes.Container)
 	return entry, nil
 }
 
-func (manager *RoomManagerCtx) listContainers(ctx context.Context, labels map[string]string) ([]dockerTypes.Container, error) {
-	args := filters.NewArgs(
-		filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", manager.config.InstanceName)),
+func (manager *RoomManagerCtx) listContainers(ctx context.Context, labels map[string]string) ([]dockerContainer.Summary, error) {
+	args := dockerFilters.NewArgs(
+		dockerFilters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", manager.config.InstanceName)),
 	)
 
 	for key, val := range labels {
 		args.Add("label", fmt.Sprintf("m1k1o.neko_rooms.x-%s=%s", key, val))
 	}
 
-	return manager.client.ContainerList(ctx, dockerTypes.ContainerListOptions{
+	return manager.client.ContainerList(ctx, dockerContainer.ListOptions{
 		All:     true,
 		Filters: args,
 	})
 }
 
-func (manager *RoomManagerCtx) containerFilter(ctx context.Context, args filters.Args) (*dockerTypes.Container, error) {
+func (manager *RoomManagerCtx) containerFilter(ctx context.Context, args dockerFilters.Args) (*dockerContainer.Summary, error) {
 	args.Add("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", manager.config.InstanceName))
 
-	containers, err := manager.client.ContainerList(ctx, dockerTypes.ContainerListOptions{
+	containers, err := manager.client.ContainerList(ctx, dockerContainer.ListOptions{
 		All:     true,
 		Filters: args,
 	})
@@ -81,22 +81,22 @@ func (manager *RoomManagerCtx) containerFilter(ctx context.Context, args filters
 	return &container, nil
 }
 
-func (manager *RoomManagerCtx) containerById(ctx context.Context, id string) (*dockerTypes.Container, error) {
-	return manager.containerFilter(ctx, filters.NewArgs(
-		filters.Arg("id", id),
+func (manager *RoomManagerCtx) containerById(ctx context.Context, id string) (*dockerContainer.Summary, error) {
+	return manager.containerFilter(ctx, dockerFilters.NewArgs(
+		dockerFilters.Arg("id", id),
 	))
 }
 
-func (manager *RoomManagerCtx) containerByName(ctx context.Context, name string) (*dockerTypes.Container, error) {
-	return manager.containerFilter(ctx, filters.NewArgs(
-		filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.name=%s", name)),
+func (manager *RoomManagerCtx) containerByName(ctx context.Context, name string) (*dockerContainer.Summary, error) {
+	return manager.containerFilter(ctx, dockerFilters.NewArgs(
+		dockerFilters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.name=%s", name)),
 	))
 }
 
-func (manager *RoomManagerCtx) inspectContainer(ctx context.Context, id string) (*dockerTypes.ContainerJSON, error) {
+func (manager *RoomManagerCtx) inspectContainer(ctx context.Context, id string) (*dockerContainer.InspectResponse, error) {
 	container, err := manager.client.ContainerInspect(ctx, id)
 	if err != nil {
-		if dockerClient.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return nil, types.ErrRoomNotFound
 		}
 		return nil, err
@@ -111,7 +111,7 @@ func (manager *RoomManagerCtx) inspectContainer(ctx context.Context, id string) 
 }
 
 func (manager *RoomManagerCtx) containerExec(ctx context.Context, id string, cmd []string) (string, error) {
-	exec, err := manager.client.ContainerExecCreate(ctx, id, dockerTypes.ExecConfig{
+	exec, err := manager.client.ContainerExecCreate(ctx, id, dockerContainer.ExecOptions{
 		AttachStderr: true,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -120,13 +120,13 @@ func (manager *RoomManagerCtx) containerExec(ctx context.Context, id string, cmd
 		Detach:       false,
 	})
 	if err != nil {
-		if dockerClient.IsErrNotFound(err) {
+		if errdefs.IsNotFound(err) {
 			return "", types.ErrRoomNotFound
 		}
 		return "", err
 	}
 
-	conn, err := manager.client.ContainerExecAttach(ctx, exec.ID, dockerTypes.ExecStartCheck{
+	conn, err := manager.client.ContainerExecAttach(ctx, exec.ID, dockerContainer.ExecAttachOptions{
 		Detach: false,
 		Tty:    true,
 	})

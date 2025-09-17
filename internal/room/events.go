@@ -14,8 +14,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	dockerTypes "github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
+	dockerContainer "github.com/docker/docker/api/types/container"
+	dockerEvents "github.com/docker/docker/api/types/events"
+	dockerFilters "github.com/docker/docker/api/types/filters"
 	dockerClient "github.com/docker/docker/client"
 )
 
@@ -72,9 +73,9 @@ func (e *events) Start() {
 	e.ctx, e.cancel = context.WithCancel(context.Background())
 
 	// load initial metrics
-	containers, err := e.client.ContainerList(e.ctx, dockerTypes.ContainerListOptions{
-		Filters: filters.NewArgs(
-			filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", e.config.InstanceName)),
+	containers, err := e.client.ContainerList(e.ctx, dockerContainer.ListOptions{
+		Filters: dockerFilters.NewArgs(
+			dockerFilters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", e.config.InstanceName)),
 		),
 	})
 	if err != nil {
@@ -89,17 +90,17 @@ func (e *events) Start() {
 		}
 	}
 
-	msgs, errs := e.client.Events(e.ctx, dockerTypes.EventsOptions{
-		Filters: filters.NewArgs(
-			filters.Arg("type", "container"),
-			filters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", e.config.InstanceName)),
-			filters.Arg("event", "create"),
-			filters.Arg("event", "start"),
-			filters.Arg("event", "health_status"),
-			filters.Arg("event", "stop"),
-			filters.Arg("event", "destroy"),
-			filters.Arg("event", "pause"),
-			filters.Arg("event", "unpause"),
+	msgs, errs := e.client.Events(e.ctx, dockerEvents.ListOptions{
+		Filters: dockerFilters.NewArgs(
+			dockerFilters.Arg("type", string(dockerEvents.ContainerEventType)),
+			dockerFilters.Arg("label", fmt.Sprintf("m1k1o.neko_rooms.instance=%s", e.config.InstanceName)),
+			dockerFilters.Arg("event", string(dockerEvents.ActionCreate)),
+			dockerFilters.Arg("event", string(dockerEvents.ActionStart)),
+			dockerFilters.Arg("event", string(dockerEvents.ActionHealthStatus)),
+			dockerFilters.Arg("event", string(dockerEvents.ActionStop)),
+			dockerFilters.Arg("event", string(dockerEvents.ActionDestroy)),
+			dockerFilters.Arg("event", string(dockerEvents.ActionPause)),
+			dockerFilters.Arg("event", string(dockerEvents.ActionUnPause)),
 		),
 	})
 
@@ -141,35 +142,35 @@ func (e *events) Start() {
 
 				e.logger.Debug().
 					Str("id", roomId).
-					Str("action", msg.Action).
+					Str("action", string(msg.Action)).
 					Msg("got docker event")
 
 				var action types.RoomEventAction
 				switch msg.Action {
-				case "create":
+				case dockerEvents.ActionCreate:
 					action = types.RoomEventCreated
 					e.totalRooms.Inc()
-				case "start":
+				case dockerEvents.ActionStart:
 					action = types.RoomEventStarted
 					e.waitForRoomReady(roomId, labels)
 					e.runningRooms.Inc()
-				case "health_status: healthy":
+				case dockerEvents.ActionHealthStatusHealthy:
 					action = types.RoomEventReady
 					// ignore if room was already ready
 					if !e.setRoomReady(roomId) {
 						continue
 					}
-				case "stop":
+				case dockerEvents.ActionStop:
 					action = types.RoomEventStopped
 					e.setRoomNotReady(roomId)
 					e.runningRooms.Dec()
-				case "destroy":
+				case dockerEvents.ActionDestroy:
 					action = types.RoomEventDestroyed
-				case "pause":
+				case dockerEvents.ActionPause:
 					action = types.RoomEventPaused
 					e.setRoomNotReady(roomId)
 					e.runningRooms.Dec()
-				case "unpause":
+				case dockerEvents.ActionUnPause:
 					action = types.RoomEventStarted
 					e.waitForRoomReady(roomId, labels)
 					e.runningRooms.Inc()
@@ -203,7 +204,7 @@ func (e *events) waitForRoomReady(roomId string, labels map[string]string) {
 		defer e.wg.Done()
 
 		// check if room is ready
-		exec, err := e.client.ContainerExecCreate(e.ctx, roomId, dockerTypes.ExecConfig{
+		exec, err := e.client.ContainerExecCreate(e.ctx, roomId, dockerContainer.ExecOptions{
 			AttachStdout: true,
 			Cmd: []string{
 				"/bin/bash", "-c",
@@ -215,7 +216,7 @@ func (e *events) waitForRoomReady(roomId string, labels map[string]string) {
 			return
 		}
 
-		conn, err := e.client.ContainerExecAttach(e.ctx, exec.ID, dockerTypes.ExecStartCheck{})
+		conn, err := e.client.ContainerExecAttach(e.ctx, exec.ID, dockerContainer.ExecAttachOptions{})
 		if err != nil {
 			e.logger.Err(err).Msg("failed to attach exec")
 			return

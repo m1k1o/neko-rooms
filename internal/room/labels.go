@@ -121,8 +121,8 @@ func (manager *RoomManagerCtx) extractLabels(labels map[string]string) (*RoomLab
 	// extract user defined labels
 	userDefined := map[string]string{}
 	for key, val := range labels {
-		if strings.HasPrefix(key, "m1k1o.neko_rooms.x-") {
-			userDefined[strings.TrimPrefix(key, "m1k1o.neko_rooms.x-")] = val
+		if after, ok := strings.CutPrefix(key, "m1k1o.neko_rooms.x-"); ok {
+			userDefined[after] = val
 		}
 	}
 
