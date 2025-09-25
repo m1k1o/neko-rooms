@@ -589,9 +589,13 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
 
-        proxy_cache_bypass \$http_upgrade;
-        proxy_buffering off;
-        proxy_read_timeout 900s;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout    4h;
+        proxy_read_timeout    4h;
+        send_timeout          900s;
+
+        proxy_request_buffering off;
+        proxy_buffering        off;
     }
 
     # Admin Panel Restricted Access
