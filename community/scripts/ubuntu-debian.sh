@@ -571,6 +571,11 @@ echo -e "${AQUA}\n==================================================${NC}"
 # Configure NGINX without SSL
 echo -e "${YELLOW}Configuring NGINX without SSL...${NC}"
 cat <<EOF > /etc/nginx/sites-available/${DOMAIN}-neko-rooms.conf
+map \$http_upgrade \$connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
 server {
     listen 80;
     server_name ${DOMAIN};
@@ -581,8 +586,8 @@ server {
         proxy_http_version 1.1;
 
         # WebSocket headers
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
 
         # Forwarding headers for reverse proxy
         proxy_set_header X-Real-IP \$remote_addr;
