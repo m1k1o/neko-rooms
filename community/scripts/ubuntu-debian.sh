@@ -604,7 +604,7 @@ server {
     }
 
     # Admin Panel Restricted Access
-    location ~ ^/$ {
+    location = / {
         auth_basic "Restricted Access";
         auth_basic_user_file /etc/nginx/.htpasswd;
 
