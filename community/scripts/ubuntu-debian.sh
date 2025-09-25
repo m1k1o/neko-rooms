@@ -607,7 +607,19 @@ server {
     location ~ ^/$ {
         auth_basic "Restricted Access";
         auth_basic_user_file /etc/nginx/.htpasswd;
+
         proxy_pass http://127.0.0.1:${DOCKER_PORT};
+        proxy_set_header Host $host;
+        proxy_http_version 1.1;
+
+        # Falls das Admin-UI WebSockets nutzt, sind wir vorbereitet
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        # Forwarding headers wie oben
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 EOF
