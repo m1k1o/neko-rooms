@@ -31,7 +31,6 @@ FROM scratch
 COPY --from=builder /app/bin/neko_rooms /app/bin/neko_rooms
 COPY --from=frontend /src/dist/ /var/www
 
-ENV DOCKER_API_VERSION=1.39
 ENV NEKO_ROOMS_BIND=:8080
 ENV NEKO_ROOMS_ADMIN_STATIC=/var/www
 

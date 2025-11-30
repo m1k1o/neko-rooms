@@ -124,7 +124,9 @@ func (main *MainCtx) Start() {
 	if err != nil {
 		main.logger.Panic().Err(err).Msg("unable to connect to docker client")
 	} else {
-		main.logger.Info().Msg("successfully connected to docker client")
+		main.logger.Info().
+			Str("version", client.ClientVersion()).
+			Msg("successfully connected to docker client")
 	}
 
 	main.roomManager = room.New(
