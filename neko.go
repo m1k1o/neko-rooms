@@ -120,13 +120,16 @@ func (main *MainCtx) Preflight() {
 }
 
 func (main *MainCtx) Start() {
-	client, err := client.NewClientWithOpts(client.FromEnv)
+	client, err := client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithAPIVersionNegotiation(),
+	)
 	if err != nil {
 		main.logger.Panic().Err(err).Msg("unable to connect to docker client")
 	} else {
 		main.logger.Info().
 			Str("version", client.ClientVersion()).
-			Msg("successfully connected to docker client")
+			Msg("successfully connected to docker client (API negotiation enabled)")
 	}
 
 	main.roomManager = room.New(
