@@ -189,7 +189,19 @@ export const state = {
           url: 'https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi',
         } as BrowserPolicyExtension,
         [BrowserPolicyTypeEnum.chromium]: {
-          id: 'cjpalhdlnbpafiamejdnhcphjbkeiagm',
+          id: 'ddkjiahejlhfcafbddmgiahcphecmpfh', // uBlock Origin Lite
+        } as BrowserPolicyExtension,
+      },
+    },
+    {
+      text: 'AdGuard AdBlocker',
+      value: {
+        [BrowserPolicyTypeEnum.firefox]: {
+          id: 'adguardadblocker@adguard.com',
+          url: 'https://addons.mozilla.org/firefox/downloads/latest/adguard-adblocker/latest.xpi',
+        } as BrowserPolicyExtension,
+        [BrowserPolicyTypeEnum.chromium]: {
+          id: 'apjcbfpjihpedihablmalmbbhjpklbdf',
         } as BrowserPolicyExtension,
       },
     },
