@@ -7,7 +7,7 @@ networks:
 
 services:
   traefik: # domain name used in nginx config
-    image: "traefik:2.4"
+    image: "traefik:2"
     restart: "unless-stopped"
     environment:
       - "TZ=Europe/Vienna"

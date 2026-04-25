@@ -12,7 +12,7 @@ networks:
 
 services:
   traefik:
-    image: "traefik:2.4"
+    image: "traefik:2"
     restart: "unless-stopped"
     environment:
       - "TZ"

@@ -26,7 +26,7 @@ docker run --rm -it \
 	-e "TZ=${TZ}" \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
     --net="${NEKO_ROOMS_TRAEFIK_NETWORK}" \
-    traefik:2.4 \
+    traefik:2 \
       --api.insecure=true \
       --providers.docker=true \
       --providers.docker.watch=true \

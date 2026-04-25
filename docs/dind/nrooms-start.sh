@@ -29,7 +29,7 @@ docker run -d \
     -p "80:80" \
     -v "/var/run/docker.sock:/var/run/docker.sock:ro" \
     -e "TZ=${TZ}" \
-    traefik:2.4 \
+    traefik:2 \
       --providers.docker=true \
       --providers.docker.watch=true \
       --providers.docker.exposedbydefault=false \
