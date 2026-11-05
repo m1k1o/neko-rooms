@@ -40,6 +40,15 @@ If you want to use Traefik as reverse proxy, visit [installation guide for traef
 
 Otherwise modify variables in `docker-compose.yml` and just run `docker-compose up -d`.
 
+### Easypanel
+
+[Easypanel](https://easypanel.io) is a self-hosted Docker deployment platform, and neko-rooms has a one-click deployment template there:
+
+[![Deploy on Easypanel][easypanel-btn]][easypanel-deploy]
+
+[easypanel-btn]: https://easypanel.io/img/deploy-on-easypanel-40.svg
+[easypanel-deploy]: https://easypanel.io/templates/neko-rooms
+
 ### Download images / update
 
 You need to pull all your images, that you want to use with neko-room. Otherwise, you might get this error: `Error response from daemon: No such image:` (see issue #1).
